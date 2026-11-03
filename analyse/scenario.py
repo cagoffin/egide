@@ -20,6 +20,11 @@ class Scenario:
     drones_nombre: int
     drones_vitesse: float
     drones_altitude: float
+    drones_tactique: str
+    drones_concentration_max: int
+    drones_etalement: float
+    fourmi_eclatement_rayon: float
+    fourmi_largeur_couloir: float
     radar_hauteur_antenne: float
     radar_portee_max: float
     delai_reaction: float
@@ -30,15 +35,18 @@ class Scenario:
     avions_vitesse_engagement: float
     avions_facteur_charge_max: float
     avions_roquettes_par_avion: int
+    avions_pas_decision: float
     roquette_air_portee: float
     roquette_air_pk: float
     laser_duree_designation: float
     ir_cadence: float
     sol_roquettes_nombre: int
     sol_missiles_nombre: int
+    sol_postes_nombre: int
     sol_portee: float
     sol_pk: float
     sol_engagements_par_passage: int
+    simulation_pas: float
     graine: int
 
 

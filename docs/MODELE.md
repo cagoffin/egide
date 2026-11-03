@@ -79,3 +79,45 @@ uniformément réparti.
 - Pas de contre-mesures, pas de leurres, pas de manœuvre d'évitement des drones.
 - Radar parfait dans sa couverture (pas de fausse alarme ni de perte de piste).
 - Pas de rechargement des avions pendant le raid.
+
+## 8 · Simulation multi-agents (étape 2, `src/moteur/`)
+### 8.1 Temps et hasard
+Pas fixe `simulation_pas_s` (0,5 s). Tout tirage passe par un générateur à graine (`hasard.js`) : une graine
+rejoue un raid à l'identique. Une campagne (`src/campagne.js`) enchaîne les graines `graine`, `graine + 1`, …
+et résume chaque grandeur par sa moyenne et son intervalle de confiance à 95 % (1,96 σ / √N).
+
+### 8.2 Menace
+Répartition sur les cibles : § 6.1 (G groupes de taille égale, cibles tirées au hasard). Les drones naissent
+20 km avant la couverture radar et volent à vitesse constante, sans réagir à la défense.
+- `direct` : chaque groupe arrive d'un cap tiré au hasard, en vague serrée (±1 km), et va droit sur sa cible.
+- `disperse` : chaque drone a son propre cap et part à un instant tiré dans `drones_etalement_s`.
+- `fourmi` : tout l'essaim entre par un même cap, en colonne de 4 km sur `fourmi_largeur_couloir_km`, jusqu'au
+  point d'éclatement à `fourmi_eclatement_rayon_km` du centre, puis chaque drone rejoint sa cible.
+
+Un drone qui atteint sa cible la frappe (fuite) ; il n'y a pas de rayon létal autour de la cible.
+
+### 8.3 Détection et planification
+Un drone est vu dès qu'il entre dans le disque de rayon R + d_det (§ 2) ; il n'est utilisable par la conduite
+qu'après `delai_reaction_s`. Toutes les `avions_pas_decision_s`, la conduite :
+1. regroupe les drones vus en pistes (cellules de 5 km), chacune pondérée par son effectif ;
+2. extrapole chaque piste en ligne droite — elle ignore la destination et le point d'éclatement ;
+3. pour chaque avion libre (armé, sans drone en approche), calcule le plus petit délai t tel que
+   |D + V t| ≤ v_a t + r_arme (racine du trinôme, `delai_interception`), dans un horizon de 15 min ;
+4. envoie l'avion au point extrapolé qui maximise effectif / (1 + avions déjà envoyés dans la même cellule).
+
+### 8.4 Mouvement des avions
+Mise à poste à `avions_vitesse_kmh` (ligne droite ; le virage, § 3.1, est négligé). Dès qu'un drone se
+rapproche à moins de 3 portées d'arme, l'avion passe en engagement et vole vers lui à
+`avions_vitesse_engagement_kmh`. Sans cible restante, il se replanifie ou revient à son orbite.
+
+### 8.5 Tirs
+- Air : sur le drone non visé le plus proche à portée. Laser : impact après `laser_duree_designation_s`, l'avion
+  ne tire pas entre-temps. IR : impact après le vol de la roquette (700 m/s), tir suivant après `ir_cadence_s`.
+  Un drone visé n'est pas visé une seconde fois avant l'impact.
+- Sol : postes sur les cibles, stock partagé à parts égales ; tir sur le drone le plus proche dans la bulle,
+  résultat immédiat ; cadence = (r_sol / v_d) / e, pour réaliser les e engagements du § 5 pendant la traversée.
+
+### 8.6 Écart attendu avec les formules fermées
+Le pas discret place un tir à l'entrée de la bulle et un à l'arrivée sur la cible : un poste réalise 8 à 9 tirs
+là où le § 5 en compte 8. Les tests d'acceptation (`tests/simulation.test.js`) vérifient cette fourchette et
+que les destructions valent tirs × Pk à l'intervalle de confiance près.
