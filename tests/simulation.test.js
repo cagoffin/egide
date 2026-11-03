@@ -1,6 +1,6 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
-import {mener_campagne} from "../src/campagne.js";
+import {mener_campagne} from "../src/moteur/campagne.js";
 import {bilan, creer_monde, simuler} from "../src/moteur/monde.js";
 import {distance} from "../src/moteur/vecteurs.js";
 import {REFERENCE, scenario} from "./aide_scenario.js";

@@ -1,0 +1,21 @@
+// Couleurs de l'interface, seule source : le canevas les lit ici, la feuille de style les reçoit en variables CSS.
+// La couleur suit l'entité partout (scope, tableau de bord, courbes) : ami = avions, hostile = drones, sol = postes.
+// Les trois couleurs de série passent le validateur de palette (daltonisme, contraste ≥ 3:1) sur `fond`.
+export const COULEURS = {
+  fond: "#18222d",
+  panneau: "#1e2a37",
+  trait: "#2e3d4d",
+  grille: "#253240",
+  texte: "#e3eaf1",
+  texte_secondaire: "#93a4b5",
+  ami: "#4a98e8",
+  hostile: "#e5574b",
+  sol: "#b8860b",
+  inconnu: "#7d8b99",
+  eclat: "#fff1cc",
+};
+
+/** Publier les couleurs en variables CSS (--fond, --ami…) sur l'élément racine. */
+export function publier_couleurs(racine) {
+  for (const [nom, valeur] of Object.entries(COULEURS)) racine.style.setProperty(`--${nom.replace("_", "-")}`, valeur);
+}

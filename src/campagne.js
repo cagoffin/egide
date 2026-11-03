@@ -8,11 +8,8 @@
 import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
-import {bilan, simuler} from "./moteur/monde.js";
-import {lire_scenario, modifier_scenario} from "./moteur/scenario.js";
-import {resumer} from "./moteur/statistiques.js";
-
-const GRANDEURS = ["fuites", "fuites_max_cible", "detruits_air", "detruits_sol", "tirs_air", "tirs_sol", "duree"];
+import {GRANDEURS, mener_campagne} from "./moteur/campagne.js";
+import {modifier_scenario} from "./moteur/scenario.js";
 
 function lire_arguments(liste) {
   const options = {scenario: "scenarios/reference.json", tirages: 50, sortie: "resultats/campagnes", balayer: null};
@@ -24,15 +21,6 @@ function lire_arguments(liste) {
     else modifications[cle] = Number.isNaN(Number(valeur)) ? valeur : Number(valeur);
   }
   return {options, modifications};
-}
-
-/** Rendre le résumé statistique de `tirages` raids du scénario `brut`, graines successives depuis la sienne. */
-export function mener_campagne(brut, tirages) {
-  const bilans = Array.from({length: tirages}, (_, i) => {
-    const scenario = lire_scenario(modifier_scenario(brut, {graine: brut.graine + i}));
-    return bilan(simuler(scenario, {journal: false}));
-  });
-  return Object.fromEntries(GRANDEURS.map((grandeur) => [grandeur, resumer(bilans.map((b) => b[grandeur]))]));
 }
 
 function afficher(libelle, resume) {

@@ -4,23 +4,96 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Égide</title>
-<style>
-  body{font:15px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:44rem;padding:0 1rem;background:#0d1117;color:#e6edf3}
-  table{border-collapse:collapse;width:100%}th,td{padding:.4rem .6rem;border-bottom:1px solid #30363d;text-align:right}
-  th:first-child,td:first-child{text-align:left}.hors{color:#f85149}.ok{color:#3fb950}
-</style>
+<meta name="description" content="Simulation de défense du territoire face à un essaim de drones rapides : radars, avions en orbite, postes sol-air.">
+<link rel="stylesheet" href="src/vue/style.css">
+<script type="module" src="src/vue/app.js"></script>
 </head>
 <body>
-<h1>Égide</h1>
-<p>Étape 1 en cours. Vitesse minimale de mise à poste (km/h) pour garantir k avions sur une route,
-scénario de référence (zone 150 km, roquettes 8 km, délai 6 min). En vert : plage turbopropulseur 450–600 km/h.</p>
-<table id="abaque"></table>
-<script type="module">
-import {vitesse_minimale} from "./src/moteur/geometrie.js";
-const flottes=[10,20,30,50,80], ks=[1,5,8,10], table=document.getElementById("abaque");
-table.innerHTML="<tr><th>k \\ N</th>"+flottes.map(n=>`<th>${n}</th>`).join("")+"</tr>"+ks.map(k=>"<tr><td>k = "+k+"</td>"+
-  flottes.map(n=>{const v=vitesse_minimale(n,k,150_000,8_000,360)*3.6;
-    return `<td class="${v<=600?"ok":"hors"}">${Number.isFinite(v)?Math.round(v):"—"}</td>`}).join("")+"</tr>").join("");
-</script>
+<header class="bandeau">
+  <h1>Égide</h1>
+  <p class="sous-titre">Défense du territoire face à un essaim de drones</p>
+  <fieldset class="tactiques">
+    <legend>Tactique de l'essaim</legend>
+    <label title="Chaque groupe arrive d'un cap différent, en vague serrée."><input type="radio" name="tactique" value="direct">Groupes directs</label>
+    <label title="Chaque drone vient seul, de n'importe où, avec des départs étalés."><input type="radio" name="tactique" value="disperse">Dispersés</label>
+    <label title="Tout l'essaim entre par un couloir compact puis éclate vers les cibles."><input type="radio" name="tactique" value="fourmi">Fourmi</label>
+  </fieldset>
+</header>
+
+<main class="poste">
+  <aside class="colonne" aria-label="Réglages du scénario">
+    <div id="reglages"></div>
+    <div class="prereglages">
+      <select name="prereglage" aria-label="Charger un réglage enregistré"></select>
+      <div class="ligne">
+        <input name="nom_prereglage" placeholder="Nom du réglage" aria-label="Nom du réglage à enregistrer">
+        <button data-action="enregistrer">Enregistrer</button>
+      </div>
+      <div class="ligne">
+        <button data-action="exporter">Exporter le scénario</button>
+        <button data-action="reinitialiser">Revenir à la référence</button>
+      </div>
+    </div>
+  </aside>
+
+  <section class="ecran" aria-label="Situation aérienne">
+    <canvas id="scope" aria-label="Scope : zone défendue, avions, drones, cibles"></canvas>
+    <p class="legende">
+      <span class="ami-plein">Avion IR</span><span class="ami-creux">Avion laser</span>
+      <span class="hostile">Drone détecté</span><span class="inconnu">Drone non détecté</span>
+      <span class="sol">Bulle sol, plus pâle à court de munitions</span>
+    </p>
+    <div class="transport">
+      <button data-action="lire" class="principal">Lire</button>
+      <button data-action="debut" aria-label="Revenir au début du raid">Début</button>
+      <input type="range" name="temps" min="0" max="100" step="1" value="0" aria-label="Instant du raid">
+      <output data-champ="horloge">0:00</output>
+      <fieldset class="vitesses"><legend>Vitesse</legend><div data-zone="vitesses"></div></fieldset>
+      <label class="graine">Graine <input type="number" name="graine" min="0" step="1"></label>
+      <button data-action="autre_graine">Autre raid</button>
+    </div>
+    <p class="astuce">Espace : lire ou suspendre. Flèches : ±30 s. Molette : zoom, double-clic : recadrer.</p>
+  </section>
+
+  <aside id="tableau" class="colonne" aria-label="Bilan du raid" aria-live="off">
+    <h2>Bilan du raid</h2>
+    <dl class="chiffres">
+      <div class="hostile"><dt>Drones en vol</dt><dd data-champ="en_vol">0</dd></div>
+      <div class="ami"><dt>Détruits par les avions</dt><dd data-champ="detruits_air">0</dd></div>
+      <div class="sol"><dt>Détruits au sol</dt><dd data-champ="detruits_sol">0</dd></div>
+      <div class="frappes"><dt>Frappes sur les cibles</dt><dd data-champ="frappes">0</dd></div>
+    </dl>
+    <h3>Munitions restantes</h3>
+    <p class="jauge ami"><span>Roquettes des avions</span><span class="piste"><i data-jauge="munitions_air"></i></span><b data-champ="munitions_air"></b></p>
+    <p class="jauge sol"><span>Munitions sol</span><span class="piste"><i data-jauge="munitions_sol"></i></span><b data-champ="munitions_sol"></b></p>
+    <h3>Flotte armée</h3>
+    <dl class="flotte">
+      <div><dt>En orbite</dt><dd data-champ="avions_orbite">0</dd></div>
+      <div><dt>En route</dt><dd data-champ="avions_ralliement">0</dd></div>
+      <div><dt>Au contact</dt><dd data-champ="avions_engagement">0</dd></div>
+      <div><dt>À poste</dt><dd data-champ="avions_poste">0</dd></div>
+      <div><dt>À court</dt><dd data-champ="avions_vides">0</dd></div>
+    </dl>
+    <h3>Frappes par cible</h3>
+    <ol class="cibles" data-liste="cibles"></ol>
+  </aside>
+</main>
+
+<section id="balayage" aria-labelledby="titre-balayage">
+  <h2 id="titre-balayage">Balayage</h2>
+  <p>Fait varier un réglage et rejoue le raid sur plusieurs graines pour chaque valeur. Chaque point est une moyenne ; le trait vertical, son intervalle de confiance à 95 %.</p>
+  <div class="ligne">
+    <label>Réglage <select name="cle_balayee"></select></label>
+    <label class="large">Valeurs <input name="valeurs"></label>
+    <label>Raids par valeur <input type="number" name="tirages" value="20" min="5" max="500"></label>
+    <button data-action="balayer" class="principal">Lancer le balayage</button>
+  </div>
+  <p data-champ="progression" role="status"></p>
+  <div data-zone="courbes"></div>
+  <details><summary>Voir les résultats en tableau</summary><div data-zone="table"></div></details>
+</section>
+
+<p data-champ="message" class="message" role="status"></p>
+<div id="infobulle" role="tooltip" hidden></div>
 </body>
 </html>
