@@ -23,7 +23,8 @@ Rayon en palier au facteur de charge n : r = v² / (g √(n² − 1)). Demi-tour
 À 500 km/h et 5 g : r ≈ 400 m, t ≈ 9 s — négligeable devant les délais du § 3.2.
 
 ### 3.2 Délai disponible
-Un drone détecté à d_det de la frontière et intercepté à la profondeur p dans la zone laisse :
+Un drone détecté à d_det de la frontière (§ 2) et intercepté à la profondeur p dans la zone
+(clé `interception_profondeur_km`) laisse :
 
   t = (d_det + p) / v_d − t_réaction
 
@@ -46,7 +47,10 @@ Inversion de § 3.4 pour garantir k avions sur une route quelconque :
 
 ## 4 · Engagement air-air
 ### 4.1 Fenêtre de tir
-Pendant un passage, un avion dispose d'une fenêtre T_f ≈ 2 r_arme / v_rel (géométrie de croisement).
+Pendant un passage face à face, un avion dispose d'une fenêtre T_f = 2 r_arme / (v_d + v_e), où v_e est
+sa **vitesse d'engagement** (une fois à poste), distincte de la vitesse de mise à poste v_a du § 3.
+Sans cette distinction, accélérer la mise à poste raccourcirait la fenêtre et ferait paradoxalement
+remonter le besoin en postes sol au-delà de 600 km/h.
 ### 4.2 Tirs utiles par passage
 - Laser : n_L = min(emport, ⌊T_f / t_désignation⌋) — un tir attend l'impact du précédent.
 - IR : n_IR = min(emport, ⌊T_f / t_cadence⌋).
@@ -62,6 +66,12 @@ Un poste réalise e engagements utiles par passage de vague dans sa bulle.
 
 ## 6 · Attrition multicouche (approximation analytique)
 Survivants après les couches successives i : S_{i+1} = S_i − min(S_i, capacité_i · Pk_i).
+### 6.1 Partage des avions entre groupes et pré-attrition
+Pour porter c drones sur une cible, l'essaim forme G = min(cibles, ⌈n_total / c⌉) groupes simultanés.
+Les avions se partagent entre eux : un groupe reçoit A = min(k, N / G) avions (k du § 3.4).
+Pré-attrition d'un groupe : A · E (E du § 4.3, un seul passage par avion). Chaque cible est
+dimensionnée pour c drones moins cette pré-attrition, car on ignore laquelle sera visée.
+
 La simulation (étape 2) remplace cette approximation et doit la retrouver quand l'essaim est
 uniformément réparti.
 

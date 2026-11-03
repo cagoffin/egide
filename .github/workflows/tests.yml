@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Outils Python
-        run: pip install pytest ruff
+        run: pip install pytest ruff matplotlib
       - name: Lint Python
         run: ruff check analyse tests
       - name: Tests Python (modele analytique)

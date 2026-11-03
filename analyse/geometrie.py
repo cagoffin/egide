@@ -53,3 +53,13 @@ def vitesse_minimale(
 def postes_sol_par_cible(drones_sur_cible: int, probabilite_destruction: float, engagements_par_passage: int) -> int:
     """Rendre le nombre de postes sol necessaires pour defendre une cible seule (MODELE § 5)."""
     return math.ceil(drones_sur_cible / (probabilite_destruction * engagements_par_passage))
+
+
+def fenetre_tir(portee_arme: float, vitesse_drone: float, vitesse_avion: float) -> float:
+    """Rendre la duree pendant laquelle un drone reste a portee lors d'un passage face a face, en s (MODELE § 4.1)."""
+    return 2 * portee_arme / (vitesse_drone + vitesse_avion)
+
+
+def tirs_par_passage(fenetre: float, emport: int, intervalle_entre_tirs: float) -> int:
+    """Rendre le nombre de tirs utiles d'un avion pendant un passage (MODELE § 4.2)."""
+    return min(emport, math.floor(fenetre / intervalle_entre_tirs))

@@ -38,3 +38,13 @@ export function vitesse_minimale(nombreAvions, avionsVoulus, rayonZone, porteeAr
 export function postes_sol_par_cible(dronesSurCible, probabiliteDestruction, engagementsParPassage) {
   return Math.ceil(dronesSurCible / (probabiliteDestruction * engagementsParPassage));
 }
+
+/** Rendre la durée pendant laquelle un drone reste à portée lors d'un passage face à face, en s (MODELE § 4.1). */
+export function fenetre_tir(porteeArme, vitesseDrone, vitesseAvion) {
+  return (2 * porteeArme) / (vitesseDrone + vitesseAvion);
+}
+
+/** Rendre le nombre de tirs utiles d'un avion pendant un passage (MODELE § 4.2). */
+export function tirs_par_passage(fenetre, emport, intervalleEntreTirs) {
+  return Math.min(emport, Math.floor(fenetre / intervalleEntreTirs));
+}
