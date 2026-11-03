@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Égide</title>
+<style>
+  body{font:15px/1.5 system-ui,sans-serif;margin:2rem auto;max-width:44rem;padding:0 1rem;background:#0d1117;color:#e6edf3}
+  table{border-collapse:collapse;width:100%}th,td{padding:.4rem .6rem;border-bottom:1px solid #30363d;text-align:right}
+  th:first-child,td:first-child{text-align:left}.hors{color:#f85149}.ok{color:#3fb950}
+</style>
+</head>
+<body>
+<h1>Égide</h1>
+<p>Étape 1 en cours. Vitesse minimale de mise à poste (km/h) pour garantir k avions sur une route,
+scénario de référence (zone 150 km, roquettes 8 km, délai 6 min). En vert : plage turbopropulseur 450–600 km/h.</p>
+<table id="abaque"></table>
+<script type="module">
+import {vitesse_minimale} from "./src/moteur/geometrie.js";
+const flottes=[10,20,30,50,80], ks=[1,5,8,10], table=document.getElementById("abaque");
+table.innerHTML="<tr><th>k \\ N</th>"+flottes.map(n=>`<th>${n}</th>`).join("")+"</tr>"+ks.map(k=>"<tr><td>k = "+k+"</td>"+
+  flottes.map(n=>{const v=vitesse_minimale(n,k,150_000,8_000,360)*3.6;
+    return `<td class="${v<=600?"ok":"hors"}">${Number.isFinite(v)?Math.round(v):"—"}</td>`}).join("")+"</tr>").join("");
+</script>
+</body>
+</html>

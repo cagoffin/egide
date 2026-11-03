@@ -1,0 +1,16 @@
+{
+  "_aide": {
+    "_": "Valeurs de reference verifiees a la main, controlees par tests/geometrie.test.js ET tests/test_geometrie.py : les deux implementations doivent rester d'accord.",
+    "tolerance_relative": "Ecart relatif admis entre valeur calculee et attendue."
+  },
+  "tolerance_relative": 1e-3,
+  "cas": [
+    {"fonction": "rayon_virage", "arguments": [138.8889, 5], "attendu": 401.52, "note": "500 km/h a 5 g"},
+    {"fonction": "horizon_radar", "arguments": [20, 100], "attendu": 59652, "note": "antenne 20 m, drone a 100 m"},
+    {"fonction": "delai_disponible", "arguments": [50000, 50000, 222.2222, 90], "attendu": 360, "note": "detection 50 km avant, interception 50 km dedans"},
+    {"fonction": "avions_concentrables", "arguments": [50, 60000, 150000], "attendu": 8},
+    {"fonction": "vitesse_minimale", "arguments": [50, 8, 150000, 8000, 360], "attendu": 144.444, "note": "520 km/h"},
+    {"fonction": "vitesse_minimale", "arguments": [50, 10, 150000, 8000, 360], "attendu": 164.117, "note": "591 km/h"},
+    {"fonction": "postes_sol_par_cible", "arguments": [100, 0.7, 8], "attendu": 18}
+  ]
+}

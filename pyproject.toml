@@ -1,0 +1,10 @@
+[project]
+name = "egide"
+version = "0.1.0"
+description = "Simulation de défense du territoire contre un essaim de drones rapides"
+requires-python = ">=3.12"
+# Le noyau (analyse/geometrie.py) n'utilise que la bibliotheque standard ; les abaques tracent avec matplotlib.
+dependencies = ["matplotlib>=3.9", "numpy>=2.0"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
