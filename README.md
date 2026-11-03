@@ -10,7 +10,7 @@ orbite armés de roquettes guidées laser ou IR.
   dont on ne connaît pas la route ?
 - **Combien de postes sol-air faudrait-il sans avions**, et combien la couche aérienne en épargne ?
 
-![Le scope pendant une attaque « fourmi » : l'essaim compact arrive par l'est, les avions convergent](docs/images/accueil.png)
+![L'interface en lecture : attaque « fourmi », les avions convergent sur l'essaim, le bilan évolue en direct](docs/images/interface.gif)
 
 > Scénario notionnel : ordres de grandeur publics, aucune performance réelle de système identifié.
 > Chaque valeur chiffrée vient de [scenarios/reference.json](scenarios/reference.json), qui dit pour chaque clé à quoi elle sert.
@@ -64,15 +64,15 @@ La molette zoome, le glisser déplace la vue, le double-clic recadre. Le survol 
 
 <table>
 <tr>
-<td width="50%"><img src="docs/images/fourmi_eclatement.png" alt="Tactique fourmi : l'essaim vient d'éclater près de C10"></td>
-<td width="50%"><img src="docs/images/tactique_direct.png" alt="Groupes directs : chaque groupe arrive d'un cap différent"></td>
+<td width="50%"><img src="docs/images/eclatement.gif" alt="Tactique fourmi, vue zoomée : le couloir éclate près de C10 et les avions convergent"></td>
+<td width="50%"><img src="docs/images/direct.gif" alt="Groupes directs : chaque groupe arrive d'un cap différent sur sa cible"></td>
 </tr>
 <tr>
-<td><b>Fourmi</b> : tout l'essaim entre par un même couloir, puis éclate vers ses cibles. Ici, juste après l'éclatement près de C10.</td>
+<td><b>Fourmi</b>, vue zoomée : tout l'essaim entre par un même couloir, éclate près de C10, puis se répartit sur ses cibles pendant que les avions convergent.</td>
 <td><b>Groupes directs</b> : chaque groupe arrive d'un cap tiré au hasard, en vague serrée, droit sur sa cible.</td>
 </tr>
 <tr>
-<td colspan="2"><img src="docs/images/tactique_disperse.png" alt="Dispersés : un anneau de drones isolés converge sur toute la zone"></td>
+<td colspan="2" align="center"><img src="docs/images/disperse.gif" alt="Dispersés : un anneau de drones isolés converge sur toute la zone" width="60%"></td>
 </tr>
 <tr>
 <td colspan="2"><b>Dispersés</b> : chaque drone vient seul, de n'importe quel cap, avec des départs étalés. C'est la tactique la plus facile à défendre : les avions trouvent des cibles partout et vident presque tout leur emport.</td>
