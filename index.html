@@ -13,6 +13,7 @@
 <header class="bandeau">
   <h1>Égide</h1>
   <p class="sous-titre">Défense du territoire face à un essaim de drones</p>
+  <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
   <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions.">Éditer le scénario</button>
   <fieldset class="tactiques">
     <legend>Tactique de l'essaim</legend>
@@ -43,6 +44,10 @@
     <div class="vue" id="vue">
       <div id="carte" aria-label="Fond de carte"></div>
       <canvas id="scope" aria-label="Situation : zone défendue, avions, drones, cibles"></canvas>
+      <aside class="inspecteur" aria-label="Inspecteur" hidden>
+        <button data-action="fermer_inspecteur" aria-label="Fermer l'inspecteur">Fermer</button>
+        <div data-zone="inspection"></div>
+      </aside>
       <div class="barre-edition" role="toolbar" aria-label="Outils d'édition" hidden>
         <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
         <button data-outil="cible" aria-pressed="false" title="Ajouter une cible (C)">Cible</button>
@@ -83,7 +88,7 @@
       <summary>Profil du plan de vol</summary>
       <div data-zone="profil"><p class="note-profil">Dessinez un plan de vol dans l'éditeur (outil Plan de vol) pour voir son profil.</p></div>
     </details>
-    <p class="astuce">Espace : lire ou suspendre. Flèches : ±30 s. Molette : zoom. Clic droit glissé : incliner et tourner la carte. Double-clic : recadrer.</p>
+    <p class="astuce">Espace : lire ou suspendre. Flèches : ±30 s. Molette : zoom. Clic droit glissé : incliner et tourner la carte. Double-clic : recadrer. Clic sur une entité : l'inspecter.</p>
   </section>
 
   <aside id="tableau" class="colonne" aria-label="Bilan du raid" aria-live="off">

@@ -68,3 +68,12 @@ export function unite_si(id, fichiers, surcharges = {}) {
   const {nom, fidelite, sources, ...valeurs} = convertir_objet({...brute, ...surcharges});
   return {id, nom, fidelite, sources, lignee: brute._lignee, ...valeurs};
 }
+
+/** Rendre, pour chaque clé de l'unité `id`, l'identifiant de l'ancêtre (ou d'elle-même) qui lui donne sa valeur. */
+export function origine_des_cles(id, fichiers) {
+  const origines = {};
+  for (const ancetre of unite_brute(id, fichiers)._lignee) {
+    for (const cle of Object.keys(fichiers[ancetre])) if (!cle.startsWith("_") && cle !== "herite_de") origines[cle] = ancetre;
+  }
+  return origines;
+}

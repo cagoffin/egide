@@ -40,30 +40,52 @@ export function delai_interception(position, cible, vitesseAvion, portee, outils
   return delai >= 0 ? delai : null;
 }
 
+// Alternatives gardées pour l'explication : les trois meilleures suffisent à comprendre un choix.
+const ALTERNATIVES = 3;
+
 function meilleure_interception(avion, pistes, affectes, outils) {
   const {vitesse_mise_a_poste: vitesse, arme, altitude} = avion.groupe;
   let meilleur = null;
+  const candidats = [];
   for (const piste of pistes) {
     const cible = {position: piste.drone.ecef, vitesse: piste.drone.vitesse};
     const delai = delai_interception(avion.ecef, cible, vitesse, arme.portee, outils);
     if (delai === null || delai > HORIZON_INTERCEPTION) continue;
     const extrapole = outils.ajouter(piste.drone.ecef, piste.drone.vitesse, delai);
-    const score = piste.effectif / (1 + (affectes.get(cle(extrapole)) ?? 0));
+    const deja = affectes.get(cle(extrapole)) ?? 0;
+    const score = piste.effectif / (1 + deja);
+    candidats.push({score, delai, effectif: piste.effectif, deja_affectes: deja});
     if (!meilleur || score > meilleur.score || (score === meilleur.score && delai < meilleur.delai)) {
       // La droite ECEF passe sous la surface (≈ d²/8R) : seul le point au sol compte, l'avion garde son altitude.
-      meilleur = {point: {...outils.depuis_ecef(extrapole), alt: altitude}, cle: cle(extrapole), delai, score};
+      meilleur = {point: {...outils.depuis_ecef(extrapole), alt: altitude}, cle: cle(extrapole), delai, score, effectif: piste.effectif, deja_affectes: deja};
     }
   }
-  return meilleur;
+  return {meilleur, candidats, pistes: pistes.length};
 }
 
-/** Rendre, pour chaque avion libre et dans leur ordre, {avion, point} : son point de mise à poste, ou null. */
+function expliquer(choix) {
+  const {meilleur, candidats, pistes} = choix;
+  const autres = candidats.filter((c) => c.score !== meilleur?.score || c.delai !== meilleur?.delai)
+    .sort((a, b) => b.score - a.score || a.delai - b.delai).slice(0, ALTERNATIVES);
+  return {
+    pistes_connues: pistes,
+    pistes_atteignables: candidats.length,
+    retenue: meilleur && {score: meilleur.score, delai: meilleur.delai, effectif: meilleur.effectif, deja_affectes: meilleur.deja_affectes},
+    alternatives: autres,
+  };
+}
+
+/**
+ * Rendre, pour chaque avion libre et dans leur ordre, {avion, point, explication} : son point de mise à poste (ou
+ * null) et de quoi comprendre le choix — pistes connues et atteignables, piste retenue, meilleures alternatives.
+ */
 export function allouer(avions, pistes, outils) {
   const affectes = new Map();
   return avions.map((avion) => {
     const choix = meilleure_interception(avion, pistes, affectes, outils);
-    if (!choix) return {avion, point: null};
-    affectes.set(choix.cle, (affectes.get(choix.cle) ?? 0) + 1);
-    return {avion, point: choix.point};
+    const explication = expliquer(choix);
+    if (!choix.meilleur) return {avion, point: null, explication};
+    affectes.set(choix.meilleur.cle, (affectes.get(choix.meilleur.cle) ?? 0) + 1);
+    return {avion, point: choix.meilleur.point, explication};
   });
 }

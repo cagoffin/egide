@@ -26,6 +26,6 @@ export function tirer_sol(monde) {
     poste.munitions--;
     poste.prochain_tir = monde.t + cadence;
     monde.compteurs.tirs_sol++;
-    resoudre_tir(monde, drone, sol.pk, "sol", poste.geo);
+    resoudre_tir(monde, drone, sol.pk, "sol", poste.geo, poste.id);
   }
 }

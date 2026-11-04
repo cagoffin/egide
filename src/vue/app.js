@@ -8,6 +8,7 @@ import {cadrer_carte, creer_carte} from "./carte.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {creer_editeur} from "./editeur.js";
+import {dessiner_inspection, inspection} from "./inspecteur.js";
 import {dessiner_profil} from "./profil.js";
 import {altitudes_relief, echantillonner_chemin} from "./relief.js";
 import {publier_couleurs} from "./couleurs.js";
@@ -28,7 +29,7 @@ const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 
 const etat = {base: null, modifications: {}, fichiers: {}, registre: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
   camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null,
-  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: []};
+  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: [], inspection: null, derniereInspection: 0};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 
@@ -74,6 +75,9 @@ async function charger() {
   Object.assign(etat.lecteur, {enLecture, multiplicateur});
   etat.traces = creer_traces();
   etat.effets = creer_effets();
+  const {monde} = etat.lecteur;
+  const existe = {avion: monde.avions, drone: monde.drones, cible: monde.cibles}[etat.inspection?.type]?.[etat.inspection?.id];
+  if (etat.inspection && !existe) inspecter(null);
   $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
   $("[name='graine']").value = brut.simulation.graine;
   cadrer();
@@ -127,14 +131,29 @@ function image(maintenant, precedent) {
     dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
       angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol});
     etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
+    dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
   }
   requestAnimationFrame((suivant) => image(suivant, maintenant));
 }
 
+/** Mettre à jour le panneau de l'inspecteur (au plus quatre fois par seconde : le texte se lit, il ne s'anime pas). */
+function rafraichir_inspection(maintenant, forcer = false) {
+  if (!etat.inspection || (!forcer && maintenant - etat.derniereInspection < 250)) return;
+  etat.derniereInspection = maintenant;
+  $("[data-zone='inspection']").innerHTML = inspection(etat.inspection, etat.lecteur.monde);
+}
+
+function inspecter(cible) {
+  etat.inspection = cible;
+  $(".inspecteur").hidden = !cible;
+  if (cible) rafraichir_inspection(performance.now(), true);
+}
+
 function rafraichir_commandes(maintenant) {
   const {lecteur} = etat;
   etat.dernierTableau = maintenant;
+  rafraichir_inspection(maintenant);
   mettre_a_jour_tableau($("#tableau"), lecteur.monde);
   $("[name='temps']").value = lecteur.monde.t;
   $("[data-champ='horloge']").textContent = `${format_duree(lecteur.monde.t)} sur ${format_duree(lecteur.duree)}`;
@@ -206,6 +225,18 @@ function brancher_scope() {
     montrer(infobulle, etat.survol && decrire(etat.survol, etat.lecteur.monde), e.clientX, e.clientY);
   });
   vue.addEventListener("pointerleave", () => (etat.survol = null, montrer(infobulle, null)));
+  // Clic sur une entité : l'inspecter. Un glisser (déplacement de carte) n'est pas un clic.
+  let appui = null;
+  vue.addEventListener("pointerdown", (e) => (appui = {x: e.clientX, y: e.clientY}));
+  vue.addEventListener("click", (e) => {
+    if (etat.editeur?.est_actif() || e.target.closest(".inspecteur, .reglages-carte, .barre-edition")) return;
+    if (appui && Math.hypot(e.clientX - appui.x, e.clientY - appui.y) > 4) return;
+    const cadre = vue.getBoundingClientRect();
+    const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top});
+    if (touche) inspecter({type: touche.type, id: touche.type === "cible" ? touche.indice : touche.objet.id});
+  });
+  $("[data-action='fermer_inspecteur']").addEventListener("click", () => inspecter(null));
+  addEventListener("keydown", (e) => e.key === "Escape" && !etat.editeur?.est_actif() && inspecter(null));
   new ResizeObserver(() => cadrer()).observe(vue);
 }
 

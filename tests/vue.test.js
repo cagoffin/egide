@@ -194,3 +194,49 @@ test("relief : l'échantillonnage d'un chemin couvre toute sa longueur et marque
   assert.ok(Math.abs(e.at(-1).distance - 80_000) < 1e-3);
   assert.deepEqual(e.filter((x) => x.passage !== null).map((x) => x.passage), [0, 1, 2]);
 });
+
+import {echapper, fiche_algo, fiche_unite, utilisations} from "../src/vue/fiches.js";
+import {origine_des_cles, unite_brute} from "../src/moteur/catalogue.js";
+
+test("fiches : chaque paramètre d'une unité est attribué à l'ancêtre qui le fixe", () => {
+  const origines = origine_des_cles("vecteurs/avions/turbopropulseur_ir_notionnel", FICHIERS);
+  assert.equal(origines.vitesse_mise_a_poste_kmh, "vecteurs/avions/_avion");
+  assert.equal(origines.emport, "vecteurs/avions/turbopropulseur_ir_notionnel");
+  assert.equal(origines.fidelite, "_unite");
+});
+test("fiches : la fiche d'unité montre lignée, sources, paramètres hérités et algorithmes, texte échappé", () => {
+  const html = fiche_unite("vecteurs/avions/turbopropulseur_ir_notionnel", FICHIERS, {"global/mouvement/croisiere_geodesique": REGISTRE["global/mouvement/croisiere_geodesique"].meta});
+  for (const attendu of ["Lignée", "Sources", "vitesse_mise_a_poste_kmh", "500 km/h", "Croisière géodésique", "unites/vecteurs/avions/turbopropulseur_ir_notionnel.json"]) assert.ok(html.includes(attendu), attendu);
+  assert.equal(echapper('<script>"'), "&lt;script&gt;&quot;");
+});
+test("fiches : la fiche d'algorithme montre équations, hypothèses, références, code et utilisateurs", () => {
+  const unites = Object.fromEntries(Object.keys(FICHIERS).map((id) => [id, unite_brute(id, FICHIERS)]));
+  const usages = utilisations(unites, REFERENCE);
+  assert.ok(usages["global/allocation/densite_pistes"].some((u) => u.reglage === "bleu.conduite.allocation"));
+  const html = fiche_algo("global/tir_sol/cadence_par_passage", REGISTRE["global/tir_sol/cadence_par_passage"].meta, usages["global/tir_sol/cadence_par_passage"], FICHIERS);
+  for (const attendu of ["Équations", "cadence = (r_sol / v_drone) / engagements_par_passage", "Hypothèses", "Domaine de validité", "algos/global/tir_sol/cadence_par_passage.js", "Poste sol-air"]) assert.ok(html.includes(attendu), attendu);
+});
+
+import {inspection, tirs_subis} from "../src/vue/inspecteur.js";
+import {simuler} from "../src/moteur/monde.js";
+
+const RAID = simuler(scenario({"rouge.nombre": 300, "rouge.concentration_max": 100}), {registre: REGISTRE});
+
+test("inspecteur : un avion affecté explique son choix — piste, score, délai, alternatives", () => {
+  const avion = RAID.avions.find((a) => a.decision?.point);
+  const html = inspection({type: "avion", id: avion.id}, RAID);
+  for (const attendu of ["Pourquoi va-t-il là ?", "Score = effectif / (1 + avions déjà envoyés là)", "pistes atteignables", "catalogue.html#unite/"]) assert.ok(html.includes(attendu), attendu);
+  const {retenue, alternatives} = avion.decision.explication;
+  assert.ok(alternatives.every((a) => a.score <= retenue.score), "la piste retenue a le meilleur score");
+});
+test("inspecteur : la survie d'un drone vaut le produit des (1 − Pk) de ses tirs, et la cause de sa perte est donnée", () => {
+  const drone = RAID.drones.find((d) => !d.vivant);
+  const {tirs, survie, detruit_par} = tirs_subis(RAID, drone.id);
+  assert.ok(tirs.length >= 1 && detruit_par);
+  assert.ok(Math.abs(survie - tirs.reduce((p, t) => p * (1 - t.pk), 1)) < 1e-12);
+  assert.ok(inspection({type: "drone", id: drone.id}, RAID).includes("Probabilité de survivre"));
+});
+test("inspecteur : une cible explique sa défense — bulle, cadence, Pk", () => {
+  const html = inspection({type: "cible", id: 0}, RAID);
+  for (const attendu of ["Comment est-elle défendue ?", "un tir toutes les", "Pk 0,7"]) assert.ok(html.includes(attendu), attendu);
+});

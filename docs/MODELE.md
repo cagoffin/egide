@@ -256,3 +256,24 @@ Le plan de vol est échantillonné tous les km le long des géodésiques (600 é
 échantillon, l'altitude du relief est lue dans les tuiles terrarium de `cartes/relief/` au zoom 10 (environ 150 m par
 pixel) : altitude = R × 256 + V + B / 256 − 32 768. Le profil trace l'altitude de vol de l'essaim au-dessus du relief.
 Sans réseau, il se replie sur l'altitude de vol seule. Le moteur, lui, ne tient pas encore compte du relief.
+
+## 13 · Physique expliquée (jalon 4)
+### 13.1 Fiches
+Chaque unité et chaque algorithme a sa fiche dans l'explorateur (`catalogue.html`) : niveau de fidélité, équations,
+hypothèses, domaine de validité, sources ou références, paramètres (avec, pour une unité, l'ancêtre qui fixe chaque
+valeur), lien vers le fichier de code ou de données, et ce qui l'utilise. Les fiches sont tirées des fichiers eux-mêmes
+(`meta` des algorithmes, `_aide` et `sources` des unités) : elles ne peuvent pas diverger du code.
+
+### 13.2 Inspecteur « pourquoi »
+Un clic sur une entité ouvre son inspection, mise à jour en direct :
+- avion : état, position, vitesse, munitions, et la dernière décision de la conduite — piste retenue, score
+  effectif / (1 + avions déjà envoyés), délai d'interception, pistes connues et atteignables, trois meilleures
+  alternatives écartées. L'algorithme d'allocation rend cette explication avec sa décision, sans la modifier (les
+  bilans de référence restent exacts, `tests/portage_j0.test.js`) ;
+- drone : état, détection, distance et temps restants, chaque tir subi avec son Pk et son issue, et la probabilité de
+  survivre à ces tirs, Π(1 − Pk) ;
+- cible : postes, munitions, frappes, et la cadence de tir déduite du § 5.
+
+### 13.3 Preuve des renvois
+Le code renvoie au modèle par « MODELE § x » ; `tests/conformite.test.js` vérifie que chaque renvoi du code, des
+algorithmes et des analyses désigne une section existante de ce document.

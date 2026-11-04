@@ -29,7 +29,7 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 1 | Registre d'algorithmes par rôle, portage du comportement actuel dans `algos/global/`, suite de conformité, index du catalogue | Bilans du jalon 0 rendus à l'identique ; conformité appliquée à tout fichier déposé | **socle fait** — pas de bibliothèque publique de modèles d'armes : ces modèles relèvent de `prive/` |
 | 2 | Globe et carte 2,5D (MapLibre), sources configurables, relief dans le moteur (masquage radar), couverture réelle, tuiles hors ligne (PMTiles) | Sur relief plat, l'horizon calculé retrouve le § 2 | **fond de carte fait** (MapLibre embarqué, 5 fonds, relief ombré et 3D, bâtiments 3D, globe) ; relief dans le moteur et hors ligne à faire |
 | 3 | Éditeur façon jeu de stratégie : palette, glisser-déposer, sélection, groupes Ctrl+1–9, ordres enchaînés, plans de vol, vue en profil, zones dessinées, ordres en direct rejoués | Un raid avec ordres en direct se rejoue à l'identique | **fait** : cibles, orbites, plan de vol, zones, sélection, groupes, envoi, annulation, ordres en cours de raid rejoués, vue en profil |
-| 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | à faire |
+| 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | **fait** : explorateur `catalogue.html`, inspecteur au clic, renvois au modèle vérifiés |
 | 5 | Preuve : convergence en pas de temps, sensibilité (Morris, Sobol), duel A/B, empreinte de reproductibilité, dossier de preuve | Les résultats publiés portent leur empreinte et leur convergence | à faire |
 | 6 | Idées ci-dessous, par lots | Selon l'idée | à faire |
 
@@ -72,6 +72,10 @@ Nouvelles idées proposées pendant le développement, à trier avec l'utilisate
   référence (`bleu.avions.1.nombre : 30 → 50`), pour qu'un chiffre se lise toujours avec ce qui l'a produit.
 - *Jalon 0* — **Explorateur du catalogue** : une page qui liste les unités, montre leur arbre d'héritage, leurs
   sources, leur niveau de fidélité et leur état de validation (à faire avec le jalon 1).
+- *Jalon 4* — **Équations mises en forme** : rendre les équations des fiches en notation mathématique (KaTeX embarqué
+  dans `vendor/`), et les relier aux paragraphes du modèle qu'elles appliquent.
+- *Jalon 4* — **Comparer deux fiches** : mettre côte à côte deux unités ou deux algorithmes du même rôle, écarts
+  surlignés — utile pour choisir entre un modèle public et un modèle privé.
 - *Jalon 3* — **Chronologie des ordres** : une frise sous la barre de lecture qui marque chaque ordre donné, pour le
   retrouver, le déplacer dans le temps ou le supprimer — l'équivalent du journal de partie d'un jeu de stratégie.
 - *Jalon 3* — **Zones à effet** : donner aux zones un rôle dans la simulation (couloir d'entrée imposé à l'essaim,

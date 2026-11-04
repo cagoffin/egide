@@ -105,3 +105,22 @@ test("conformité cartes : chaque source n'emploie que des clés documentées, e
     }
   }
 });
+
+test("renvois au modèle : chaque « MODELE § x » du code, des algorithmes et des analyses existe dans docs/MODELE.md", async () => {
+  const {readdirSync} = await import("node:fs");
+  const modele = readFileSync(join(RACINE, "docs", "MODELE.md"), "utf-8");
+  const sections = new Set([...modele.matchAll(/^##\s+(\d+)\s·/gm)].map((m) => m[1]).concat([...modele.matchAll(/^###\s+(\d+\.\d+)\s/gm)].map((m) => m[1])));
+  const fichiers = ["src", "algos", "analyse"].flatMap((dossier) => readdirSync(join(RACINE, dossier), {recursive: true})
+    .filter((f) => /\.(js|py)$/.test(f)).map((f) => join(RACINE, dossier, f)));
+  const manquants = [];
+  for (const fichier of fichiers) {
+    readFileSync(fichier, "utf-8").split("\n").forEach((texte, numero) => {
+      if (!texte.includes("MODELE")) return;
+      for (const [, section] of texte.matchAll(/§\s*(\d+(?:\.\d+)?)/g)) {
+        if (!sections.has(section)) manquants.push(`${fichier.slice(RACINE.length)}:${numero + 1} → § ${section}`);
+      }
+    });
+  }
+  assert.deepEqual(manquants, [], "renvois vers des sections absentes");
+  assert.ok(fichiers.length > 30 && sections.size > 30);
+});

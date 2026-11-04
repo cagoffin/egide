@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Égide — catalogue</title>
+<meta name="description" content="Fiches des unités et des algorithmes d'Égide : fidélité, équations, hypothèses, domaine de validité, sources et code.">
+<link rel="stylesheet" href="src/vue/style.css">
+<script type="module" src="src/vue/catalogue_page.js"></script>
+</head>
+<body class="page-catalogue">
+<header class="bandeau">
+  <h1>Égide</h1>
+  <p class="sous-titre">Catalogue des unités et des algorithmes</p>
+  <a class="retour" href="index.html">Retour à la simulation</a>
+</header>
+<main class="catalogue">
+  <nav class="index-catalogue" aria-label="Index du catalogue">
+    <input type="search" name="recherche" placeholder="Chercher une unité, un algorithme…" aria-label="Chercher">
+    <h2>Unités</h2>
+    <ul data-liste="unites"></ul>
+    <h2>Algorithmes</h2>
+    <ul data-liste="algos"></ul>
+  </nav>
+  <article id="fiche" aria-live="polite"><p class="vide">Choisissez une unité ou un algorithme.</p></article>
+</main>
+</body>
+</html>

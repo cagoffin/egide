@@ -57,7 +57,9 @@ export function planifier_avions(monde) {
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
   // Un avion sous ordre n'est pas réaffecté par la conduite avant d'avoir rallié son point.
   const libres = monde.avions.filter((avion) => avion.munitions > 0 && !avion.ordre && !drone_approchant(monde, avion));
-  for (const {avion, point} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
+  for (const {avion, point, explication} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
+    // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
+    avion.decision = {t: monde.t, point, explication};
     if (point) {
       avion.etat = "ralliement";
       avion.point = point;
@@ -112,7 +114,7 @@ export function tirer_air(monde) {
     avion.prochain_tir = monde.t + occupation;
     drone.vise = true;
     monde.compteurs.tirs_air++;
-    monde.tirs_en_vol.push({drone, impact: monde.t + vol, pk: arme.pk, origine: {...avion.geo}});
+    monde.tirs_en_vol.push({drone, impact: monde.t + vol, pk: arme.pk, origine: {...avion.geo}, tireur: avion.id});
   }
 }
 
@@ -125,7 +127,7 @@ export function resoudre_tirs_en_vol(monde) {
       continue;
     }
     tir.drone.vise = false;
-    resoudre_tir(monde, tir.drone, tir.pk, "air", tir.origine);
+    resoudre_tir(monde, tir.drone, tir.pk, "air", tir.origine, tir.tireur);
   }
   monde.tirs_en_vol = restants;
 }
