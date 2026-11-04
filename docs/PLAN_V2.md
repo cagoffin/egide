@@ -21,6 +21,8 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
 - **v0.5.0** : éditeur de déploiement (jalon 12) : palette du catalogue, unités de modèles différents, moyens de
   communication par unité et réseau automatique, fiche d'unité (modèle, algorithmes), sauvegarde et import ; guide
   d'extension du catalogue ; README en guide utilisateur.
+- **v0.6.0** : catalogue de 35 unités fictives par pays et icônes de jeu ; gomme, Maj+clic et « Tout effacer » dans
+  l'éditeur.
 
 ## Arborescence cible
 ```

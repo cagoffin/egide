@@ -82,6 +82,19 @@ Symbologie inspirée d'APP-6 :
 | Demi-losange rouge / gris | Drone ennemi détecté / pas encore détecté |
 | Traits entre unités | Liaisons : plein pour le fil, tirets pour la radio, pointillés pour le satellite ; barré rouge si coupée |
 
+### Icônes de jeu et pays
+
+Par défaut, chaque unité est dessinée en **icône de jeu** : une silhouette vue de dessus (radar sur pylône ou mobile,
+batterie, canon, turbopropulseur, chasseur, hélicoptère, drone armé, intercepteur, brouilleur…) sur une pastille à la
+couleur de son pays, cerclée de bleu pour les unités amies et d'ocre pour les batteries. L'essaim apparaît en petites
+silhouettes rouges, grises tant qu'il n'est pas détecté. Le calque « Icônes de jeu » ramène les symboles APP-6.
+
+Le catalogue compte 35 unités fictives inspirées de classes de 14 pays : radars, batteries à missiles ou à canons,
+avions et hélicoptères, drones défensifs, drones d'attaque. Leurs noms sont des noms de plantes (Ajonc 300, Genêt 35,
+Orpin H, Chardon D…) et leurs valeurs celles de leur classe, arrondies : aucune ne correspond à un système réel.
+
+![Unités de plusieurs pays déployées en icônes de jeu ; la palette filtrée sur la France](docs/images/icones.png)
+
 Le panneau **Calques** choisit le fond de carte (sombre, OpenStreetMap, plan ou photographies IGN, relief ombré ou
 3D, bâtiments 3D, globe) et affiche ou masque chaque famille d'entités. Ce qui est masqué ne se survole, ne s'inspecte
 ni ne s'édite.
@@ -96,6 +109,7 @@ ni ne s'édite.
 | 1 à 7 | Ouvrir un panneau | Échap | Fermer le panneau ou l'inspecteur |
 | E | Éditer | V | Vue du CDC |
 | S, C, R, K, L, P, Z | Outils Sélection, Cible, Radar, CDC, Liaison, Plan de vol, Zone (en édition) | Suppr | Effacer la sélection (en édition) ou la mettre hors service (en plein raid) |
+| X | Gomme : effacer l'unité cliquée | Maj+clic | Pendant un dépôt : effacer l'unité visée (curseur rouge) |
 | Ctrl+1 à 9 | Mémoriser la sélection comme groupe | 1 à 9 | Rappeler le groupe (en édition) |
 | Ctrl+Z | Annuler le dernier geste | Clic droit | Envoyer la sélection au point visé |
 | Molette | Zoom | Alt+glisser, bouton du milieu | Déplacer la vue |
@@ -156,7 +170,8 @@ l'unité sélectionnée à droite, la barre d'outils en bas.
 
 ### Poser des unités
 
-La palette range le catalogue par famille. Pour poser une unité :
+La palette range le catalogue par famille, chaque unité avec son icône et son pays ; le filtre « Pays » n'affiche que
+les unités d'un pays (et les génériques). Pour poser une unité :
 
 - **cliquez-la dans la palette, puis cliquez la carte**, autant de fois qu'il faut ; Échap pour finir ;
 - **ou glissez-la** de la palette sur la carte.
@@ -176,6 +191,11 @@ rectangle ou à Maj+clic, envoyer au clic droit en gardant la formation ; **Cibl
 poser l'unité par défaut ; **Plan de vol** (P) ; **Zone** (Z), un clic par sommet, double-clic ou Entrée pour fermer,
 qui compte les incursions. Suppr efface la sélection, Ctrl+Z annule, Ctrl+1 à 9 mémorise un groupe et 1 à 9 le rappelle.
 La vue ne bouge pas pendant l'édition, même quand un radar déposé loin agrandit le théâtre.
+
+**Effacer** : pendant un dépôt, enfoncez Maj : le curseur passe de « + unité » en vert à « − Effacer » en rouge et
+l'unité visée est barrée ; Maj+clic l'efface. L'outil **Gomme** (X) fait de même à chaque clic. **Tout effacer** vide la
+carte — radars, batteries, postes, vecteurs, autres C2, liaisons, moyens, zones, plan de vol, ordres — pour repartir
+de zéro ; restent le CDC principal et un site à défendre, et Ctrl+Z ramène tout.
 
 ![Éditeur : un radar déplacé, un radar ajouté (R11), une zone protégée et un plan de vol de trois points sélectionnés](docs/images/editeur.png)
 
@@ -408,6 +428,7 @@ Tout ce que la palette propose vient de fichiers ; en ajouter un suffit pour qu'
 
 ```
 unites/<famille>/<classe>/<unite>.json    une unité par fichier, héritage par herite_de, chaque clé documentée
+icones/<silhouette>.svg                   icônes de jeu des unités
 unites/liaisons/<moyen>.json              moyens de communication : latence, portée, vue directe
 unites/terrains/<terrain>.json            reliefs : grilles d'altitudes (node outils/terrain.js)
 algos/global/<rôle>/<algo>.js             un algorithme par module : fiche « meta » + fonctions du rôle, sans import
@@ -422,6 +443,8 @@ scenarios/                                scénarios JSON, chaque clé document�
   module interchangeable, choisi par une unité, un groupe, un centre ou le scénario. Il exporte sa fiche `meta` et les
   fonctions de son rôle, n'importe rien et reçoit géodésie et hasard à graine : il est pur et reproductible.
   `algos/global/allocation/plus_proche.js` sert d'exemple commenté.
+- **Pays et icônes** : `pays` (code ISO à trois lettres) classe l'unité et colore sa pastille ; `icone` choisit une
+  silhouette de `icones/` (SVG blanc, 64 × 64, vu de dessus).
 - **Catalogue privé** : `prive/` reçoit vos unités et algorithmes réels, hors du dépôt public.
 
 Après tout ajout : `node outils/indexer.js`, puis `npm test` — la conformité vérifie d'elle-même tout fichier déposé.
