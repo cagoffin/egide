@@ -8,6 +8,7 @@ import {
   modifications_ajout_centre, modifications_ajout_liaison, modifications_ajout_radar, modifications_panne, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
 import {element_visible} from "./calques.js";
+import {modifications_depot} from "./deploiement.js";
 import {format_duree} from "./format.js";
 
 const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", k: "centre", l: "liaison", p: "plan", z: "zone"};
@@ -16,11 +17,12 @@ const SEUIL_GLISSER = 4;
 
 /**
  * Rendre l'éditeur branché sur `env` : {vue, toile, barre, camera(), monde(), brut(), calques(), moyen(), appliquer(modifs),
- * annuler(), panoramique(dx, dy), zoom(facteur, point), sur_activation(actif)}. Un calque masqué ne s'édite pas.
+ * annuler(), panoramique(dx, dy), zoom(facteur, point), sur_activation(actif), quantite(), nom(id), signaler(texte),
+ * sur_depot(id)}. Un calque masqué ne s'édite pas.
  */
 export function creer_editeur(env) {
   // mode « edition » : on prépare le scénario à t = 0 ; mode « ordres » : en pause au cours du raid, on envoie des avions.
-  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null};
+  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null, depot: null};
   const elements = () => elements_editables(env.monde(), env.brut(), etat.mode).filter((e) => element_visible(env.calques(), e));
   const vers_ecran = (geo) => ecran(env.camera(), geo);
   const local = (e) => {
@@ -31,6 +33,10 @@ export function creer_editeur(env) {
   function choisir_outil(outil) {
     etat.outil = outil;
     etat.liaison = null;
+    if (outil !== "depot" && etat.depot) {
+      etat.depot = null;
+      env.sur_depot(null);
+    }
     env.vue.dataset.outil = outil;
     env.barre.querySelectorAll("[data-outil]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.outil === outil)));
   }
@@ -44,6 +50,24 @@ export function creer_editeur(env) {
     env.barre.querySelector("[data-champ='instant_ordres']").textContent = format_duree(env.monde().t);
     choisir_outil("selection");
     env.sur_activation(actif, mode);
+  }
+
+  /** Armer le dépôt de l'unité `id` du catalogue (palette) : chaque clic sur la carte en dépose une, jusqu'à Échap. */
+  function armer_depot(id) {
+    if (!etat.actif) activer(true);
+    if (etat.mode !== "edition") return;
+    choisir_outil("depot");
+    etat.depot = id;
+    env.sur_depot(id);
+  }
+
+  /** Déposer l'unité `id` au point écran `p` ; sur une unité déjà placée si le point en touche une (moyens, armements). */
+  function deposer(id, p) {
+    const sous = element_sous(elements(), vers_ecran, p, 14);
+    const modifications = modifications_depot(env.monde(), env.brut(), id, geo_depuis_ecran(env.camera(), p), {quantite: env.quantite(), sous});
+    if (!Object.keys(modifications).length) return env.signaler(`${env.nom(id)} : à déposer sur une unité déjà placée (et pas deux fois le même moyen).`);
+    env.signaler("");
+    env.appliquer(modifications);
   }
 
   /** Outil liaison : un clic sur un premier nœud (radar, conduite, avion), un clic sur le second, et la liaison existe. */
@@ -69,6 +93,7 @@ export function creer_editeur(env) {
     }
     if (e.button !== 0) return;
     const geo = geo_depuis_ecran(env.camera(), p);
+    if (etat.outil === "depot" && etat.depot) return deposer(etat.depot, p);
     if (etat.outil === "cible") return env.appliquer(modifications_ajout_cible(env.monde(), geo));
     if (etat.outil === "radar") return env.appliquer(modifications_ajout_radar(env.monde(), geo));
     if (etat.outil === "centre") return env.appliquer(modifications_ajout_centre(env.brut(), geo));
@@ -166,6 +191,19 @@ export function creer_editeur(env) {
     env.zoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, local(e));
   }), {passive: false});
   addEventListener("keydown", clavier);
+  // Glisser-déposer depuis la palette : la vue entière reçoit le dépôt, carte comprise.
+  env.vue.addEventListener("dragover", (e) => {
+    if (!e.dataTransfer.types.includes("text/egide-unite")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  });
+  env.vue.addEventListener("drop", (e) => {
+    const id = e.dataTransfer.getData("text/egide-unite");
+    if (!id) return;
+    e.preventDefault();
+    if (!etat.actif) activer(true);
+    if (etat.mode === "edition") deposer(id, local(e));
+  });
   env.barre.addEventListener("click", (e) => {
     const bouton = e.target.closest("button");
     if (bouton?.dataset.outil) choisir_outil(bouton.dataset.outil);
@@ -186,6 +224,11 @@ export function creer_editeur(env) {
     if (calques.missions) dessiner_ordres(ctx, camera, monde);
     if (!etat.actif) return;
     dessiner_brouillon(ctx, camera);
+    if (etat.depot && etat.curseur) {
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.fillStyle = COULEURS.selection;
+      ctx.fillText(`+ ${env.nom(etat.depot)}`, etat.curseur.x + 12, etat.curseur.y - 10);
+    }
     if (etat.liaison && etat.curseur) {
       const p = ecran(camera, etat.liaison.geo);
       ctx.strokeStyle = COULEURS.selection;
@@ -311,5 +354,5 @@ export function creer_editeur(env) {
     ctx.textAlign = "start";
   }
 
-  return {activer, dessiner, est_actif: () => etat.actif};
+  return {activer, dessiner, armer_depot, est_actif: () => etat.actif};
 }

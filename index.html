@@ -206,6 +206,14 @@
     </aside>
   </div>
 
+  <aside class="palette" aria-label="Palette du catalogue : unités à déployer" hidden>
+    <h2>Déployer</h2>
+    <p class="aide-palette">Cliquez une unité puis la carte (autant de fois qu'il faut, Échap pour finir), ou glissez-la sur la carte.
+      Moyens de communication et armements se déposent sur une unité déjà placée.</p>
+    <label class="quantite">Vecteurs par dépôt <input type="number" name="quantite_depot" value="1" min="1" max="200" step="1"></label>
+    <div data-zone="palette"></div>
+  </aside>
+
   <div class="bas">
     <div class="barre-edition" role="toolbar" aria-label="Outils d'édition" hidden>
       <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>

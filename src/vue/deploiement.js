@@ -1,0 +1,87 @@
+// Éditeur de déploiement (MODELE § 21) : palette du catalogue et dépôt d'une unité sur la carte, à la manière d'un jeu
+// de stratégie. Chaque dépôt devient des modifications par chemin du scénario : annulation, export et rejeu d'office.
+// Pur, sans DOM, testé.
+import {direct} from "../moteur/geodesie.js";
+import {en_degres, modifications_ajout_centre, modifications_ajout_cible, modifications_ajout_radar, noeud_element} from "./edition.js";
+
+// Munitions d'une batterie déposée ; modifiables ensuite dans sa fiche.
+export const MUNITIONS_BATTERIE = 40;
+// Écart entre vecteurs déposés ensemble : ils forment un petit cercle autour du point visé.
+const ECART_DEPOT = 1500;
+
+/**
+ * Familles de la palette, dans l'ordre d'affichage : `prefixe` des identifiants d'unités qu'elle regroupe, `cible` ce
+ * sur quoi l'on dépose (la carte, ou une unité déjà placée), `aide` la phrase affichée.
+ */
+export const FAMILLES_PALETTE = [
+  {id: "infrastructures", libelle: "Infrastructures", cible: "carte", aide: "Sites sensibles à défendre et centres C2 (CDC)."},
+  {id: "capteurs", libelle: "Capteurs", prefixe: "capteurs/", cible: "carte", aide: "Radars : chacun garde son modèle, sa portée et sa hauteur d'antenne."},
+  {id: "sol", libelle: "Défense sol", prefixe: "sites/", cible: "carte", aide: "Batteries sol-air, posées une à une, rattachées au site le plus proche."},
+  {id: "avions", libelle: "Aviation", prefixe: "vecteurs/avions/", cible: "carte", aide: "Intercepteurs : un avion par dépôt (ou la quantité choisie), en orbite au point déposé."},
+  {id: "drones_defensifs", libelle: "Drones défensifs", prefixe: "vecteurs/drones_defensifs/", cible: "carte", aide: "Essaims défensifs : armés, intercepteurs kamikazes, brouilleurs."},
+  {id: "liaisons", libelle: "Communications", prefixe: "liaisons/", cible: "unite", aide: "À déposer sur une unité (radar, C2, site, batterie, avion) pour l'équiper de ce moyen."},
+  {id: "effecteurs", libelle: "Armements", prefixe: "effecteurs/", cible: "unite", aide: "À déposer sur un avion ou un drone défensif : son groupe change d'emport."},
+  {id: "menace", libelle: "Menace", prefixe: "vecteurs/drones/", cible: "carte", aide: "Modèle de drone de l'essaim adverse (où qu'on le dépose)."},
+  {id: "terrains", libelle: "Terrain", prefixe: "terrains/", cible: "carte", aide: "Relief du théâtre (où qu'on le dépose)."},
+];
+
+const SPECIAUX = [{id: "special/cible", nom: "Site sensible à défendre"}, {id: "special/centre", nom: "Centre C2 (CDC)"}];
+
+/** Rendre la palette : pour chaque famille, ses éléments déposables {id, nom}, lus dans l'index du catalogue (sans les classes `_`). */
+export function palette(index) {
+  return FAMILLES_PALETTE.map((famille) => ({
+    ...famille,
+    elements: famille.id === "infrastructures" ? SPECIAUX : index.filter((u) => !u.base && u.id.startsWith(famille.prefixe)).map(({id, nom}) => ({id, nom})),
+  })).filter((famille) => famille.elements.length);
+}
+
+/** Rendre la famille de la palette d'un identifiant déposé. */
+export const famille_de = (id) => FAMILLES_PALETTE.find((f) => (f.id === "infrastructures" ? id.startsWith("special/") : id.startsWith(f.prefixe)));
+
+/**
+ * Rendre les modifications qui déposent `id` en `geo` ({} si le dépôt n'a pas de sens, par exemple un moyen de
+ * communication lâché hors de toute unité). `quantite` : vecteurs déposés d'un coup ; `sous` : élément éditable visé.
+ */
+export function modifications_depot(monde, brut, id, geo, {quantite = 1, sous = null} = {}) {
+  const famille = famille_de(id)?.id;
+  if (id === "special/cible") return modifications_ajout_cible(monde, geo);
+  if (id === "special/centre") return modifications_ajout_centre(brut, geo);
+  if (famille === "capteurs") return modifications_ajout_radar(monde, geo, brut, id === brut.bleu.radar.unite ? {} : {unite: id});
+  if (famille === "sol") return {"bleu.sol.batteries": [...(brut.bleu.sol.batteries ?? []), {...en_degres(geo), munitions: MUNITIONS_BATTERIE, unite: id}]};
+  if (famille === "avions" || famille === "drones_defensifs") return depot_vecteurs(monde, brut, id, geo, Math.max(1, Math.round(quantite)));
+  if (famille === "liaisons") return equiper(monde, brut, sous, id);
+  if (famille === "effecteurs") return armer(monde, brut, sous, id);
+  if (famille === "menace") return {"rouge.unite": id, "rouge.surcharges": {}};
+  if (famille === "terrains") return {"theatre.terrain": id};
+  return {};
+}
+
+/** Déposer `quantite` vecteurs `id` en `geo` : dans le groupe de cette unité (créé s'il n'existe pas), orbites des autres figées. */
+function depot_vecteurs(monde, brut, id, geo, quantite) {
+  const g = brut.bleu.avions.findIndex((groupe) => groupe.unite === id);
+  const groupe = monde.scenario.avions[g];
+  const existants = g < 0 ? [] : monde.avions.filter((avion) => avion.groupe === groupe).map((avion) => en_degres(avion.orbite));
+  const nouveaux = Array.from({length: quantite}, (_, k) => en_degres(k === 0 ? geo : direct(geo, (2 * Math.PI * k) / (quantite - 1 || 1), ECART_DEPOT)));
+  const orbites = [...existants, ...nouveaux];
+  if (g >= 0) return {[`bleu.avions.${g}.nombre`]: orbites.length, [`bleu.avions.${g}.orbites_placees`]: orbites};
+  const altitude = id.startsWith("vecteurs/drones_defensifs/") ? 300 : 1000;
+  return {[`bleu.avions.${brut.bleu.avions.length}`]: {unite: id, nombre: orbites.length, altitude_m: altitude, surcharges: {}, surcharges_emport: {}, orbites_placees: orbites}};
+}
+
+/** Équiper le nœud de l'élément `sous` du moyen de communication `moyen` (MODELE § 21.4). */
+function equiper(monde, brut, sous, moyen) {
+  const noeud = sous && noeud_element(monde, sous);
+  if (!noeud) return {};
+  const equipements = brut.bleu.reseau.equipements ?? [];
+  const actuel = equipements.find((e) => e.noeud === noeud);
+  if (actuel?.moyens.includes(moyen)) return {};
+  const autres = equipements.filter((e) => e !== actuel);
+  return {"bleu.reseau.equipements": [...autres, {noeud, moyens: [...(actuel?.moyens ?? []), moyen]}]};
+}
+
+/** Changer l'emport du groupe de l'avion `sous` pour l'effecteur `arme` ; les surcharges de l'ancienne arme tombent. */
+function armer(monde, brut, sous, arme) {
+  if (sous?.type !== "avion") return {};
+  const g = monde.scenario.avions.indexOf(monde.avions[sous.indice].groupe);
+  return {[`bleu.avions.${g}.surcharges`]: {...brut.bleu.avions[g].surcharges, emport: arme}, [`bleu.avions.${g}.surcharges_emport`]: {}};
+}

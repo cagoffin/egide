@@ -10,6 +10,7 @@ import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./cart
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
 import {creer_editeur} from "./editeur.js";
+import {palette} from "./deploiement.js";
 import {MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {resume_situation} from "./situation.js";
 import {FAMILLES, lignes_journal} from "./journal.js";
@@ -452,6 +453,10 @@ function brancher_editeur() {
     camera: () => etat.camera, monde: () => etat.lecteur.monde, brut: brut_courant, calques: () => etat.calques,
     moyen: () => $("[name='moyen_liaison']").value,
     appliquer: appliquer_edition, annuler: annuler_edition,
+    quantite: () => Number($("[name='quantite_depot']").value) || 1,
+    nom: (id) => etat.noms_unites?.[id] ?? id,
+    signaler: (texte) => ($("[data-champ='message']").textContent = texte),
+    sur_depot: (id) => $("[data-zone='palette']").querySelectorAll("[data-unite]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.unite === id))),
     panoramique: (dx, dy) => {
       if (etat.camera.type === "carte") etat.carte.panBy([-dx, -dy], {duration: 0});
       else etat.camera = deplacer(etat.camera, dx, dy);
@@ -462,6 +467,7 @@ function brancher_editeur() {
     },
     sur_activation: (actif, mode) => {
       bouton.setAttribute("aria-pressed", String(actif));
+      $(".palette").hidden = !(actif && mode === "edition");
       if (!actif) return;
       // Pour éditer, on dégage la vue : les panneaux se replient.
       etat.panneaux.fermer();
@@ -494,9 +500,34 @@ function brancher_calques() {
   afficher();
 }
 
+// Pastille de chaque famille de la palette, aux couleurs des entités sur la carte.
+const PASTILLES_PALETTE = {infrastructures: "var(--texte)", capteurs: "var(--ami)", sol: "var(--sol)", avions: "var(--ami)", drones_defensifs: "var(--ami)",
+  liaisons: "var(--texte-secondaire)", effecteurs: "var(--sol)", menace: "var(--hostile)", terrains: "var(--inconnu)"};
+const echapper_html = (texte) => texte.replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
+
+/** Remplir la palette du déploiement (MODELE § 21) : une famille par rubrique, chaque unité à cliquer ou à glisser sur la carte. */
+function remplir_palette(index) {
+  const familles = palette(index);
+  etat.noms_unites = Object.fromEntries(familles.flatMap((f) => f.elements.map((e) => [e.id, e.nom.replace(/ \(notionnel(le)?\)$/, "")])));
+  const zone = $("[data-zone='palette']");
+  zone.innerHTML = familles.map((f, i) => `<details ${i < 5 ? "open" : ""}><summary>${f.libelle}</summary><p class="famille-aide">${f.aide}</p>
+    ${f.elements.map((e) => `<button class="unite-palette" draggable="true" data-unite="${echapper_html(e.id)}" aria-pressed="false" title="${echapper_html(e.id)}"><i style="--pastille: ${PASTILLES_PALETTE[f.id]}"></i>${echapper_html(etat.noms_unites[e.id])}</button>`).join("")}</details>`).join("");
+  zone.addEventListener("click", (e) => {
+    const choix = e.target.closest("[data-unite]");
+    if (choix) etat.editeur.armer_depot(choix.dataset.unite);
+  });
+  zone.addEventListener("dragstart", (e) => {
+    const choix = e.target.closest("[data-unite]");
+    if (!choix) return;
+    e.dataTransfer.setData("text/egide-unite", choix.dataset.unite);
+    e.dataTransfer.effectAllowed = "copy";
+  });
+}
+
 /** Proposer dans la barre d'édition les moyens de liaison du catalogue (unites/liaisons/), radio par défaut. */
 async function remplir_moyens() {
   const index = await lire_json("unites/index.json");
+  remplir_palette(index);
   const moyens = index.filter((u) => u.famille === "liaisons" && !u.base);
   const choix = $("[name='moyen_liaison']");
   choix.innerHTML = moyens.map((u) => `<option value="${u.id}">${u.nom.replace(/ \(notionnelle?\)$/, "")}</option>`).join("");

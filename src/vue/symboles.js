@@ -12,7 +12,8 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
   const munitionsInitiales = monde.postes.length ? sol.munitions : 0;
   monde.cibles.forEach((cible, indice) => {
     const ecran = projeter_ecran(camera, cible.geo);
-    const postes = monde.postes.filter((poste) => poste.cible === indice);
+    // Les batteries placées ont leur propre bulle, tracée à leur position (dessiner_batteries).
+    const postes = monde.postes.filter((poste) => poste.cible === indice && poste.batterie === undefined);
     if (postes.length && calques.postes) {
       const restantes = postes.reduce((somme, poste) => somme + poste.munitions, 0);
       const part = restantes / (munitionsInitiales / monde.cibles.length);
@@ -47,7 +48,37 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
       ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
     }
   });
+  if (calques.postes) dessiner_batteries(ctx, camera, monde);
   if (calques.cibles) dessiner_impacts(ctx, camera, monde, effets, maintenant);
+}
+
+/** Tracer les batteries placées (MODELE § 21.2) : bulle de leur propre portée, opacité selon leurs munitions, symbole et nom. */
+function dessiner_batteries(ctx, camera, monde) {
+  const initiales = monde.scenario.sol.batteries ?? [];
+  for (const poste of monde.postes) {
+    if (poste.batterie === undefined) continue;
+    const part = poste.munitions / Math.max(1, initiales[poste.batterie]?.munitions ?? 1);
+    ctx.fillStyle = `rgba(184, 134, 11, ${0.04 + 0.12 * part})`;
+    ctx.strokeStyle = COULEURS.sol;
+    ctx.lineWidth = 1;
+    chemin_cercle(ctx, camera, poste.geo, poste.unite.portee, 48);
+    ctx.fill();
+    ctx.stroke();
+    const p = projeter_ecran(camera, poste.geo);
+    // Symbole de batterie sol-air : socle et rampe dressée.
+    ctx.fillStyle = COULEURS.fond;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(p.x - 7, p.y + 5);
+    ctx.lineTo(p.x + 7, p.y + 5);
+    ctx.lineTo(p.x, p.y - 7);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = "11px system-ui, sans-serif";
+    ctx.fillStyle = COULEURS.sol;
+    ctx.fillText(`B${poste.batterie + 1}`, p.x + 9, p.y + 4);
+  }
 }
 
 function dessiner_impacts(ctx, camera, monde, effets, maintenant) {

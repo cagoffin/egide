@@ -47,6 +47,7 @@ export function elements_editables(monde, brut, mode = "edition") {
     ...monde.cibles.filter((cible) => !cible.conduite).map((cible, indice) => ({cle: `cible:${indice}`, type: "cible", indice, geo: cible.geo})),
     ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite, guidage: avion.guidage, vecteur: avion.type})),
     ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
+    ...points_geo(brut.bleu.sol.batteries).map((geo, indice) => ({cle: `batterie:${indice}`, type: "batterie", indice, geo})),
     {cle: "conduite", type: "conduite", indice: 0, geo: monde.scenario.reseau.centre},
     ...centres_secondaires(monde),
     ...milieux_liaisons(monde),
@@ -74,7 +75,7 @@ export function modifications_deplacement(monde, brut, cles, de, vers) {
     if (!avions.some((avion) => choisis.has(`avion:${avion.id}`))) return;
     modifications[`bleu.avions.${g}.orbites_placees`] = avions.map((avion) => en_degres(bouge(`avion:${avion.id}`, avion.orbite) ?? avion.orbite));
   });
-  if (cles.some((c) => c.startsWith("radar:"))) Object.assign(modifications, sites_radars(monde, (i, geo) => bouge(`radar:${i}`, geo)));
+  if (cles.some((c) => c.startsWith("radar:"))) Object.assign(modifications, sites_radars(monde, brut, (i, geo) => bouge(`radar:${i}`, geo)));
   if (cles.some((c) => c.startsWith("centre:"))) {
     modifications["bleu.reseau.centres"] = (brut.bleu.reseau.centres ?? []).map((c, k) => {
       const geo = bouge(`centre:${k}`, geo_deg(c.lat_deg, c.lon_deg));
@@ -84,6 +85,12 @@ export function modifications_deplacement(monde, brut, cles, de, vers) {
   if (choisis.has("conduite")) {
     const centre = en_degres(bouge("conduite", monde.scenario.reseau.centre));
     Object.assign(modifications, {"bleu.reseau.centre_lat_deg": centre.lat_deg, "bleu.reseau.centre_lon_deg": centre.lon_deg});
+  }
+  if (cles.some((c) => c.startsWith("batterie:"))) {
+    modifications["bleu.sol.batteries"] = brut.bleu.sol.batteries.map((b, j) => {
+      const geo = bouge(`batterie:${j}`, geo_deg(b.lat_deg, b.lon_deg));
+      return geo ? {...b, ...en_degres(geo)} : b;
+    });
   }
   if (cles.some((c) => c.startsWith("passage:"))) {
     modifications["rouge.plan_de_vol"] = (brut.rouge.plan_de_vol ?? []).map((p, i) => en_degres(bouge(`passage:${i}`, geo_deg(p.lat_deg, p.lon_deg)) ?? geo_deg(p.lat_deg, p.lon_deg)));
@@ -99,11 +106,17 @@ export function modifications_deplacement(monde, brut, cles, de, vers) {
 
 /**
  * Rendre les modifications qui inscrivent tous les radars affichés comme sites placés (MODELE § 15.1) : `deplacer(i,
- * geo)` rend la nouvelle position du radar i ou null, `garder(i)` dit s'il reste, `ajouts` s'ajoutent à la fin.
+ * geo)` rend la nouvelle position du radar i ou null, `garder(i)` dit s'il reste, `ajouts` ({geo, ...propre}) s'ajoutent
+ * à la fin. Un site garde son unité propre et ses surcharges (MODELE § 21.1).
  */
-function sites_radars(monde, deplacer = () => null, garder = () => true, ajouts = []) {
-  const sites = positions_radars(monde.scenario).map((geo, i) => (garder(i) ? en_degres(deplacer(i, geo) ?? geo) : null)).filter(Boolean);
-  return {"bleu.radar.disposition": "sites", "bleu.radar.sites": [...sites, ...ajouts.map(en_degres)]};
+function sites_radars(monde, brut, deplacer = () => null, garder = () => true, ajouts = []) {
+  const bruts = brut?.bleu.radar.disposition === "sites" ? brut.bleu.radar.sites : [];
+  const propre = (i) => {
+    const {lat_deg: _a, lon_deg: _o, ...reste} = bruts[i] ?? {};
+    return reste;
+  };
+  const sites = positions_radars(monde.scenario).map((geo, i) => (garder(i) ? {...propre(i), ...en_degres(deplacer(i, geo) ?? geo)} : null)).filter(Boolean);
+  return {"bleu.radar.disposition": "sites", "bleu.radar.sites": [...sites, ...ajouts.map(({geo, ...reste}) => ({...reste, ...en_degres(geo)}))]};
 }
 
 /** Rendre les points de sélection des liaisons (milieu de chaque liaison), en mode « liaisons » seulement. */
@@ -121,6 +134,8 @@ export function noeud_element(monde, element) {
   if (element.type === "conduite") return "conduite";
   if (element.type === "centre") return `centre:${element.indice}`;
   if (element.type === "cible") return `sol:${element.indice}`;
+  // Une batterie placée partage le nœud des postes de la cible la plus proche (MODELE § 21.2).
+  if (element.type === "batterie") return `sol:${monde.postes.find((p) => p.batterie === element.indice)?.cible ?? 0}`;
   if (element.type === "avion") return `avions:${monde.scenario.avions.indexOf(monde.avions[element.indice].groupe)}`;
   return null;
 }
@@ -148,7 +163,7 @@ export function modifications_ajout_centre(brut, geo) {
 }
 
 /** Rendre les modifications qui ajoutent un radar en `geo` (les radars affichés deviennent des sites placés). */
-export const modifications_ajout_radar = (monde, geo) => sites_radars(monde, undefined, undefined, [geo]);
+export const modifications_ajout_radar = (monde, geo, brut = null, propre = {}) => sites_radars(monde, brut, undefined, undefined, [{geo, ...propre}]);
 
 /** Rendre les modifications qui ajoutent une zone protégée de sommets `points` (au moins trois). */
 export function modifications_ajout_zone(brut, points) {
@@ -186,7 +201,10 @@ export function modifications_ajout_passage(brut, geo) {
   return {"rouge.plan_de_vol": [...(brut.rouge.plan_de_vol ?? []), en_degres(geo)], "rouge.tactique": "plan_de_vol"};
 }
 
-/** Rendre les modifications qui suppriment cibles, radars, liaisons, points de passage et zones `cles` (pas les avions ni la conduite). */
+/**
+ * Rendre les modifications qui suppriment cibles, radars, batteries, avions (une orbite et un avion de moins dans leur
+ * groupe), liaisons, points de passage et zones `cles` (pas la conduite).
+ */
 export function modifications_suppression(monde, brut, cles) {
   const choisis = new Set(cles);
   const modifications = {};
@@ -198,7 +216,7 @@ export function modifications_suppression(monde, brut, cles) {
   const radars = positions_radars(monde.scenario);
   // Comme pour les cibles, on garde au moins un radar.
   const radarsOtes = cles.some((c) => c.startsWith("radar:")) && radars.some((_, i) => !choisis.has(`radar:${i}`));
-  if (radarsOtes) Object.assign(modifications, sites_radars(monde, undefined, (i) => !choisis.has(`radar:${i}`)));
+  if (radarsOtes) Object.assign(modifications, sites_radars(monde, brut, undefined, (i) => !choisis.has(`radar:${i}`)));
   const centresOtes = cles.some((c) => c.startsWith("centre:"));
   if (centresOtes) modifications["bleu.reseau.centres"] = (brut.bleu.reseau.centres ?? []).filter((_, k) => !choisis.has(`centre:${k}`));
   if (monde.scenario.reseau.mode === "liaisons" && (radarsOtes || centresOtes || cles.some((c) => c.startsWith("liaison:")))) {
@@ -206,6 +224,9 @@ export function modifications_suppression(monde, brut, cles) {
     if (centresOtes) liaisons = renumeroter(liaisons, "centre", (brut.bleu.reseau.centres ?? []).length, choisis);
     modifications["bleu.reseau.liaisons"] = liaisons;
   }
+  if (cles.some((c) => c.startsWith("batterie:"))) modifications["bleu.sol.batteries"] = brut.bleu.sol.batteries.filter((_, j) => !choisis.has(`batterie:${j}`));
+  Object.assign(modifications, avions_otes(monde, choisis));
+  if (radarsOtes || centresOtes) Object.assign(modifications, equipements_restants(brut, choisis, radarsOtes ? radars.length : 0));
   if (cles.some((c) => c.startsWith("passage:"))) {
     modifications["rouge.plan_de_vol"] = (brut.rouge.plan_de_vol ?? []).filter((_, i) => !choisis.has(`passage:${i}`));
   }
@@ -213,6 +234,35 @@ export function modifications_suppression(monde, brut, cles) {
     modifications["theatre.zones"] = (brut.theatre.zones ?? []).filter((_, i) => !choisis.has(`zone:${i}`));
   }
   return modifications;
+}
+
+/** Rendre les modifications qui ôtent les avions choisis : chaque groupe touché perd ces avions et garde les orbites des autres. */
+function avions_otes(monde, choisis) {
+  const modifications = {};
+  monde.scenario.avions.forEach((groupe, g) => {
+    const avions = monde.avions.filter((avion) => avion.groupe === groupe);
+    const restants = avions.filter((avion) => !choisis.has(`avion:${avion.id}`));
+    if (restants.length === avions.length) return;
+    modifications[`bleu.avions.${g}.nombre`] = restants.length;
+    modifications[`bleu.avions.${g}.orbites_placees`] = restants.map((avion) => en_degres(avion.orbite));
+  });
+  return modifications;
+}
+
+/** Rendre les équipements de communication sans ceux des radars et des centres ôtés, les suivants renumérotés (MODELE § 21.4). */
+function equipements_restants(brut, choisis, nombreRadars) {
+  const equipements = brut.bleu.reseau.equipements ?? [];
+  if (!equipements.length) return {};
+  const radars = renommeur("radar", nombreRadars, choisis);
+  const centres = renommeur("centre", (brut.bleu.reseau.centres ?? []).length, choisis);
+  return {"bleu.reseau.equipements": equipements.map((e) => ({...e, noeud: centres(radars(e.noeud))})).filter((e) => e.noeud)};
+}
+
+/** Rendre la fonction qui renomme un nœud `famille:<k>` après l'ablation des choisis (undefined s'il est ôté) ; les autres restent. */
+function renommeur(famille, nombre, choisis) {
+  const nouveau = new Map();
+  for (let i = 0, j = 0; i < nombre; i++) if (!choisis.has(`${famille}:${i}`)) nouveau.set(`${famille}:${i}`, `${famille}:${j++}`);
+  return (n) => (n?.startsWith(`${famille}:`) && nombre ? nouveau.get(n) : n);
 }
 
 /** Rendre les liaisons restantes : sans celles choisies, sans celles des radars ôtés, radars renumérotés. */
