@@ -171,6 +171,7 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .palette h2 { font-size: 15px; margin: 12px 0 4px; }
 .palette .aide-palette { font-size: 12px; color: var(--texte-secondaire); margin: 0 0 8px; }
 .sauvegarde-deploiement { display: grid; gap: 6px; margin-block-end: 10px; }
+.sauvegarde-deploiement input { inline-size: 100%; box-sizing: border-box; }
 .sauvegarde-deploiement .ligne { display: flex; gap: 6px; flex-wrap: wrap; }
 .bouton-fichier { background: var(--panneau); border: 1px solid var(--trait); border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: 13.3px; }
 .bouton-fichier:focus-within { outline: 2px solid var(--ami); }

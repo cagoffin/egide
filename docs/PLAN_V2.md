@@ -18,6 +18,9 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   lot), réseau d'information avec pannes et Vue du PC (jalon 7, lots 1 et 2), relief dans le moteur (jalon 2).
 - **v0.4.0** : circulation de l'information lisible (jalon 8), centres de détection et de contrôle et batteries
   désignées (jalon 9), drones défensifs (jalon 10), auto-configuration et bibliothèque de scénarios (jalon 11).
+- **v0.5.0** : éditeur de déploiement (jalon 12) : palette du catalogue, unités de modèles différents, moyens de
+  communication par unité et réseau automatique, fiche d'unité (modèle, algorithmes), sauvegarde et import ; guide
+  d'extension du catalogue ; README en guide utilisateur.
 
 ## Arborescence cible
 ```

@@ -120,15 +120,17 @@ function cadrer(forcer = false) {
   if (!monde) return;
   const {origine} = monde.scenario.theatre;
   const rayon = monde.rayonDetection * 1.08;
+  // En édition, la vue ne bouge pas sous la souris : un radar déposé loin agrandit le théâtre sans recadrer.
+  const enEdition = etat.editeur?.est_actif() && !forcer;
   if (!avec_carte()) {
-    etat.camera = creer_camera(toile.clientWidth, toile.clientHeight, rayon, origine);
+    if (!enEdition || tailleChangee || etat.camera?.type === "carte") etat.camera = creer_camera(toile.clientWidth, toile.clientHeight, rayon, origine);
     return;
   }
   if (tailleChangee) etat.carte.resize();
   etat.camera = {type: "carte", carte: etat.carte, largeur: toile.clientWidth, hauteur: toile.clientHeight};
   // On ne recadre la carte que si le théâtre change : un zoom ou une inclinaison de l'utilisateur sont respectés.
   const cadrage = `${origine.lat},${origine.lon},${rayon}`;
-  if (forcer || cadrage !== etat.cadrage) cadrer_carte(etat.carte, origine, rayon);
+  if (forcer || (cadrage !== etat.cadrage && !enEdition)) cadrer_carte(etat.carte, origine, rayon);
   etat.cadrage = cadrage;
 }
 
