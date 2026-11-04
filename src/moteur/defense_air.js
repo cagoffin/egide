@@ -55,7 +55,8 @@ export function planifier_avions(monde) {
     (drone) => est_actif(drone, monde.t) && drone.detection !== null && monde.t - drone.detection >= conduite.delai_reaction,
   );
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
-  const libres = monde.avions.filter((avion) => avion.munitions > 0 && !drone_approchant(monde, avion));
+  // Un avion sous ordre n'est pas réaffecté par la conduite avant d'avoir rallié son point.
+  const libres = monde.avions.filter((avion) => avion.munitions > 0 && !avion.ordre && !drone_approchant(monde, avion));
   for (const {avion, point} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
     if (point) {
       avion.etat = "ralliement";
@@ -86,9 +87,12 @@ export function avancer_avions(monde, dt) {
       deplacer(monde, avion, menace.geo, vitesseEngagement * dt);
       continue;
     }
-    if (avion.etat === "engagement") avion.etat = "poste";
+    if (avion.etat === "engagement") avion.etat = avion.ordre ? "ralliement" : "poste";
     if (avion.etat !== "ralliement" && avion.etat !== "retour") continue;
-    if (deplacer(monde, avion, avion.point, vitesse * dt)) avion.etat = avion.etat === "retour" ? "orbite" : "poste";
+    if (deplacer(monde, avion, avion.point, vitesse * dt)) {
+      avion.etat = avion.etat === "retour" ? "orbite" : "poste";
+      avion.ordre = false;
+    }
   }
 }
 

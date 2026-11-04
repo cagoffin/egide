@@ -58,6 +58,9 @@ summary { cursor: pointer; font-weight: 600; padding-block: 4px; }
   align-items: center; gap: 6px; padding: 8px 10px; background: rgba(24, 34, 45, 0.92); border: 1px solid var(--trait); border-radius: 8px; }
 .barre-edition[hidden] { display: none; }
 .barre-edition [aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
+.vue[data-mode="ordres"] .barre-edition [data-outil]:not([data-outil="selection"]), .vue[data-mode="ordres"] .seulement-edition,
+.vue[data-mode="edition"] .seulement-ordres { display: none; }
+.vue.edition[data-outil="zone"] #scope { cursor: crosshair; }
 .aide-edition { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: var(--texte-secondaire); }
 .bandeau [data-action="editer"][aria-pressed="true"] { background: var(--texte); color: var(--fond); }
 .reglages-carte { position: absolute; inset-block-start: 10px; inset-inline-start: 10px; z-index: 2; display: grid; gap: 4px;
@@ -136,3 +139,8 @@ summary { cursor: pointer; font-weight: 600; padding-block: 4px; }
   .tactiques { margin-inline-start: 0; flex-wrap: wrap; }
   .tactiques legend { float: none; inline-size: 100%; margin-block-end: 4px; }
 }
+
+.profil { padding: 6px 16px 10px; background: var(--panneau); border-block-start: 1px solid var(--trait); }
+.profil summary { font-weight: 600; }
+[data-zone="profil"] svg { font-size: 11px; fill: var(--texte-secondaire); display: block; margin-block-start: 6px; }
+.note-profil { margin: 6px 0 0; font-size: 13px; color: var(--texte-secondaire); }

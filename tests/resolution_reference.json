@@ -13,7 +13,8 @@
       },
       "zone_rayon": 150000,
       "cibles_nombre": 10,
-      "cibles_placees": []
+      "cibles_placees": [],
+      "zones": []
     },
     "rouge": {
       "id": "vecteurs/drones/drone_reaction_notionnel",
@@ -180,6 +181,7 @@
       "pistage": "global/pistage/cellules",
       "allocation": "global/allocation/densite_pistes"
     },
+    "ordres": [],
     "simulation": {
       "pas": 0.5,
       "graine": 42

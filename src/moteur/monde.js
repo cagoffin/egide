@@ -7,6 +7,8 @@ import {indexer_drones} from "./grille.js";
 import {creer_hasard} from "./hasard.js";
 import {avancer_drones, creer_drones, detecter_drones} from "./menace.js";
 import {OUTILS} from "./outils.js";
+import {journaliser} from "./tir.js";
+import {compter_incursions, preparer_zone} from "./zones.js";
 
 // Les drones naissent 20 km avant la couverture radar : ils ne sont pas vus dès leur apparition.
 const MARGE_APPARITION = 20_000;
@@ -54,16 +56,36 @@ export function creer_monde(scenario, {registre, journal = true}) {
     evenements: journal ? [] : null,
     prochaine_decision: 0,
     index: new Map(),
+    zones: scenario.theatre.zones.map(preparer_zone),
+    incursions: scenario.theatre.zones.map(() => new Set()),
+    prochain_controle_zones: 0,
+    ordres_appliques: 0,
   };
 }
 
-/** Faire avancer le monde d'un pas de temps. L'ordre compte : on bouge, on voit, on décide, on tire. */
+/**
+ * Appliquer les ordres dont l'instant est atteint : les avions cités (armés) rallient le point, et la conduite
+ * ne les réaffecte plus avant leur arrivée (MODELE § 12.4).
+ */
+function appliquer_ordres(monde) {
+  const {ordres} = monde.scenario;
+  while (monde.ordres_appliques < ordres.length && ordres[monde.ordres_appliques].t <= monde.t) {
+    const ordre = ordres[monde.ordres_appliques++];
+    const concernes = ordre.avions.map((id) => monde.avions[id]).filter((avion) => avion && avion.munitions > 0);
+    for (const avion of concernes) Object.assign(avion, {etat: "ralliement", point: {...ordre.point, alt: avion.geo.alt}, ordre: true});
+    journaliser(monde, {type: "ordre", avions: concernes.map((avion) => avion.id), point: ordre.point});
+  }
+}
+
+/** Faire avancer le monde d'un pas de temps. L'ordre compte : on bouge, on voit, on obéit, on décide, on tire. */
 export function avancer_monde(monde) {
   const {simulation, conduite} = monde.scenario;
   monde.t += simulation.pas;
   avancer_drones(monde, simulation.pas);
   monde.index = indexer_drones(monde.drones, monde.t);
   detecter_drones(monde);
+  compter_incursions(monde);
+  appliquer_ordres(monde);
   if (monde.t >= monde.prochaine_decision) {
     planifier_avions(monde);
     monde.prochaine_decision = monde.t + conduite.pas_decision;
@@ -87,9 +109,12 @@ export function simuler(scenario, options) {
   return monde;
 }
 
-/** Rendre le bilan chiffré d'un monde : fuites, destructions, tirs, munitions restantes, durée. */
+/** Rendre le bilan chiffré d'un monde : fuites, destructions, tirs, munitions restantes, durée, incursions par zone. */
 export function bilan(monde) {
+  // Les incursions n'apparaissent que s'il y a des zones : un bilan sans zone garde sa forme d'avant le jalon 3.
+  const incursions = monde.zones.length ? {incursions: monde.incursions.map((drones) => drones.size)} : {};
   return {
+    ...incursions,
     fuites: monde.fuites.reduce((somme, n) => somme + n, 0),
     fuites_max_cible: Math.max(...monde.fuites),
     ...monde.compteurs,

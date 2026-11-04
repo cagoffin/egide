@@ -20,13 +20,19 @@ export function barycentre(points) {
   return {...depuis_ecef({x: somme.x / points.length, y: somme.y / points.length, z: somme.z / points.length}), alt: 0};
 }
 
-/** Rendre les éléments éditables du monde : cibles, avions (orbite) et points du plan de vol, avec leur position. */
-export function elements_editables(monde, brut) {
-  const plan = (brut.rouge.plan_de_vol ?? []).map((p) => geo_deg(p.lat_deg, p.lon_deg, 0));
+const points_geo = (points) => (points ?? []).map((p) => geo_deg(p.lat_deg, p.lon_deg, 0));
+
+/**
+ * Rendre les éléments éditables, avec leur position : en mode « edition », cibles, orbites d'avions, points du plan
+ * de vol et zones (par leur barycentre) ; en mode « ordres », les seuls avions, là où ils sont à cet instant.
+ */
+export function elements_editables(monde, brut, mode = "edition") {
+  if (mode === "ordres") return monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.geo}));
   return [
     ...monde.cibles.map((cible, indice) => ({cle: `cible:${indice}`, type: "cible", indice, geo: cible.geo})),
     ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite})),
-    ...plan.map((geo, indice) => ({cle: `passage:${indice}`, type: "passage", indice, geo})),
+    ...points_geo(brut.rouge.plan_de_vol).map((geo, indice) => ({cle: `passage:${indice}`, type: "passage", indice, geo})),
+    ...(brut.theatre.zones ?? []).map((zone, indice) => ({cle: `zone:${indice}`, type: "zone", indice, geo: barycentre(points_geo(zone.points))})),
   ];
 }
 
@@ -52,7 +58,27 @@ export function modifications_deplacement(monde, brut, cles, de, vers) {
   if (cles.some((c) => c.startsWith("passage:"))) {
     modifications["rouge.plan_de_vol"] = (brut.rouge.plan_de_vol ?? []).map((p, i) => en_degres(bouge(`passage:${i}`, geo_deg(p.lat_deg, p.lon_deg)) ?? geo_deg(p.lat_deg, p.lon_deg)));
   }
+  if (cles.some((c) => c.startsWith("zone:"))) {
+    // Une zone se déplace d'un bloc : tous ses sommets subissent la même translation que son barycentre.
+    modifications["theatre.zones"] = (brut.theatre.zones ?? []).map((zone, i) => (!choisis.has(`zone:${i}`) ? zone : {
+      ...zone, points: points_geo(zone.points).map((p) => en_degres(translater(p, de, vers))),
+    }));
+  }
   return modifications;
+}
+
+/** Rendre les modifications qui ajoutent une zone protégée de sommets `points` (au moins trois). */
+export function modifications_ajout_zone(brut, points) {
+  const zones = brut.theatre.zones ?? [];
+  return {"theatre.zones": [...zones, {nom: `Zone ${zones.length + 1}`, type: "protegee", points: points.map(en_degres)}]};
+}
+
+/** Rendre les modifications qui ordonnent aux avions `cles`, à l'instant du monde, de rallier `geo`. */
+export function modifications_ordre(brut, monde, cles, geo) {
+  const avions = cles.filter((c) => c.startsWith("avion:")).map((c) => Number(c.slice(6)));
+  if (!avions.length) return {};
+  const ordre = {t_s: monde.t, avions, ...en_degres(geo)};
+  return {"bleu.ordres": [...(brut.bleu.ordres ?? []), ordre]};
 }
 
 /** Rendre les modifications qui ajoutent une cible en `geo` (les cibles existantes sont figées). */
@@ -77,6 +103,9 @@ export function modifications_suppression(monde, brut, cles) {
   }
   if (cles.some((c) => c.startsWith("passage:"))) {
     modifications["rouge.plan_de_vol"] = (brut.rouge.plan_de_vol ?? []).filter((_, i) => !choisis.has(`passage:${i}`));
+  }
+  if (cles.some((c) => c.startsWith("zone:"))) {
+    modifications["theatre.zones"] = (brut.theatre.zones ?? []).filter((_, i) => !choisis.has(`zone:${i}`));
   }
   return modifications;
 }

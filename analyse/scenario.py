@@ -98,6 +98,10 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                 # Les cibles placees comptent toujours : le nombre de cibles ne descend pas sous leur nombre.
                 "cibles_nombre": max(theatre["cibles_nombre"], len(cibles_placees)),
                 "cibles_placees": cibles_placees,
+                "zones": [
+                    {"nom": z["nom"], "type": z["type"], "points": _vers_geo(z["points"], 0)}
+                    for z in theatre.get("zones", [])
+                ],
             },
             "rouge": {
                 **drone,
@@ -110,6 +114,11 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
             "sol": {**sol, "nombre": bleu["sol"]["nombre"], "munitions": bleu["sol"]["munitions"]},
             "radar": unite_si(bleu["radar"]["unite"], fichiers, bleu["radar"].get("surcharges")),
             "conduite": convertir_objet(bleu["conduite"]),
+            # Ordres tries par instant : le moteur les applique dans l'ordre, sans revenir en arriere.
+            "ordres": sorted(
+                ({"t": o["t_s"], "avions": o["avions"], "point": _vers_geo([o], 0)[0]} for o in bleu.get("ordres", [])),
+                key=lambda o: o["t"],
+            ),
             "simulation": convertir_objet(brut["simulation"]),
         }
     except CatalogueInvalideError as erreur:

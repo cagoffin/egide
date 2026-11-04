@@ -153,3 +153,44 @@ test("édition : sélection au rectangle et au clic, dans le repère écran", ()
   assert.equal(element_sous(elements, versEcran, {x: 52, y: 77}).cle, "b");
   assert.equal(element_sous(elements, versEcran, {x: 200, y: 200}), null);
 });
+
+import {elements_editables, modifications_ajout_zone, modifications_ordre} from "../src/vue/edition.js";
+
+test("édition : une zone s'ajoute, se sélectionne par son barycentre, se déplace d'un bloc et se supprime", () => {
+  const points = [geo_deg(47.2, 2.2), geo_deg(47.2, 2.8), geo_deg(46.8, 2.5)];
+  const ajout = modifications_ajout_zone(REFERENCE, points);
+  assert.equal(ajout["theatre.zones"][0].type, "protegee");
+  const brut = {...REFERENCE, theatre: {...REFERENCE.theatre, zones: ajout["theatre.zones"]}};
+  const zone = elements_editables(MONDE, brut).find((e) => e.cle === "zone:0");
+  const vers = direct(zone.geo, 0, 20_000);
+  const deplacee = modifications_deplacement(MONDE, brut, ["zone:0"], zone.geo, vers)["theatre.zones"][0];
+  assert.ok(deplacee.points.every((p, i) => p.lat_deg > ajout["theatre.zones"][0].points[i].lat_deg));
+  assert.deepEqual(modifications_suppression(MONDE, brut, ["zone:0"])["theatre.zones"], []);
+});
+test("ordres : en mode ordres, seuls les avions sont éditables ; l'ordre porte l'instant et les numéros", () => {
+  assert.ok(elements_editables(MONDE, REFERENCE, "ordres").every((e) => e.type === "avion"));
+  const monde = {...MONDE, t: 412.5};
+  const m = modifications_ordre(REFERENCE, monde, ["avion:3", "avion:7", "cible:1"], geo_deg(47.5, 2));
+  assert.deepEqual(m["bleu.ordres"], [{t_s: 412.5, avions: [3, 7], lat_deg: 47.5, lon_deg: 2}]);
+  assert.deepEqual(modifications_ordre(REFERENCE, monde, ["cible:1"], geo_deg(47.5, 2)), {});
+});
+
+import {altitude_terrarium, echantillonner_chemin, tuile_de} from "../src/vue/relief.js";
+
+test("relief : décodage terrarium — (128, 0, 0) vaut le niveau de la mer, (130, 196, 128) vaut 708,5 m", () => {
+  assert.equal(altitude_terrarium(128, 0, 0), 0);
+  assert.equal(altitude_terrarium(130, 196, 128), 708.5);
+});
+test("relief : tuile et pixel Web Mercator — (0°, 0°) au coin de la tuile centrale, Paris en tuile (518, 352) au zoom 10", () => {
+  assert.deepEqual(tuile_de(geo_deg(0, 0), 1), {x: 1, y: 1, px: 0, py: 0});
+  const paris = tuile_de(geo_deg(48.8566, 2.3522), 10);
+  assert.deepEqual([paris.x, paris.y], [518, 352]);
+});
+test("relief : l'échantillonnage d'un chemin couvre toute sa longueur et marque chaque point de passage", () => {
+  const points = [geo_deg(47, 1), direct(geo_deg(47, 1), 1, 50_000)];
+  points.push(direct(points[1], 2.5, 30_000));
+  const e = echantillonner_chemin(points, 1_000);
+  // Vincenty direct puis inverse : cohérents au dixième de millimètre près, pas au-delà.
+  assert.ok(Math.abs(e.at(-1).distance - 80_000) < 1e-3);
+  assert.deepEqual(e.filter((x) => x.passage !== null).map((x) => x.passage), [0, 1, 2]);
+});

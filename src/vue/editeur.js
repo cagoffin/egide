@@ -5,10 +5,11 @@ import {COULEURS} from "./couleurs.js";
 import {ecran, geo_depuis_ecran} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, modifications_ajout_cible, modifications_ajout_passage,
-  modifications_deplacement, modifications_suppression, translater,
+  modifications_ajout_zone, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
+import {format_duree} from "./format.js";
 
-const TOUCHES_OUTILS = {s: "selection", c: "cible", p: "plan"};
+const TOUCHES_OUTILS = {s: "selection", c: "cible", p: "plan", z: "zone"};
 // En deçà de 4 px, un appui est un clic, pas un glisser : on ne déplace rien par mégarde.
 const SEUIL_GLISSER = 4;
 
@@ -17,8 +18,9 @@ const SEUIL_GLISSER = 4;
  * panoramique(dx, dy), zoom(facteur, point), sur_activation(actif)}.
  */
 export function creer_editeur(env) {
-  const etat = {actif: false, outil: "selection", selection: [], groupes: {}, geste: null};
-  const elements = () => elements_editables(env.monde(), env.brut());
+  // mode « edition » : on prépare le scénario à t = 0 ; mode « ordres » : en pause au cours du raid, on envoie des avions.
+  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null};
+  const elements = () => elements_editables(env.monde(), env.brut(), etat.mode);
   const vers_ecran = (geo) => ecran(env.camera(), geo);
   const local = (e) => {
     const cadre = env.vue.getBoundingClientRect();
@@ -32,11 +34,19 @@ export function creer_editeur(env) {
   }
 
   function activer(actif) {
-    Object.assign(etat, {actif, selection: [], geste: null});
+    const mode = env.monde().t > 0 ? "ordres" : "edition";
+    Object.assign(etat, {actif, mode, selection: [], geste: null, brouillon: []});
     env.vue.classList.toggle("edition", actif);
+    env.vue.dataset.mode = mode;
     env.barre.hidden = !actif;
+    env.barre.querySelector("[data-champ='instant_ordres']").textContent = format_duree(env.monde().t);
     choisir_outil("selection");
-    env.sur_activation(actif);
+    env.sur_activation(actif, mode);
+  }
+
+  function fermer_zone() {
+    if (etat.brouillon.length >= 3) env.appliquer(modifications_ajout_zone(env.brut(), etat.brouillon));
+    etat.brouillon = [];
   }
 
   function commencer(e) {
@@ -49,10 +59,17 @@ export function creer_editeur(env) {
     const geo = geo_depuis_ecran(env.camera(), p);
     if (etat.outil === "cible") return env.appliquer(modifications_ajout_cible(env.monde(), geo));
     if (etat.outil === "plan") return env.appliquer(modifications_ajout_passage(env.brut(), geo));
+    if (etat.outil === "zone") {
+      // Double-clic (ou Entrée) : la zone se ferme ; le second clic du double-clic n'ajoute pas de sommet.
+      if (e.detail >= 2) return fermer_zone();
+      etat.brouillon.push(geo);
+      return;
+    }
     const touche = element_sous(elements(), vers_ecran, p);
     if (touche) {
       if (!etat.selection.includes(touche.cle)) etat.selection = e.shiftKey ? [...etat.selection, touche.cle] : [touche.cle];
-      etat.geste = {type: "glisser", depart: p, de: touche.geo, vers: touche.geo, deplace: false};
+      // En mode ordres, on ne déplace pas un avion en vol : on le sélectionne, puis on l'envoie au clic droit.
+      if (etat.mode === "edition") etat.geste = {type: "glisser", depart: p, de: touche.geo, vers: touche.geo, deplace: false};
     } else {
       if (!e.shiftKey) etat.selection = [];
       etat.geste = {type: "rectangle", rectangle: {x0: p.x, y0: p.y, x1: p.x, y1: p.y}, ajout: e.shiftKey};
@@ -60,6 +77,7 @@ export function creer_editeur(env) {
   }
 
   function suivre(e) {
+    etat.curseur = local(e);
     const geste = etat.geste;
     if (!geste) return;
     const p = local(e);
@@ -85,11 +103,12 @@ export function creer_editeur(env) {
     }
   }
 
-  /** Envoyer la sélection au point visé : son barycentre y vient, la formation est conservée. */
+  /** Envoyer la sélection au point visé : en édition, son barycentre y vient (formation conservée) ; en ordres, les avions y vont. */
   function envoyer(e) {
     const choisis = elements().filter((element) => etat.selection.includes(element.cle));
     if (!choisis.length) return;
     const vers = geo_depuis_ecran(env.camera(), local(e));
+    if (etat.mode === "ordres") return env.appliquer(modifications_ordre(env.brut(), env.monde(), etat.selection, vers));
     env.appliquer(modifications_deplacement(env.monde(), env.brut(), etat.selection, barycentre(choisis.map((c) => c.geo)), vers));
   }
 
@@ -97,14 +116,16 @@ export function creer_editeur(env) {
     if (!etat.actif || e.target.closest("input, select, textarea")) return;
     const commande = e.ctrlKey || e.metaKey;
     const chiffre = /^Digit([1-9])$/.exec(e.code)?.[1];
-    if (e.key === "Escape") etat.outil === "selection" ? (etat.selection = []) : choisir_outil("selection");
+    if (e.key === "Escape" && etat.brouillon.length) etat.brouillon = [];
+    else if (e.key === "Enter" && etat.outil === "zone") fermer_zone();
+    else if (e.key === "Escape") etat.outil === "selection" ? (etat.selection = []) : choisir_outil("selection");
     else if (e.key === "Delete" || e.key === "Backspace") {
       env.appliquer(modifications_suppression(env.monde(), env.brut(), etat.selection));
       etat.selection = [];
     } else if (commande && e.key.toLowerCase() === "z") env.annuler();
     else if (chiffre && commande) etat.groupes[chiffre] = [...etat.selection];
     else if (chiffre) etat.selection = [...(etat.groupes[chiffre] ?? [])];
-    else if (!commande && TOUCHES_OUTILS[e.key.toLowerCase()]) choisir_outil(TOUCHES_OUTILS[e.key.toLowerCase()]);
+    else if (!commande && etat.mode === "edition" && TOUCHES_OUTILS[e.key.toLowerCase()]) choisir_outil(TOUCHES_OUTILS[e.key.toLowerCase()]);
     else return;
     e.preventDefault();
   }
@@ -132,10 +153,13 @@ export function creer_editeur(env) {
     if (bouton?.dataset.action === "terminer_edition") activer(false);
   });
 
-  /** Dessiner le plan de vol (toujours) puis, en édition, la sélection, le fantôme du glisser et le rectangle. */
+  /** Dessiner zones, plan de vol et ordres (toujours) puis, en édition, la sélection, le glisser, le rectangle, le brouillon. */
   function dessiner(ctx, camera, monde) {
+    dessiner_zones(ctx, camera, monde);
     dessiner_plan(ctx, camera, monde);
+    dessiner_ordres(ctx, camera, monde);
     if (!etat.actif) return;
+    dessiner_brouillon(ctx, camera);
     const choisis = elements().filter((element) => etat.selection.includes(element.cle));
     const geste = etat.geste;
     ctx.strokeStyle = COULEURS.selection;
@@ -162,6 +186,68 @@ export function creer_editeur(env) {
       ctx.fillRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
       ctx.strokeRect(Math.min(x0, x1), Math.min(y0, y1), Math.abs(x1 - x0), Math.abs(y1 - y0));
     }
+  }
+
+  function dessiner_zones(ctx, camera, monde) {
+    ctx.font = "12px system-ui, sans-serif";
+    monde.zones.forEach((zone, i) => {
+      const protegee = zone.type === "protegee";
+      ctx.beginPath();
+      zone.points.forEach((point, j) => {
+        const p = ecran(camera, point);
+        if (j === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = protegee ? "rgba(227, 234, 241, 0.07)" : "rgba(227, 234, 241, 0.03)";
+      ctx.fill();
+      ctx.setLineDash(protegee ? [10, 5] : [2, 4]);
+      ctx.strokeStyle = COULEURS.texte;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const centre = ecran(camera, zone.centre);
+      ctx.fillStyle = COULEURS.texte;
+      ctx.textAlign = "center";
+      ctx.fillText(zone.nom, centre.x, centre.y - 4);
+      if (protegee) {
+        ctx.fillStyle = monde.incursions[i].size ? COULEURS.hostile : COULEURS.texte_secondaire;
+        ctx.fillText(`${monde.incursions[i].size} incursions`, centre.x, centre.y + 12);
+      }
+      ctx.textAlign = "start";
+    });
+  }
+
+  function dessiner_ordres(ctx, camera, monde) {
+    ctx.strokeStyle = COULEURS.selection;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 3]);
+    for (const avion of monde.avions) {
+      if (!avion.ordre) continue;
+      const [a, b] = [ecran(camera, avion.geo), ecran(camera, avion.point)];
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.moveTo(b.x - 5, b.y - 5);
+      ctx.lineTo(b.x + 5, b.y + 5);
+      ctx.moveTo(b.x + 5, b.y - 5);
+      ctx.lineTo(b.x - 5, b.y + 5);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
+
+  function dessiner_brouillon(ctx, camera) {
+    if (!etat.brouillon.length) return;
+    const points = etat.brouillon.map((geo) => ecran(camera, geo));
+    if (etat.curseur) points.push(etat.curseur);
+    ctx.strokeStyle = COULEURS.selection;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    points.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.stroke();
+    ctx.setLineDash([]);
+    for (const p of points.slice(0, etat.brouillon.length)) ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
   }
 
   function dessiner_plan(ctx, camera, monde) {

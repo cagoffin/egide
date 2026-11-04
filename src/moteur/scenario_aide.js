@@ -19,6 +19,10 @@ export const AIDE = {
     cibles_placees: "Cibles placees a la main (editeur) : liste de {lat_deg, lon_deg}. Les autres cibles sont tirees au hasard.",
     "cibles_placees[].lat_deg": "Latitude de la cible placee (WGS84).",
     "cibles_placees[].lon_deg": "Longitude de la cible placee (WGS84).",
+    zones: "Zones dessinees (editeur) : liste de {nom, type, points}. Une zone 'protegee' compte les drones qui y penetrent ; une zone 'annotation' ne sert qu'a l'affichage.",
+    "zones[].nom": "Nom affiche de la zone.",
+    "zones[].type": "'protegee' (incursions comptees au bilan) ou 'annotation'.",
+    "zones[].points": "Sommets du polygone, liste de {lat_deg, lon_deg}, au moins trois.",
   },
   rouge: {
     unite: "Identifiant du drone dans le catalogue.",
@@ -44,6 +48,11 @@ export const AIDE = {
     sol: "Postes sol-air, repartis a parts egales sur les cibles.",
     radar: "Couverture radar : continue le long de la frontiere, a l'horizon du type de radar choisi (MODELE § 2).",
     conduite: "Centre de conduite des avions.",
+    ordres: "Ordres donnes en cours de raid (editeur) : a l'instant t_s, les avions cites rallient le point ; la conduite les reprend une fois arrives.",
+    "ordres[].t_s": "Instant de l'ordre depuis le debut du raid.",
+    "ordres[].avions": "Numeros des avions concernes (ordre de creation : groupes dans l'ordre du scenario).",
+    "ordres[].lat_deg": "Latitude du point a rallier (WGS84).",
+    "ordres[].lon_deg": "Longitude du point a rallier (WGS84).",
   },
   sol: {
     unite: "Identifiant du poste dans le catalogue.",

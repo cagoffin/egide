@@ -8,6 +8,8 @@ import {cadrer_carte, creer_carte} from "./carte.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {creer_editeur} from "./editeur.js";
+import {dessiner_profil} from "./profil.js";
+import {altitudes_relief, echantillonner_chemin} from "./relief.js";
 import {publier_couleurs} from "./couleurs.js";
 import {absorber, creer_effets, sauter} from "./effets.js";
 import {format_duree} from "./format.js";
@@ -75,6 +77,7 @@ async function charger() {
   $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
   $("[name='graine']").value = brut.simulation.graine;
   cadrer();
+  rafraichir_profil();
 }
 
 let minuterie = null;
@@ -185,6 +188,8 @@ function brancher_scope() {
   toile.addEventListener("pointerdown", (e) => scope_libre() && (glisse = {x: e.clientX, y: e.clientY}, toile.setPointerCapture(e.pointerId)));
   toile.addEventListener("pointerup", () => (glisse = null));
   vue.addEventListener("dblclick", (e) => {
+    // En édition, le double-clic ferme une zone : il ne doit pas recadrer la vue.
+    if (etat.editeur?.est_actif()) return;
     e.preventDefault();
     cadrer(true);
   });
@@ -263,15 +268,43 @@ async function appliquer_edition(modifications) {
   if (!Object.keys(modifications).length) return;
   etat.historique.push(structuredClone(etat.modifications));
   Object.assign(etat.modifications, modifications);
-  await charger();
-  rafraichir_reglages();
+  await recharger_au_meme_instant();
 }
 
 async function annuler_edition() {
   if (!etat.historique.length) return;
   etat.modifications = etat.historique.pop();
+  await recharger_au_meme_instant();
+}
+
+// Un échantillon par km le long du plan, au plus 600 : assez fin pour le relief, assez léger pour le navigateur.
+const PAS_PROFIL = 1_000;
+const ECHANTILLONS_MAX = 600;
+
+/** Mettre à jour la vue en profil du plan de vol, si elle est ouverte. */
+async function rafraichir_profil() {
+  const panneau = $("#profil");
+  const zone = panneau.querySelector("[data-zone='profil']");
+  const {rouge} = etat.lecteur?.scenario ?? {};
+  if (!panneau.open || !rouge) return;
+  if (rouge.plan_de_vol.length < 2) {
+    zone.innerHTML = `<p class="note-profil">Dessinez un plan de vol d'au moins deux points dans l'éditeur pour voir son profil.</p>`;
+    return;
+  }
+  const brut = echantillonner_chemin(rouge.plan_de_vol, PAS_PROFIL);
+  const echantillons = brut.length > ECHANTILLONS_MAX ? echantillonner_chemin(rouge.plan_de_vol, (brut.at(-1).distance / ECHANTILLONS_MAX) * 1.01) : brut;
+  const source = Object.entries(etat.sources_carte).find(([id]) => id.startsWith("relief/"))?.[1];
+  dessiner_profil(zone, echantillons, null, rouge.altitude);
+  const relief = await altitudes_relief(echantillons, source);
+  if (relief) dessiner_profil(zone, echantillons, relief, rouge.altitude);
+}
+
+/** Recalculer le raid après un geste ; en mode ordres, le rejouer jusqu'à l'instant où l'on était. */
+async function recharger_au_meme_instant() {
+  const instant = etat.lecteur.monde.t;
   await charger();
   rafraichir_reglages();
+  if (instant > 0) sauter_a(instant);
 }
 
 function brancher_editeur() {
@@ -288,11 +321,11 @@ function brancher_editeur() {
       if (etat.camera.type !== "carte") return void (etat.camera = zoomer(etat.camera, facteur, point));
       etat.carte.zoomTo(etat.carte.getZoom() + Math.log2(facteur), {around: etat.carte.unproject([point.x, point.y]), duration: 0});
     },
-    sur_activation: (actif) => {
+    sur_activation: (actif, mode) => {
       bouton.setAttribute("aria-pressed", String(actif));
       if (!actif) return;
       etat.lecteur.enLecture = false;
-      sauter_a(0);
+      if (mode === "edition") sauter_a(0);
     },
   });
   bouton.addEventListener("click", () => etat.editeur.activer(!etat.editeur.est_actif()));
@@ -308,6 +341,7 @@ async function demarrer() {
   brancher_transport();
   brancher_scope();
   brancher_editeur();
+  $("#profil").addEventListener("toggle", rafraichir_profil);
   brancher_prereglages();
   brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));
   await charger();

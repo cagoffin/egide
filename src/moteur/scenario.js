@@ -79,13 +79,17 @@ export function resoudre_scenario(brutDonne, fichiers) {
   const brut = en_v2(brutDonne);
   valider_aide(brut, "");
   const {theatre, rouge, bleu, simulation} = brut;
+  for (const zone of theatre.zones ?? []) {
+    if (!["protegee", "annotation"].includes(zone.type)) throw new ScenarioInvalide(`zone « ${zone.nom} » : type inconnu « ${zone.type} »`);
+    if ((zone.points ?? []).length < 3) throw new ScenarioInvalide(`zone « ${zone.nom} » : au moins trois sommets`);
+  }
   if (!(rouge.tactique in TACTIQUES) && !rouge.tactique.includes("/")) {
     throw new ScenarioInvalide(`tactique inconnue « ${rouge.tactique} » (${Object.keys(TACTIQUES).join(", ")}, ou identifiant d'algorithme)`);
   }
   try {
     const drone = unite_si(rouge.unite, fichiers, rouge.surcharges);
     const {unite: _u, surcharges: _s, plan_de_vol: plan, ...reglagesRouge} = rouge;
-    const {cibles_placees: placees, ...reglagesTheatre} = theatre;
+    const {cibles_placees: placees, zones, ...reglagesTheatre} = theatre;
     const ciblesPlacees = vers_geo(placees, 0);
     return structuredClone({
       nom: brut.nom,
@@ -95,6 +99,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
         // Les cibles placées comptent toujours : le nombre de cibles ne descend pas sous leur nombre.
         cibles_nombre: Math.max(reglagesTheatre.cibles_nombre, ciblesPlacees.length),
         cibles_placees: ciblesPlacees,
+        zones: (zones ?? []).map((zone) => ({nom: zone.nom, type: zone.type, points: vers_geo(zone.points, 0)})),
       },
       rouge: {
         ...drone, altitude: drone.altitude_croisiere, ...convertir_objet(reglagesRouge),
@@ -104,6 +109,8 @@ export function resoudre_scenario(brutDonne, fichiers) {
       sol: {...unite_si(bleu.sol.unite, fichiers, bleu.sol.surcharges), nombre: bleu.sol.nombre, munitions: bleu.sol.munitions},
       radar: unite_si(bleu.radar.unite, fichiers, bleu.radar.surcharges),
       conduite: convertir_objet(bleu.conduite),
+      // Ordres triés par instant : le moteur les applique dans l'ordre, sans revenir en arrière.
+      ordres: (bleu.ordres ?? []).map((o) => ({t: o.t_s, avions: o.avions, point: geo_deg(o.lat_deg, o.lon_deg, 0)})).sort((a, b) => a.t - b.t),
       simulation: convertir_objet(simulation),
     });
   } catch (erreur) {

@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {mener_campagne} from "../src/moteur/campagne.js";
 import {inverse} from "../src/moteur/geodesie.js";
-import {bilan, creer_monde, simuler} from "../src/moteur/monde.js";
+import {avancer_monde, bilan, creer_monde, simuler} from "../src/moteur/monde.js";
 import {modifier_scenario} from "../src/moteur/scenario.js";
 import {FICHIERS, REFERENCE, REGISTRE, scenario} from "./aide_scenario.js";
 
@@ -86,4 +86,44 @@ test("plan de vol : l'essaim passe par chaque point du plan avant de rejoindre s
   }
   const resultat = bilan(simuler(scenario({...PETIT, ...SANS_DEFENSE, "rouge.tactique": "plan_de_vol", "rouge.plan_de_vol": plan}), {registre: REGISTRE, journal: false}));
   assert.equal(resultat.fuites, 200);
+});
+
+const ZONE = {nom: "Z", type: "protegee", points: [{lat_deg: 47.4, lon_deg: 1.8}, {lat_deg: 47.4, lon_deg: 3.2}, {lat_deg: 46.6, lon_deg: 3.2}, {lat_deg: 46.6, lon_deg: 1.8}]};
+
+test("zones : chaque drone entré dans une zone protégée y compte une fois ; sans zone, le bilan garde sa forme", () => {
+  const sansZone = bilan(simuler(scenario({...PETIT, ...SANS_DEFENSE}), {registre: REGISTRE, journal: false}));
+  assert.equal("incursions" in sansZone, false);
+  const avecZones = bilan(simuler(scenario({...PETIT, ...SANS_DEFENSE, "theatre.zones": [ZONE, {...ZONE, nom: "A", type: "annotation"}]}), {registre: REGISTRE, journal: false}));
+  assert.equal(avecZones.incursions.length, 2);
+  assert.ok(avecZones.incursions[0] > 0 && avecZones.incursions[0] <= 200);
+  assert.equal(avecZones.incursions[1], 0, "une annotation ne compte rien");
+});
+
+test("zones : appartenance juste pour un carré de 1° autour du centre, dans le plan tangent", async () => {
+  const {preparer_zone, contient} = await import("../src/moteur/zones.js");
+  const {geo_deg, vers_ecef} = await import("../src/moteur/geodesie.js");
+  const zone = preparer_zone(scenario({"theatre.zones": [ZONE]}).theatre.zones[0]);
+  assert.equal(contient(zone, vers_ecef(geo_deg(47, 2.5, 100))), true);
+  assert.equal(contient(zone, vers_ecef(geo_deg(47.5, 2.5, 100))), false);
+  assert.equal(contient(zone, vers_ecef(geo_deg(47, 3.3, 100))), false);
+});
+
+test("ordres : à l'instant dit, les avions cités rallient le point, puis la conduite les reprend ; rejeu identique", () => {
+  const ordre = {t_s: 300, avions: [0, 1, 2], lat_deg: 47.9, lon_deg: 1.2};
+  const s = scenario({...PETIT, "bleu.ordres": [ordre]});
+  const monde = creer_monde(s, {registre: REGISTRE});
+  while (monde.t < 300) avancer_monde(monde);
+  assert.ok([0, 1, 2].every((id) => monde.avions[id].ordre && monde.avions[id].etat !== "orbite"));
+  assert.ok(monde.evenements.some((e) => e.type === "ordre" && e.avions.length === 3));
+  // L'avion 0 finit par rallier le point (à quelques centaines de m près, sa route est recalculée à chaque pas),
+  // puis la conduite le reprend : l'ordre est levé.
+  const point = s.ordres[0].point;
+  let plusPres = Infinity;
+  while (monde.avions[0].ordre && monde.t < 7_200) {
+    avancer_monde(monde);
+    plusPres = Math.min(plusPres, inverse(monde.avions[0].geo, point).distance);
+  }
+  assert.equal(monde.avions[0].ordre, false);
+  assert.ok(plusPres < 500, `au plus près : ${plusPres} m`);
+  assert.deepEqual(bilan(simuler(s, {registre: REGISTRE, journal: false})), bilan(simuler(s, {registre: REGISTRE, journal: false})));
 });

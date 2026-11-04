@@ -236,3 +236,23 @@ L'essaim suit les points de passage dessinés, en colonne de largeur `fourmi_lar
 profondeur ; chaque drone garde son décalage latéral, mesuré perpendiculairement au tronçon, à chaque point. Après le
 dernier point, il rejoint sa cible. Le premier point est le départ : s'il est dans la couverture radar, l'essaim est vu
 d'emblée.
+
+### 12.4 Ordres en cours de raid
+En pause à l'instant t, l'éditeur passe en mode ordres : on sélectionne des avions et on les envoie à un point. L'ordre
+est enregistré dans le scénario (`bleu.ordres` : instant, numéros d'avions, point), puis le raid est recalculé depuis
+le début et rejoué jusqu'à t. Au premier pas où l'instant de l'ordre est atteint, les avions cités encore armés passent
+en ralliement vers le point, à leur altitude ; la conduite ne les réaffecte plus avant leur arrivée, mais ils engagent
+toujours un drone qui les approche, puis reprennent leur route. Arrivés, ils redeviennent libres. Comme toute
+modification, l'ordre se rejoue à l'identique avec la même graine.
+
+### 12.5 Zones
+Une zone est un polygone de sommets géographiques. Une zone « protégée » compte, toutes les 2 s, les drones actifs qui
+s'y trouvent (chaque drone une seule fois) : c'est le nombre d'incursions, ajouté au bilan quand le scénario a des zones.
+L'appartenance se teste dans le plan tangent au barycentre de la zone (lancer de rayon), ce qui reste juste pour des
+zones de quelques centaines de km. Une zone « annotation » ne sert qu'à l'affichage.
+
+### 12.6 Vue en profil
+Le plan de vol est échantillonné tous les km le long des géodésiques (600 échantillons au plus) ; sous chaque
+échantillon, l'altitude du relief est lue dans les tuiles terrarium de `cartes/relief/` au zoom 10 (environ 150 m par
+pixel) : altitude = R × 256 + V + B / 256 − 32 768. Le profil trace l'altitude de vol de l'essaim au-dessus du relief.
+Sans réseau, il se replie sur l'altitude de vol seule. Le moteur, lui, ne tient pas encore compte du relief.
