@@ -16,6 +16,8 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   (jalons 0 à 4).
 - **v0.3.0** : outils de preuve (jalon 5), interface centrée sur la carte avec calques, radars placés (jalon 6, premier
   lot), réseau d'information avec pannes et Vue du PC (jalon 7, lots 1 et 2), relief dans le moteur (jalon 2).
+- **v0.4.0** : circulation de l'information lisible (jalon 8), centres de détection et de contrôle et batteries
+  désignées (jalon 9), drones défensifs (jalon 10), auto-configuration et bibliothèque de scénarios (jalon 11).
 
 ## Arborescence cible
 ```
