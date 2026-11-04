@@ -72,52 +72,31 @@ scenarios/                                  placements, plans de vol, zones, mé
 - Export ASTERIX des plots et pistes simulés (UDP) vers un système C2 ou des outils de test d'interfaces radar.
 - Import et export KML / GeoJSON.
 
-## Suggestions au fil de l'eau
-Nouvelles idées proposées pendant le développement, à trier avec l'utilisateur.
-- *Jalon 7* — **Panne et attaque du réseau** : couper une liaison ou un nœud à un instant donné (comme un ordre), pour
-  mesurer la résilience ; le centre de conduite devient une cible possible de l'essaim.
-- *Jalon 7* — **Situation perçue à l'écran** : basculer l'affichage entre la vérité terrain et ce que sait la conduite
-  (pistes connues, avec leur retard), pour voir l'effet du réseau d'un coup d'œil.
-- *Jalon 7* — **Duel de réseaux** : comparer avec `src/preuve.js duel` deux architectures de liaisons sur les mêmes graines.
-- *Jalon 5* — **Réglages inertes** : le criblage de Morris montre qu'un réglage peut n'avoir aucun effet (rouge.etalement_s
-  ne joue qu'en tactique dispersée). Griser dans l'interface les réglages que l'algorithme en jeu ne lit pas, en
-  croisant `meta.parametres` et le scénario.
-- *Jalon 5* — **Un générateur par entité** : tirer le hasard de chaque drone et de chaque tireur dans son propre flux
-  (graine dérivée de la graine du raid et de l'identifiant), pour que deux variantes d'un duel restent synchronisées
-  plus longtemps et que le gain des nombres communs monte.
-- *Jalon 5* — **Pas adaptatif vérifié** : choisir automatiquement le plus grand pas qui passe le test de convergence,
-  et l'inscrire dans le dossier.
-- *Jalon 5* — **Tornade dans l'interface** : afficher le résultat de Morris en diagramme μ*–σ et en tornade, cliquer
-  un facteur pour lancer son balayage.
+## Suggestions retenues
+Toute suggestion proposée pendant le développement est retenue d'office (décision de l'utilisateur) et rangée ici
+par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme les idées ci-dessus.
 
-- *Jalon 0* — **Autonomie et sites de lancement** : maintenant que le moteur couvre le globe, les drones peuvent
-  partir de sites réels à des centaines de km avec une autonomie, ce qui contraint les routes possibles et donc les
-  couloirs d'attaque crédibles.
-- *Jalon 0* — **Différentiel de scénario** : joindre à chaque résultat la liste des chemins modifiés par rapport à la
-  référence (`bleu.avions.1.nombre : 30 → 50`), pour qu'un chiffre se lise toujours avec ce qui l'a produit.
-- *Jalon 0* — **Explorateur du catalogue** : une page qui liste les unités, montre leur arbre d'héritage, leurs
-  sources, leur niveau de fidélité et leur état de validation (à faire avec le jalon 1).
-- *Jalon 4* — **Équations mises en forme** : rendre les équations des fiches en notation mathématique (KaTeX embarqué
-  dans `vendor/`), et les relier aux paragraphes du modèle qu'elles appliquent.
-- *Jalon 4* — **Comparer deux fiches** : mettre côte à côte deux unités ou deux algorithmes du même rôle, écarts
-  surlignés — utile pour choisir entre un modèle public et un modèle privé.
-- *Jalon 3* — **Chronologie des ordres** : une frise sous la barre de lecture qui marque chaque ordre donné, pour le
-  retrouver, le déplacer dans le temps ou le supprimer — l'équivalent du journal de partie d'un jeu de stratégie.
-- *Jalon 3* — **Zones à effet** : donner aux zones un rôle dans la simulation (couloir d'entrée imposé à l'essaim,
-  zone d'exclusion pour les avions), en plus du comptage des incursions.
-- *Jalon 3* — **Mini-carte** : une vignette de tout le théâtre dans un coin, avec le cadre de la vue, cliquable pour
-  s'y rendre — le réflexe des jeux de stratégie dès qu'on zoome.
-- *Jalon 3* — **Sélection par type** : double-cliquer une unité sélectionne toutes celles du même type visibles à
-  l'écran (tous les avions IR, toutes les cibles).
-- *Jalon 3* — **Formations** : répartir les avions sélectionnés en cercle, en ligne ou en grille autour du point
-  visé, avec un espacement réglable, plutôt que de les placer un par un.
-- *Jalon 2* — **Export vidéo du raid** : enregistrer la vue animée (carte, scope, bilan) en vidéo ou GIF depuis
-  l'interface, pour partager une démonstration sans installer l'outil.
-- *Jalon 2* — **Scénario dans l'adresse** : encoder les modifications du scénario dans l'URL, pour partager une
-  situation précise d'un simple lien (même graine, même vue de carte).
-- *Jalon 2* — **Brouillard de carte** : assombrir ce que les capteurs ne couvrent pas, pour voir d'un coup d'œil les
-  zones où l'essaim avance sans être vu (prépare le brouillard de guerre).
-- *Jalon 1* — **Fiche de dépôt** : quand la conformité refuse un fichier privé, afficher dans l'interface la règle
-  violée et la ligne fautive, pour corriger sans lire les tests.
-- *Jalon 0* — **Théâtres prédéfinis** : choisir le centre du théâtre par un nom de lieu plutôt que par latitude et
-  longitude, avec une liste de théâtres d'exemple.
+| Thème | Suggestion | Jalon | État |
+|---|---|---|---|
+| Preuve | **Différentiel de scénario** : chaque résultat porte les chemins modifiés par rapport à la référence | 5 | **fait** (`src/preuve.js`, campagnes) |
+| Preuve | **Réglages inertes** : griser les réglages que l'algorithme en jeu ne lit pas (`meta.parametres` × scénario) ; Morris a montré que `rouge.etalement_s` est inerte hors tactique dispersée | 5 | à faire |
+| Preuve | **Un générateur par entité** : un flux de hasard par drone et par tireur (graine dérivée), pour que les duels restent synchronisés et que le gain des nombres communs monte | 5 | à faire |
+| Preuve | **Pas adaptatif vérifié** : choisir le plus grand pas qui passe le test de convergence et l'inscrire au dossier | 5 | à faire |
+| Preuve | **Tornade dans l'interface** : Morris en diagramme μ*–σ et en tornade ; cliquer un facteur lance son balayage | 5 | à faire |
+| Preuve | **Duel de réseaux** : comparer deux architectures de liaisons sur les mêmes graines | 7 | à faire |
+| Réseau | **Panne et attaque du réseau** : couper une liaison ou un nœud à un instant donné (comme un ordre) ; le centre de conduite devient une cible possible | 7 | à faire |
+| Réseau | **Situation perçue à l'écran** : basculer entre vérité terrain et ce que sait la conduite (pistes connues et leur retard) | 7 | à faire |
+| Menace | **Autonomie et sites de lancement** : drones partis de sites réels, à des centaines de km, avec une autonomie qui contraint les couloirs crédibles | 6 | à faire |
+| Catalogue | **Explorateur du catalogue** : unités, héritage, sources, fidélité | 4 | **fait** (`catalogue.html`) |
+| Catalogue | **Équations mises en forme** : KaTeX embarqué dans `vendor/`, équations reliées aux paragraphes du modèle | 4 | à faire |
+| Catalogue | **Comparer deux fiches** : deux unités ou deux algorithmes du même rôle côte à côte, écarts surlignés | 4 | à faire |
+| Catalogue | **Fiche de dépôt** : quand la conformité refuse un fichier privé, montrer la règle violée et la ligne fautive | 1 | à faire |
+| Éditeur | **Chronologie des ordres** : frise sous la lecture, chaque ordre à retrouver, déplacer ou supprimer | 3 | à faire |
+| Éditeur | **Zones à effet** : couloir d'entrée imposé à l'essaim, zone d'exclusion pour les avions | 3 | à faire |
+| Éditeur | **Mini-carte** : vignette du théâtre avec le cadre de la vue, cliquable | 3 | à faire |
+| Éditeur | **Sélection par type** : double-clic sur une unité, toutes celles du même type visibles sont sélectionnées | 3 | à faire |
+| Éditeur | **Formations** : avions sélectionnés répartis en cercle, ligne ou grille autour du point visé | 3 | à faire |
+| Carte | **Export vidéo du raid** : enregistrer la vue animée en vidéo ou GIF depuis l'interface | 2 | à faire |
+| Carte | **Scénario dans l'adresse** : modifications, graine et vue encodées dans l'URL, à partager d'un lien | 2 | à faire |
+| Carte | **Brouillard de carte** : assombrir ce que les capteurs ne couvrent pas | 2 | à faire |
+| Carte | **Théâtres prédéfinis** : choisir le centre du théâtre par un nom de lieu, liste de théâtres d'exemple | 0 | à faire |

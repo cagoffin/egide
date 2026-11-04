@@ -14,8 +14,9 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
 - v0.1 (docs/PLAN.md) : abaques (`analyse/`), simulation (`src/moteur/`), interface (`index.html`, `src/vue/`).
 - v2 (docs/PLAN_V2.md) : plateforme à la manière d'un jeu de stratégie vu de dessus — catalogue d'unités et
   d'algorithmes en fichiers, Terre réelle avec relief, éditeur à la souris, physique expliquée, preuve de qualité.
-- **Proposer au fil de l'eau de nouvelles fonctions** et les consigner dans docs/PLAN_V2.md § Suggestions :
-  l'utilisateur y tient.
+- **Proposer au fil de l'eau de nouvelles fonctions** : l'utilisateur y tient. Par défaut, toute suggestion est
+  retenue et ajoutée sans attendre au tableau de docs/PLAN_V2.md § Suggestions retenues (thème, jalon, état) ;
+  passer son état à « fait » quand elle est livrée.
 
 ## Catalogue et scénarios (MODELE § 9.1)
 - Une unité = un fichier `unites/<famille>/<classe>/<unite>.json`, héritage par `herite_de`, chaque clé documentée
