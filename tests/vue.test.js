@@ -427,3 +427,18 @@ test("CDC dans l'éditeur : ajouter, déplacer, relier aux postes d'une cible, s
   assert.ok(ote["bleu.reseau.liaisons"].every((l) => !l.de.startsWith("centre:") && !l.vers.startsWith("centre:")));
   assert.match(inspecter_entite({type: "centre", id: 0}, monde2), /Postes désignés/);
 });
+
+import {enregistrer_dans_bibliotheque, lire_bibliotheque_locale} from "../src/vue/bibliotheque.js";
+import {decrire_strategie} from "../src/vue/autoconfig_panneau.js";
+
+test("bibliothèque du navigateur : protégée si la mémoire manque ; stratégies décrites en clair", () => {
+  const casse = {getItem: () => { throw new Error("refus"); }, setItem: () => { throw new Error("refus"); }};
+  assert.deepEqual(lire_bibliotheque_locale(casse), {});
+  assert.equal(enregistrer_dans_bibliotheque("x", {}, casse), false);
+  const memoire = new Map();
+  const stockage = {getItem: (k) => memoire.get(k) ?? null, setItem: (k, v) => memoire.set(k, v)};
+  assert.ok(enregistrer_dans_bibliotheque("Auto — France", {nom: "a"}, stockage));
+  assert.deepEqual(Object.keys(lire_bibliotheque_locale(stockage)), ["Auto — France"]);
+  assert.match(decrire_strategie({uniforme: true}), /hasard/);
+  assert.match(decrire_strategie({avions: 0.6, drones: 0.1, radars: 0.5}), /60 % .* 5 % .* poussés de 50 %/);
+});

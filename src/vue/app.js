@@ -13,6 +13,8 @@ import {creer_editeur} from "./editeur.js";
 import {MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {resume_situation} from "./situation.js";
 import {FAMILLES, lignes_journal} from "./journal.js";
+import {brancher_autoconfig} from "./autoconfig_panneau.js";
+import {enregistrer_dans_bibliotheque, lire_bibliotheque_locale} from "./bibliotheque.js";
 import {dessiner_inspection, inspection} from "./inspecteur.js";
 import {dessiner_profil} from "./profil.js";
 import {altitudes_relief, echantillonner_chemin} from "./relief.js";
@@ -235,7 +237,7 @@ function brancher_transport() {
   addEventListener("keydown", (e) => {
     if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
     const edition = etat.editeur?.est_actif();
-    const panneau = /^Digit([1-6])$/.exec(e.code)?.[1];
+    const panneau = /^Digit([1-7])$/.exec(e.code)?.[1];
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
     if (e.key.toLowerCase() === "v" && !edition) basculer_vue_pc();
@@ -302,6 +304,41 @@ function rafraichir_reglages() {
   $("[name='conduite_ciblee']").checked = Boolean(brut_courant().bleu.reseau?.conduite_ciblee);
   $("[name='terrain']").value = brut_courant().theatre.terrain ?? "";
   document.querySelector(`[name='tactique'][value='${brut_courant().rouge.tactique}']`).checked = true;
+}
+
+/** Faire du scénario `brut` la nouvelle base (bibliothèque, auto-configuration) : les modifications repartent de zéro. */
+async function remplacer_base(brut) {
+  etat.base = en_v2(structuredClone(brut));
+  etat.modifications = {};
+  etat.historique = [];
+  await charger();
+  rafraichir_reglages();
+  cadrer(true);
+}
+
+let bibliotheque = {depot: [], locale: {}};
+async function remplir_bibliotheque() {
+  try {
+    bibliotheque.depot = await lire_json("scenarios/index.json");
+  } catch {
+    bibliotheque.depot = [];
+  }
+  bibliotheque.locale = lire_bibliotheque_locale();
+  const liste = $("[name='bibliotheque']");
+  liste.innerHTML = `<option value="">Bibliothèque de scénarios…</option>`
+    + bibliotheque.depot.map((s) => `<option value="depot:${s.id}">${s.nom}</option>`).join("")
+    + Object.keys(bibliotheque.locale).map((nom) => `<option value="locale:${nom}">${nom} (ce navigateur)</option>`).join("");
+}
+
+function brancher_bibliotheque() {
+  remplir_bibliotheque();
+  $("[name='bibliotheque']").addEventListener("change", async (e) => {
+    const [source, id] = [e.target.value.split(":")[0], e.target.value.slice(e.target.value.indexOf(":") + 1)];
+    if (!source) return;
+    const brut = source === "depot" ? await lire_json(`scenarios/${id}.json`) : bibliotheque.locale[id];
+    if (brut) await remplacer_base(brut);
+    e.target.value = "";
+  });
 }
 
 function brancher_prereglages() {
@@ -481,11 +518,22 @@ async function demarrer() {
   brancher_calques();
   await remplir_moyens();
   brancher_journal();
+  const autoconfig = brancher_autoconfig($("#autoconfig"), {
+    brut: brut_courant, fichiers: () => etat.fichiers, lire_json,
+    appliquer: (brut) => remplacer_base(brut),
+    enregistrer: (nom, brut) => {
+      $("[data-champ='message']").textContent = enregistrer_dans_bibliotheque(nom, brut) ? `« ${nom} » rangé dans la bibliothèque de ce navigateur.` : "Ce navigateur refuse d'enregistrer : exportez le scénario.";
+      remplir_bibliotheque();
+    },
+    exporter: (brut) => exporter_scenario(brut, "egide-autoconfiguration.json"),
+  });
   etat.panneaux = brancher_panneaux($("#vue"), $(".rail"), (id) => {
     if (id === "profil") rafraichir_profil();
     if (id === "journal" && etat.lecteur) rafraichir_journal(performance.now(), true);
+    if (id === "autoconfig") autoconfig.remplir();
   });
   brancher_prereglages();
+  brancher_bibliotheque();
   brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));
   await charger();
   rafraichir_reglages();

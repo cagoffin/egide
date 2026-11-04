@@ -28,13 +28,23 @@ export async function index_algos() {
 export function index_cartes() {
   const dossier = join(RACINE, "cartes");
   return readdirSync(dossier, {recursive: true})
-    .filter((f) => f.endsWith(".json") && !f.startsWith("_") && f !== "index.json")
+    // Les frontières (cartes/frontieres/) sont des données d'auto-configuration, pas une source de carte.
+    .filter((f) => f.endsWith(".json") && !f.startsWith("_") && f !== "index.json" && !f.startsWith("frontieres"))
     .map((f) => f.replace(/\\/g, "/").replace(/\.json$/, ""))
     .sort()
     .map((id) => {
       const source = JSON.parse(readFileSync(join(dossier, `${id}.json`), "utf-8"));
       return {id, nom: source.nom, type: source.type, attribution: source.attribution};
     });
+}
+
+/** Rendre l'index de la bibliothèque de scénarios (scenarios/*.json) : identifiant, nom, zone éventuelle. */
+export function index_scenarios() {
+  const dossier = join(RACINE, "scenarios");
+  return readdirSync(dossier).filter((f) => f.endsWith(".json") && f !== "index.json").sort().map((f) => {
+    const s = JSON.parse(readFileSync(join(dossier, f), "utf-8"));
+    return {id: f.replace(/\.json$/, ""), nom: s.nom};
+  });
 }
 
 function ecrire(chemin, contenu) {
@@ -47,5 +57,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   ecrire(join(RACINE, "unites", "index.json"), index_unites());
   ecrire(join(RACINE, "algos", "index.json"), await index_algos());
   ecrire(join(RACINE, "cartes", "index.json"), index_cartes());
-  console.log("Index régénérés : unites/index.json, algos/index.json, cartes/index.json");
+  ecrire(join(RACINE, "scenarios", "index.json"), index_scenarios());
+  console.log("Index régénérés : unites/index.json, algos/index.json, cartes/index.json, scenarios/index.json");
 }

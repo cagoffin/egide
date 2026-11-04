@@ -1,0 +1,2920 @@
+{
+  "_aide": {
+    "_": "Scenario Egide, format 2 : les unites sont referencees dans le catalogue unites/ (ou prive/unites/). Unites d'affichage indiquees par le suffixe de chaque cle.",
+    "format": "Version du format de scenario.",
+    "nom": "Nom affiche du scenario.",
+    "theatre": "Ou se joue le raid.",
+    "rouge": "Force attaquante : l'essaim.",
+    "bleu": "Defense : avions, postes sol, radar, conduite.",
+    "simulation": "Reglages du calcul."
+  },
+  "format": 2,
+  "nom": "Auto-configuration — France",
+  "theatre": {
+    "_aide": {
+      "origine_lat_deg": "Latitude du centre de la zone defendue (WGS84).",
+      "origine_lon_deg": "Longitude du centre de la zone defendue (WGS84).",
+      "zone_rayon_km": "Rayon du disque defendu, mesure le long de l'ellipsoide.",
+      "cibles_nombre": "Nombre de cibles a proteger : les cibles placees d'abord, puis des cibles tirees au hasard dans 70 % du rayon.",
+      "cibles_placees": "Cibles placees a la main (editeur) : liste de {lat_deg, lon_deg}. Les autres cibles sont tirees au hasard.",
+      "cibles_placees[].lat_deg": "Latitude de la cible placee (WGS84).",
+      "cibles_placees[].lon_deg": "Longitude de la cible placee (WGS84).",
+      "zones": "Zones dessinees (editeur) : liste de {nom, type, points}. Une zone 'protegee' compte les drones qui y penetrent ; une zone 'annotation' ne sert qu'a l'affichage.",
+      "zones[].nom": "Nom affiche de la zone.",
+      "zones[].type": "'protegee' (incursions comptees au bilan) ou 'annotation'.",
+      "zones[].points": "Sommets du polygone, liste de {lat_deg, lon_deg}, au moins trois.",
+      "terrain": "Terrain du catalogue (unites/terrains/…) : le relief masque radars et liaisons radio (MODELE § 16) ; null : Terre lisse."
+    },
+    "origine_lat_deg": 46.680537,
+    "origine_lon_deg": 2.642404,
+    "zone_rayon_km": 591,
+    "cibles_nombre": 12,
+    "terrain": null,
+    "cibles_placees": [
+      {
+        "lat_deg": 46.680203,
+        "lon_deg": 2.393392
+      },
+      {
+        "lat_deg": 48.696322,
+        "lon_deg": -4.04686
+      },
+      {
+        "lat_deg": 43.248772,
+        "lon_deg": 6.420085
+      },
+      {
+        "lat_deg": 43.024708,
+        "lon_deg": -1.165933
+      },
+      {
+        "lat_deg": 49.034903,
+        "lon_deg": 7.455969
+      },
+      {
+        "lat_deg": 50.730174,
+        "lon_deg": 1.708771
+      },
+      {
+        "lat_deg": 43.972949,
+        "lon_deg": 2.603515
+      },
+      {
+        "lat_deg": 46.389991,
+        "lon_deg": 6.720724
+      },
+      {
+        "lat_deg": 46.367173,
+        "lon_deg": -1.309692
+      },
+      {
+        "lat_deg": 48.549114,
+        "lon_deg": 0.28819
+      },
+      {
+        "lat_deg": 48.920929,
+        "lon_deg": 3.725616
+      },
+      {
+        "lat_deg": 44.667405,
+        "lon_deg": 0.212791
+      }
+    ],
+    "zones": [
+      {
+        "nom": "France",
+        "type": "protegee",
+        "points": [
+          {
+            "lat_deg": 47.593,
+            "lon_deg": 7.616
+          },
+          {
+            "lat_deg": 47.547,
+            "lon_deg": 7.495
+          },
+          {
+            "lat_deg": 47.508,
+            "lon_deg": 7.467
+          },
+          {
+            "lat_deg": 47.455,
+            "lon_deg": 7.42
+          },
+          {
+            "lat_deg": 47.433,
+            "lon_deg": 7.343
+          },
+          {
+            "lat_deg": 47.426,
+            "lon_deg": 7.266
+          },
+          {
+            "lat_deg": 47.433,
+            "lon_deg": 7.203
+          },
+          {
+            "lat_deg": 47.454,
+            "lon_deg": 7.167
+          },
+          {
+            "lat_deg": 47.473,
+            "lon_deg": 7.169
+          },
+          {
+            "lat_deg": 47.49,
+            "lon_deg": 7.136
+          },
+          {
+            "lat_deg": 47.489,
+            "lon_deg": 7.053
+          },
+          {
+            "lat_deg": 47.453,
+            "lon_deg": 6.968
+          },
+          {
+            "lat_deg": 47.394,
+            "lon_deg": 6.9
+          },
+          {
+            "lat_deg": 47.361,
+            "lon_deg": 6.921
+          },
+          {
+            "lat_deg": 47.353,
+            "lon_deg": 6.984
+          },
+          {
+            "lat_deg": 47.339,
+            "lon_deg": 7.001
+          },
+          {
+            "lat_deg": 47.323,
+            "lon_deg": 7.001
+          },
+          {
+            "lat_deg": 47.302,
+            "lon_deg": 6.979
+          },
+          {
+            "lat_deg": 47.267,
+            "lon_deg": 6.952
+          },
+          {
+            "lat_deg": 47.163,
+            "lon_deg": 6.821
+          },
+          {
+            "lat_deg": 47.058,
+            "lon_deg": 6.688
+          },
+          {
+            "lat_deg": 47.027,
+            "lon_deg": 6.667
+          },
+          {
+            "lat_deg": 47.004,
+            "lon_deg": 6.625
+          },
+          {
+            "lat_deg": 46.948,
+            "lon_deg": 6.456
+          },
+          {
+            "lat_deg": 46.926,
+            "lon_deg": 6.439
+          },
+          {
+            "lat_deg": 46.832,
+            "lon_deg": 6.429
+          },
+          {
+            "lat_deg": 46.755,
+            "lon_deg": 6.41
+          },
+          {
+            "lat_deg": 46.683,
+            "lon_deg": 6.285
+          },
+          {
+            "lat_deg": 46.611,
+            "lon_deg": 6.161
+          },
+          {
+            "lat_deg": 46.567,
+            "lon_deg": 6.13
+          },
+          {
+            "lat_deg": 46.516,
+            "lon_deg": 6.107
+          },
+          {
+            "lat_deg": 46.459,
+            "lon_deg": 6.068
+          },
+          {
+            "lat_deg": 46.428,
+            "lon_deg": 6.06
+          },
+          {
+            "lat_deg": 46.379,
+            "lon_deg": 6.123
+          },
+          {
+            "lat_deg": 46.338,
+            "lon_deg": 6.116
+          },
+          {
+            "lat_deg": 46.279,
+            "lon_deg": 6.096
+          },
+          {
+            "lat_deg": 46.238,
+            "lon_deg": 6.036
+          },
+          {
+            "lat_deg": 46.215,
+            "lon_deg": 5.97
+          },
+          {
+            "lat_deg": 46.151,
+            "lon_deg": 5.971
+          },
+          {
+            "lat_deg": 46.142,
+            "lon_deg": 6.007
+          },
+          {
+            "lat_deg": 46.147,
+            "lon_deg": 6.087
+          },
+          {
+            "lat_deg": 46.193,
+            "lon_deg": 6.199
+          },
+          {
+            "lat_deg": 46.252,
+            "lon_deg": 6.273
+          },
+          {
+            "lat_deg": 46.308,
+            "lon_deg": 6.23
+          },
+          {
+            "lat_deg": 46.319,
+            "lon_deg": 6.224
+          },
+          {
+            "lat_deg": 46.333,
+            "lon_deg": 6.235
+          },
+          {
+            "lat_deg": 46.394,
+            "lon_deg": 6.322
+          },
+          {
+            "lat_deg": 46.431,
+            "lon_deg": 6.429
+          },
+          {
+            "lat_deg": 46.437,
+            "lon_deg": 6.578
+          },
+          {
+            "lat_deg": 46.416,
+            "lon_deg": 6.758
+          },
+          {
+            "lat_deg": 46.407,
+            "lon_deg": 6.776
+          },
+          {
+            "lat_deg": 46.369,
+            "lon_deg": 6.767
+          },
+          {
+            "lat_deg": 46.314,
+            "lon_deg": 6.784
+          },
+          {
+            "lat_deg": 46.275,
+            "lon_deg": 6.817
+          },
+          {
+            "lat_deg": 46.165,
+            "lon_deg": 6.772
+          },
+          {
+            "lat_deg": 46.131,
+            "lon_deg": 6.806
+          },
+          {
+            "lat_deg": 46.089,
+            "lon_deg": 6.858
+          },
+          {
+            "lat_deg": 46.052,
+            "lon_deg": 6.897
+          },
+          {
+            "lat_deg": 46.017,
+            "lon_deg": 6.954
+          },
+          {
+            "lat_deg": 45.959,
+            "lon_deg": 7.004
+          },
+          {
+            "lat_deg": 45.926,
+            "lon_deg": 7.021
+          },
+          {
+            "lat_deg": 45.868,
+            "lon_deg": 6.941
+          },
+          {
+            "lat_deg": 45.815,
+            "lon_deg": 6.804
+          },
+          {
+            "lat_deg": 45.78,
+            "lon_deg": 6.789
+          },
+          {
+            "lat_deg": 45.741,
+            "lon_deg": 6.791
+          },
+          {
+            "lat_deg": 45.71,
+            "lon_deg": 6.806
+          },
+          {
+            "lat_deg": 45.67,
+            "lon_deg": 6.881
+          },
+          {
+            "lat_deg": 45.581,
+            "lon_deg": 6.962
+          },
+          {
+            "lat_deg": 45.5,
+            "lon_deg": 7.014
+          },
+          {
+            "lat_deg": 45.424,
+            "lon_deg": 7.126
+          },
+          {
+            "lat_deg": 45.401,
+            "lon_deg": 7.153
+          },
+          {
+            "lat_deg": 45.382,
+            "lon_deg": 7.146
+          },
+          {
+            "lat_deg": 45.349,
+            "lon_deg": 7.117
+          },
+          {
+            "lat_deg": 45.24,
+            "lon_deg": 7.078
+          },
+          {
+            "lat_deg": 45.223,
+            "lon_deg": 7.032
+          },
+          {
+            "lat_deg": 45.216,
+            "lon_deg": 6.981
+          },
+          {
+            "lat_deg": 45.136,
+            "lon_deg": 6.842
+          },
+          {
+            "lat_deg": 45.145,
+            "lon_deg": 6.78
+          },
+          {
+            "lat_deg": 45.144,
+            "lon_deg": 6.692
+          },
+          {
+            "lat_deg": 45.118,
+            "lon_deg": 6.628
+          },
+          {
+            "lat_deg": 45.068,
+            "lon_deg": 6.635
+          },
+          {
+            "lat_deg": 45.023,
+            "lon_deg": 6.691
+          },
+          {
+            "lat_deg": 44.973,
+            "lon_deg": 6.725
+          },
+          {
+            "lat_deg": 44.921,
+            "lon_deg": 6.738
+          },
+          {
+            "lat_deg": 44.883,
+            "lon_deg": 6.801
+          },
+          {
+            "lat_deg": 44.86,
+            "lon_deg": 6.889
+          },
+          {
+            "lat_deg": 44.859,
+            "lon_deg": 6.94
+          },
+          {
+            "lat_deg": 44.845,
+            "lon_deg": 6.973
+          },
+          {
+            "lat_deg": 44.827,
+            "lon_deg": 6.993
+          },
+          {
+            "lat_deg": 44.717,
+            "lon_deg": 7.031
+          },
+          {
+            "lat_deg": 44.689,
+            "lon_deg": 7.008
+          },
+          {
+            "lat_deg": 44.677,
+            "lon_deg": 6.96
+          },
+          {
+            "lat_deg": 44.632,
+            "lon_deg": 6.932
+          },
+          {
+            "lat_deg": 44.565,
+            "lon_deg": 6.875
+          },
+          {
+            "lat_deg": 44.511,
+            "lon_deg": 6.843
+          },
+          {
+            "lat_deg": 44.463,
+            "lon_deg": 6.879
+          },
+          {
+            "lat_deg": 44.428,
+            "lon_deg": 6.894
+          },
+          {
+            "lat_deg": 44.392,
+            "lon_deg": 6.875
+          },
+          {
+            "lat_deg": 44.336,
+            "lon_deg": 6.9
+          },
+          {
+            "lat_deg": 44.28,
+            "lon_deg": 6.967
+          },
+          {
+            "lat_deg": 44.202,
+            "lon_deg": 7.149
+          },
+          {
+            "lat_deg": 44.138,
+            "lon_deg": 7.319
+          },
+          {
+            "lat_deg": 44.127,
+            "lon_deg": 7.371
+          },
+          {
+            "lat_deg": 44.168,
+            "lon_deg": 7.599
+          },
+          {
+            "lat_deg": 44.165,
+            "lon_deg": 7.637
+          },
+          {
+            "lat_deg": 44.116,
+            "lon_deg": 7.665
+          },
+          {
+            "lat_deg": 44.083,
+            "lon_deg": 7.677
+          },
+          {
+            "lat_deg": 44.034,
+            "lon_deg": 7.651
+          },
+          {
+            "lat_deg": 43.965,
+            "lon_deg": 7.59
+          },
+          {
+            "lat_deg": 43.911,
+            "lon_deg": 7.523
+          },
+          {
+            "lat_deg": 43.865,
+            "lon_deg": 7.482
+          },
+          {
+            "lat_deg": 43.823,
+            "lon_deg": 7.491
+          },
+          {
+            "lat_deg": 43.767,
+            "lon_deg": 7.493
+          },
+          {
+            "lat_deg": 43.75,
+            "lon_deg": 7.439
+          },
+          {
+            "lat_deg": 43.761,
+            "lon_deg": 7.437
+          },
+          {
+            "lat_deg": 43.771,
+            "lon_deg": 7.414
+          },
+          {
+            "lat_deg": 43.765,
+            "lon_deg": 7.395
+          },
+          {
+            "lat_deg": 43.753,
+            "lon_deg": 7.38
+          },
+          {
+            "lat_deg": 43.732,
+            "lon_deg": 7.378
+          },
+          {
+            "lat_deg": 43.696,
+            "lon_deg": 7.262
+          },
+          {
+            "lat_deg": 43.659,
+            "lon_deg": 7.181
+          },
+          {
+            "lat_deg": 43.438,
+            "lon_deg": 6.865
+          },
+          {
+            "lat_deg": 43.374,
+            "lon_deg": 6.717
+          },
+          {
+            "lat_deg": 43.335,
+            "lon_deg": 6.687
+          },
+          {
+            "lat_deg": 43.262,
+            "lon_deg": 6.657
+          },
+          {
+            "lat_deg": 43.199,
+            "lon_deg": 6.57
+          },
+          {
+            "lat_deg": 43.169,
+            "lon_deg": 6.494
+          },
+          {
+            "lat_deg": 43.139,
+            "lon_deg": 6.305
+          },
+          {
+            "lat_deg": 43.072,
+            "lon_deg": 6.116
+          },
+          {
+            "lat_deg": 43.101,
+            "lon_deg": 6.031
+          },
+          {
+            "lat_deg": 43.098,
+            "lon_deg": 5.809
+          },
+          {
+            "lat_deg": 43.178,
+            "lon_deg": 5.672
+          },
+          {
+            "lat_deg": 43.229,
+            "lon_deg": 5.407
+          },
+          {
+            "lat_deg": 43.345,
+            "lon_deg": 5.32
+          },
+          {
+            "lat_deg": 43.352,
+            "lon_deg": 5.2
+          },
+          {
+            "lat_deg": 43.349,
+            "lon_deg": 5.12
+          },
+          {
+            "lat_deg": 43.367,
+            "lon_deg": 5.073
+          },
+          {
+            "lat_deg": 43.406,
+            "lon_deg": 5.061
+          },
+          {
+            "lat_deg": 43.445,
+            "lon_deg": 5.06
+          },
+          {
+            "lat_deg": 43.427,
+            "lon_deg": 4.976
+          },
+          {
+            "lat_deg": 43.427,
+            "lon_deg": 4.912
+          },
+          {
+            "lat_deg": 43.412,
+            "lon_deg": 4.874
+          },
+          {
+            "lat_deg": 43.394,
+            "lon_deg": 4.844
+          },
+          {
+            "lat_deg": 43.405,
+            "lon_deg": 4.808
+          },
+          {
+            "lat_deg": 43.401,
+            "lon_deg": 4.787
+          },
+          {
+            "lat_deg": 43.379,
+            "lon_deg": 4.789
+          },
+          {
+            "lat_deg": 43.373,
+            "lon_deg": 4.712
+          },
+          {
+            "lat_deg": 43.387,
+            "lon_deg": 4.629
+          },
+          {
+            "lat_deg": 43.447,
+            "lon_deg": 4.41
+          },
+          {
+            "lat_deg": 43.456,
+            "lon_deg": 4.376
+          },
+          {
+            "lat_deg": 43.48,
+            "lon_deg": 4.224
+          },
+          {
+            "lat_deg": 43.504,
+            "lon_deg": 4.163
+          },
+          {
+            "lat_deg": 43.563,
+            "lon_deg": 4.113
+          },
+          {
+            "lat_deg": 43.582,
+            "lon_deg": 4.075
+          },
+          {
+            "lat_deg": 43.593,
+            "lon_deg": 4.053
+          },
+          {
+            "lat_deg": 43.563,
+            "lon_deg": 3.911
+          },
+          {
+            "lat_deg": 43.516,
+            "lon_deg": 3.862
+          },
+          {
+            "lat_deg": 43.462,
+            "lon_deg": 3.785
+          },
+          {
+            "lat_deg": 43.193,
+            "lon_deg": 3.259
+          },
+          {
+            "lat_deg": 43.081,
+            "lon_deg": 3.163
+          },
+          {
+            "lat_deg": 42.915,
+            "lon_deg": 3.052
+          },
+          {
+            "lat_deg": 42.838,
+            "lon_deg": 3.043
+          },
+          {
+            "lat_deg": 42.591,
+            "lon_deg": 3.091
+          },
+          {
+            "lat_deg": 42.461,
+            "lon_deg": 3.198
+          },
+          {
+            "lat_deg": 42.431,
+            "lon_deg": 3.211
+          },
+          {
+            "lat_deg": 42.431,
+            "lon_deg": 3.152
+          },
+          {
+            "lat_deg": 42.447,
+            "lon_deg": 3.053
+          },
+          {
+            "lat_deg": 42.467,
+            "lon_deg": 2.97
+          },
+          {
+            "lat_deg": 42.456,
+            "lon_deg": 2.891
+          },
+          {
+            "lat_deg": 42.429,
+            "lon_deg": 2.816
+          },
+          {
+            "lat_deg": 42.413,
+            "lon_deg": 2.749
+          },
+          {
+            "lat_deg": 42.408,
+            "lon_deg": 2.702
+          },
+          {
+            "lat_deg": 42.393,
+            "lon_deg": 2.67
+          },
+          {
+            "lat_deg": 42.362,
+            "lon_deg": 2.655
+          },
+          {
+            "lat_deg": 42.34,
+            "lon_deg": 2.652
+          },
+          {
+            "lat_deg": 42.346,
+            "lon_deg": 2.568
+          },
+          {
+            "lat_deg": 42.39,
+            "lon_deg": 2.374
+          },
+          {
+            "lat_deg": 42.421,
+            "lon_deg": 2.2
+          },
+          {
+            "lat_deg": 42.386,
+            "lon_deg": 2.098
+          },
+          {
+            "lat_deg": 42.354,
+            "lon_deg": 2.033
+          },
+          {
+            "lat_deg": 42.358,
+            "lon_deg": 1.987
+          },
+          {
+            "lat_deg": 42.393,
+            "lon_deg": 1.951
+          },
+          {
+            "lat_deg": 42.426,
+            "lon_deg": 1.928
+          },
+          {
+            "lat_deg": 42.457,
+            "lon_deg": 1.86
+          },
+          {
+            "lat_deg": 42.503,
+            "lon_deg": 1.706
+          },
+          {
+            "lat_deg": 42.526,
+            "lon_deg": 1.714
+          },
+          {
+            "lat_deg": 42.557,
+            "lon_deg": 1.74
+          },
+          {
+            "lat_deg": 42.576,
+            "lon_deg": 1.739
+          },
+          {
+            "lat_deg": 42.604,
+            "lon_deg": 1.71
+          },
+          {
+            "lat_deg": 42.635,
+            "lon_deg": 1.568
+          },
+          {
+            "lat_deg": 42.643,
+            "lon_deg": 1.501
+          },
+          {
+            "lat_deg": 42.622,
+            "lon_deg": 1.459
+          },
+          {
+            "lat_deg": 42.596,
+            "lon_deg": 1.428
+          },
+          {
+            "lat_deg": 42.691,
+            "lon_deg": 1.349
+          },
+          {
+            "lat_deg": 42.71,
+            "lon_deg": 1.293
+          },
+          {
+            "lat_deg": 42.713,
+            "lon_deg": 1.208
+          },
+          {
+            "lat_deg": 42.742,
+            "lon_deg": 1.111
+          },
+          {
+            "lat_deg": 42.779,
+            "lon_deg": 1.01
+          },
+          {
+            "lat_deg": 42.838,
+            "lon_deg": 0.764
+          },
+          {
+            "lat_deg": 42.845,
+            "lon_deg": 0.697
+          },
+          {
+            "lat_deg": 42.836,
+            "lon_deg": 0.67
+          },
+          {
+            "lat_deg": 42.8,
+            "lon_deg": 0.652
+          },
+          {
+            "lat_deg": 42.701,
+            "lon_deg": 0.642
+          },
+          {
+            "lat_deg": 42.69,
+            "lon_deg": 0.632
+          },
+          {
+            "lat_deg": 42.686,
+            "lon_deg": 0.518
+          },
+          {
+            "lat_deg": 42.7,
+            "lon_deg": 0.377
+          },
+          {
+            "lat_deg": 42.693,
+            "lon_deg": 0.313
+          },
+          {
+            "lat_deg": 42.693,
+            "lon_deg": 0.255
+          },
+          {
+            "lat_deg": 42.719,
+            "lon_deg": 0.201
+          },
+          {
+            "lat_deg": 42.689,
+            "lon_deg": -0.041
+          },
+          {
+            "lat_deg": 42.704,
+            "lon_deg": -0.081
+          },
+          {
+            "lat_deg": 42.749,
+            "lon_deg": -0.14
+          },
+          {
+            "lat_deg": 42.785,
+            "lon_deg": -0.205
+          },
+          {
+            "lat_deg": 42.804,
+            "lon_deg": -0.256
+          },
+          {
+            "lat_deg": 42.825,
+            "lon_deg": -0.299
+          },
+          {
+            "lat_deg": 42.829,
+            "lon_deg": -0.339
+          },
+          {
+            "lat_deg": 42.808,
+            "lon_deg": -0.398
+          },
+          {
+            "lat_deg": 42.799,
+            "lon_deg": -0.481
+          },
+          {
+            "lat_deg": 42.802,
+            "lon_deg": -0.55
+          },
+          {
+            "lat_deg": 42.799,
+            "lon_deg": -0.586
+          },
+          {
+            "lat_deg": 42.91,
+            "lon_deg": -0.74
+          },
+          {
+            "lat_deg": 42.94,
+            "lon_deg": -0.763
+          },
+          {
+            "lat_deg": 42.948,
+            "lon_deg": -0.839
+          },
+          {
+            "lat_deg": 42.95,
+            "lon_deg": -0.934
+          },
+          {
+            "lat_deg": 43.021,
+            "lon_deg": -1.175
+          },
+          {
+            "lat_deg": 43.06,
+            "lon_deg": -1.285
+          },
+          {
+            "lat_deg": 43.082,
+            "lon_deg": -1.302
+          },
+          {
+            "lat_deg": 43.101,
+            "lon_deg": -1.3
+          },
+          {
+            "lat_deg": 43.097,
+            "lon_deg": -1.319
+          },
+          {
+            "lat_deg": 43.064,
+            "lon_deg": -1.353
+          },
+          {
+            "lat_deg": 43.038,
+            "lon_deg": -1.371
+          },
+          {
+            "lat_deg": 43.033,
+            "lon_deg": -1.394
+          },
+          {
+            "lat_deg": 43.037,
+            "lon_deg": -1.429
+          },
+          {
+            "lat_deg": 43.052,
+            "lon_deg": -1.461
+          },
+          {
+            "lat_deg": 43.071,
+            "lon_deg": -1.48
+          },
+          {
+            "lat_deg": 43.105,
+            "lon_deg": -1.459
+          },
+          {
+            "lat_deg": 43.149,
+            "lon_deg": -1.423
+          },
+          {
+            "lat_deg": 43.197,
+            "lon_deg": -1.407
+          },
+          {
+            "lat_deg": 43.24,
+            "lon_deg": -1.411
+          },
+          {
+            "lat_deg": 43.268,
+            "lon_deg": -1.472
+          },
+          {
+            "lat_deg": 43.279,
+            "lon_deg": -1.561
+          },
+          {
+            "lat_deg": 43.282,
+            "lon_deg": -1.627
+          },
+          {
+            "lat_deg": 43.307,
+            "lon_deg": -1.713
+          },
+          {
+            "lat_deg": 43.325,
+            "lon_deg": -1.753
+          },
+          {
+            "lat_deg": 43.373,
+            "lon_deg": -1.793
+          },
+          {
+            "lat_deg": 43.407,
+            "lon_deg": -1.794
+          },
+          {
+            "lat_deg": 43.438,
+            "lon_deg": -1.631
+          },
+          {
+            "lat_deg": 43.564,
+            "lon_deg": -1.485
+          },
+          {
+            "lat_deg": 44.02,
+            "lon_deg": -1.346
+          },
+          {
+            "lat_deg": 44.56,
+            "lon_deg": -1.246
+          },
+          {
+            "lat_deg": 44.662,
+            "lon_deg": -1.171
+          },
+          {
+            "lat_deg": 44.69,
+            "lon_deg": -1.077
+          },
+          {
+            "lat_deg": 44.764,
+            "lon_deg": -1.153
+          },
+          {
+            "lat_deg": 44.726,
+            "lon_deg": -1.2
+          },
+          {
+            "lat_deg": 44.687,
+            "lon_deg": -1.22
+          },
+          {
+            "lat_deg": 44.667,
+            "lon_deg": -1.245
+          },
+          {
+            "lat_deg": 45.161,
+            "lon_deg": -1.189
+          },
+          {
+            "lat_deg": 45.343,
+            "lon_deg": -1.149
+          },
+          {
+            "lat_deg": 45.532,
+            "lon_deg": -1.081
+          },
+          {
+            "lat_deg": 45.457,
+            "lon_deg": -0.942
+          },
+          {
+            "lat_deg": 45.381,
+            "lon_deg": -0.826
+          },
+          {
+            "lat_deg": 45.314,
+            "lon_deg": -0.767
+          },
+          {
+            "lat_deg": 45.093,
+            "lon_deg": -0.691
+          },
+          {
+            "lat_deg": 45.047,
+            "lon_deg": -0.634
+          },
+          {
+            "lat_deg": 45.001,
+            "lon_deg": -0.548
+          },
+          {
+            "lat_deg": 45.051,
+            "lon_deg": -0.582
+          },
+          {
+            "lat_deg": 45.09,
+            "lon_deg": -0.641
+          },
+          {
+            "lat_deg": 45.385,
+            "lon_deg": -0.733
+          },
+          {
+            "lat_deg": 45.468,
+            "lon_deg": -0.791
+          },
+          {
+            "lat_deg": 45.538,
+            "lon_deg": -0.881
+          },
+          {
+            "lat_deg": 45.686,
+            "lon_deg": -1.17
+          },
+          {
+            "lat_deg": 45.714,
+            "lon_deg": -1.196
+          },
+          {
+            "lat_deg": 45.771,
+            "lon_deg": -1.21
+          },
+          {
+            "lat_deg": 45.769,
+            "lon_deg": -1.114
+          },
+          {
+            "lat_deg": 45.741,
+            "lon_deg": -1.032
+          },
+          {
+            "lat_deg": 45.773,
+            "lon_deg": -1.042
+          },
+          {
+            "lat_deg": 45.806,
+            "lon_deg": -1.066
+          },
+          {
+            "lat_deg": 45.925,
+            "lon_deg": -1.104
+          },
+          {
+            "lat_deg": 46.205,
+            "lon_deg": -1.136
+          },
+          {
+            "lat_deg": 46.253,
+            "lon_deg": -1.132
+          },
+          {
+            "lat_deg": 46.311,
+            "lon_deg": -1.146
+          },
+          {
+            "lat_deg": 46.325,
+            "lon_deg": -1.239
+          },
+          {
+            "lat_deg": 46.327,
+            "lon_deg": -1.313
+          },
+          {
+            "lat_deg": 46.35,
+            "lon_deg": -1.392
+          },
+          {
+            "lat_deg": 46.515,
+            "lon_deg": -1.787
+          },
+          {
+            "lat_deg": 46.685,
+            "lon_deg": -1.921
+          },
+          {
+            "lat_deg": 46.81,
+            "lon_deg": -2.059
+          },
+          {
+            "lat_deg": 46.865,
+            "lon_deg": -2.092
+          },
+          {
+            "lat_deg": 46.921,
+            "lon_deg": -2.09
+          },
+          {
+            "lat_deg": 47.038,
+            "lon_deg": -2.019
+          },
+          {
+            "lat_deg": 47.112,
+            "lon_deg": -2.082
+          },
+          {
+            "lat_deg": 47.126,
+            "lon_deg": -2.144
+          },
+          {
+            "lat_deg": 47.163,
+            "lon_deg": -2.197
+          },
+          {
+            "lat_deg": 47.224,
+            "lon_deg": -2.149
+          },
+          {
+            "lat_deg": 47.263,
+            "lon_deg": -2.108
+          },
+          {
+            "lat_deg": 47.274,
+            "lon_deg": -2.028
+          },
+          {
+            "lat_deg": 47.261,
+            "lon_deg": -1.922
+          },
+          {
+            "lat_deg": 47.225,
+            "lon_deg": -1.821
+          },
+          {
+            "lat_deg": 47.216,
+            "lon_deg": -1.743
+          },
+          {
+            "lat_deg": 47.311,
+            "lon_deg": -1.975
+          },
+          {
+            "lat_deg": 47.279,
+            "lon_deg": -2.353
+          },
+          {
+            "lat_deg": 47.291,
+            "lon_deg": -2.434
+          },
+          {
+            "lat_deg": 47.312,
+            "lon_deg": -2.503
+          },
+          {
+            "lat_deg": 47.382,
+            "lon_deg": -2.53
+          },
+          {
+            "lat_deg": 47.413,
+            "lon_deg": -2.476
+          },
+          {
+            "lat_deg": 47.471,
+            "lon_deg": -2.428
+          },
+          {
+            "lat_deg": 47.512,
+            "lon_deg": -2.483
+          },
+          {
+            "lat_deg": 47.527,
+            "lon_deg": -2.554
+          },
+          {
+            "lat_deg": 47.526,
+            "lon_deg": -2.666
+          },
+          {
+            "lat_deg": 47.514,
+            "lon_deg": -2.77
+          },
+          {
+            "lat_deg": 47.537,
+            "lon_deg": -2.797
+          },
+          {
+            "lat_deg": 47.602,
+            "lon_deg": -2.733
+          },
+          {
+            "lat_deg": 47.626,
+            "lon_deg": -2.787
+          },
+          {
+            "lat_deg": 47.614,
+            "lon_deg": -2.859
+          },
+          {
+            "lat_deg": 47.601,
+            "lon_deg": -2.964
+          },
+          {
+            "lat_deg": 47.621,
+            "lon_deg": -3.064
+          },
+          {
+            "lat_deg": 47.695,
+            "lon_deg": -3.159
+          },
+          {
+            "lat_deg": 47.694,
+            "lon_deg": -3.222
+          },
+          {
+            "lat_deg": 47.685,
+            "lon_deg": -3.265
+          },
+          {
+            "lat_deg": 47.713,
+            "lon_deg": -3.329
+          },
+          {
+            "lat_deg": 47.72,
+            "lon_deg": -3.396
+          },
+          {
+            "lat_deg": 47.711,
+            "lon_deg": -3.444
+          },
+          {
+            "lat_deg": 47.753,
+            "lon_deg": -3.508
+          },
+          {
+            "lat_deg": 47.838,
+            "lon_deg": -3.901
+          },
+          {
+            "lat_deg": 47.848,
+            "lon_deg": -4.071
+          },
+          {
+            "lat_deg": 47.81,
+            "lon_deg": -4.226
+          },
+          {
+            "lat_deg": 47.823,
+            "lon_deg": -4.312
+          },
+          {
+            "lat_deg": 47.877,
+            "lon_deg": -4.375
+          },
+          {
+            "lat_deg": 47.969,
+            "lon_deg": -4.428
+          },
+          {
+            "lat_deg": 48.04,
+            "lon_deg": -4.679
+          },
+          {
+            "lat_deg": 48.086,
+            "lon_deg": -4.629
+          },
+          {
+            "lat_deg": 48.097,
+            "lon_deg": -4.512
+          },
+          {
+            "lat_deg": 48.129,
+            "lon_deg": -4.378
+          },
+          {
+            "lat_deg": 48.17,
+            "lon_deg": -4.329
+          },
+          {
+            "lat_deg": 48.218,
+            "lon_deg": -4.435
+          },
+          {
+            "lat_deg": 48.23,
+            "lon_deg": -4.512
+          },
+          {
+            "lat_deg": 48.247,
+            "lon_deg": -4.544
+          },
+          {
+            "lat_deg": 48.29,
+            "lon_deg": -4.577
+          },
+          {
+            "lat_deg": 48.31,
+            "lon_deg": -4.531
+          },
+          {
+            "lat_deg": 48.299,
+            "lon_deg": -4.498
+          },
+          {
+            "lat_deg": 48.293,
+            "lon_deg": -4.403
+          },
+          {
+            "lat_deg": 48.304,
+            "lon_deg": -4.241
+          },
+          {
+            "lat_deg": 48.347,
+            "lon_deg": -4.302
+          },
+          {
+            "lat_deg": 48.357,
+            "lon_deg": -4.364
+          },
+          {
+            "lat_deg": 48.368,
+            "lon_deg": -4.393
+          },
+          {
+            "lat_deg": 48.372,
+            "lon_deg": -4.525
+          },
+          {
+            "lat_deg": 48.358,
+            "lon_deg": -4.585
+          },
+          {
+            "lat_deg": 48.363,
+            "lon_deg": -4.719
+          },
+          {
+            "lat_deg": 48.41,
+            "lon_deg": -4.749
+          },
+          {
+            "lat_deg": 48.45,
+            "lon_deg": -4.762
+          },
+          {
+            "lat_deg": 48.54,
+            "lon_deg": -4.721
+          },
+          {
+            "lat_deg": 48.62,
+            "lon_deg": -4.531
+          },
+          {
+            "lat_deg": 48.708,
+            "lon_deg": -4.059
+          },
+          {
+            "lat_deg": 48.695,
+            "lon_deg": -3.856
+          },
+          {
+            "lat_deg": 48.71,
+            "lon_deg": -3.715
+          },
+          {
+            "lat_deg": 48.766,
+            "lon_deg": -3.546
+          },
+          {
+            "lat_deg": 48.813,
+            "lon_deg": -3.471
+          },
+          {
+            "lat_deg": 48.841,
+            "lon_deg": -3.231
+          },
+          {
+            "lat_deg": 48.791,
+            "lon_deg": -3.003
+          },
+          {
+            "lat_deg": 48.601,
+            "lon_deg": -2.793
+          },
+          {
+            "lat_deg": 48.537,
+            "lon_deg": -2.692
+          },
+          {
+            "lat_deg": 48.648,
+            "lon_deg": -2.446
+          },
+          {
+            "lat_deg": 48.645,
+            "lon_deg": -2.079
+          },
+          {
+            "lat_deg": 48.582,
+            "lon_deg": -2.004
+          },
+          {
+            "lat_deg": 48.635,
+            "lon_deg": -1.973
+          },
+          {
+            "lat_deg": 48.697,
+            "lon_deg": -1.906
+          },
+          {
+            "lat_deg": 48.669,
+            "lon_deg": -1.852
+          },
+          {
+            "lat_deg": 48.631,
+            "lon_deg": -1.825
+          },
+          {
+            "lat_deg": 48.641,
+            "lon_deg": -1.438
+          },
+          {
+            "lat_deg": 48.653,
+            "lon_deg": -1.376
+          },
+          {
+            "lat_deg": 48.698,
+            "lon_deg": -1.48
+          },
+          {
+            "lat_deg": 48.806,
+            "lon_deg": -1.565
+          },
+          {
+            "lat_deg": 49.202,
+            "lon_deg": -1.583
+          },
+          {
+            "lat_deg": 49.313,
+            "lon_deg": -1.69
+          },
+          {
+            "lat_deg": 49.49,
+            "lon_deg": -1.813
+          },
+          {
+            "lat_deg": 49.595,
+            "lon_deg": -1.87
+          },
+          {
+            "lat_deg": 49.631,
+            "lon_deg": -1.875
+          },
+          {
+            "lat_deg": 49.684,
+            "lon_deg": -1.856
+          },
+          {
+            "lat_deg": 49.681,
+            "lon_deg": -1.705
+          },
+          {
+            "lat_deg": 49.668,
+            "lon_deg": -1.588
+          },
+          {
+            "lat_deg": 49.707,
+            "lon_deg": -1.366
+          },
+          {
+            "lat_deg": 49.68,
+            "lon_deg": -1.259
+          },
+          {
+            "lat_deg": 49.598,
+            "lon_deg": -1.265
+          },
+          {
+            "lat_deg": 49.495,
+            "lon_deg": -1.232
+          },
+          {
+            "lat_deg": 49.445,
+            "lon_deg": -1.195
+          },
+          {
+            "lat_deg": 49.388,
+            "lon_deg": -1.139
+          },
+          {
+            "lat_deg": 49.393,
+            "lon_deg": -0.959
+          },
+          {
+            "lat_deg": 49.36,
+            "lon_deg": -0.766
+          },
+          {
+            "lat_deg": 49.355,
+            "lon_deg": -0.521
+          },
+          {
+            "lat_deg": 49.297,
+            "lon_deg": -0.163
+          },
+          {
+            "lat_deg": 49.33,
+            "lon_deg": -0.011
+          },
+          {
+            "lat_deg": 49.402,
+            "lon_deg": 0.136
+          },
+          {
+            "lat_deg": 49.448,
+            "lon_deg": 0.417
+          },
+          {
+            "lat_deg": 49.473,
+            "lon_deg": 0.439
+          },
+          {
+            "lat_deg": 49.463,
+            "lon_deg": 0.278
+          },
+          {
+            "lat_deg": 49.508,
+            "lon_deg": 0.129
+          },
+          {
+            "lat_deg": 49.558,
+            "lon_deg": 0.109
+          },
+          {
+            "lat_deg": 49.602,
+            "lon_deg": 0.127
+          },
+          {
+            "lat_deg": 49.703,
+            "lon_deg": 0.187
+          },
+          {
+            "lat_deg": 49.863,
+            "lon_deg": 0.616
+          },
+          {
+            "lat_deg": 49.91,
+            "lon_deg": 0.924
+          },
+          {
+            "lat_deg": 49.998,
+            "lon_deg": 1.246
+          },
+          {
+            "lat_deg": 50.089,
+            "lon_deg": 1.407
+          },
+          {
+            "lat_deg": 50.205,
+            "lon_deg": 1.514
+          },
+          {
+            "lat_deg": 50.231,
+            "lon_deg": 1.548
+          },
+          {
+            "lat_deg": 50.252,
+            "lon_deg": 1.593
+          },
+          {
+            "lat_deg": 50.294,
+            "lon_deg": 1.552
+          },
+          {
+            "lat_deg": 50.739,
+            "lon_deg": 1.579
+          },
+          {
+            "lat_deg": 50.819,
+            "lon_deg": 1.61
+          },
+          {
+            "lat_deg": 50.885,
+            "lon_deg": 1.672
+          },
+          {
+            "lat_deg": 50.936,
+            "lon_deg": 1.768
+          },
+          {
+            "lat_deg": 50.991,
+            "lon_deg": 1.913
+          },
+          {
+            "lat_deg": 51.067,
+            "lon_deg": 2.446
+          },
+          {
+            "lat_deg": 51.097,
+            "lon_deg": 2.525
+          },
+          {
+            "lat_deg": 51.05,
+            "lon_deg": 2.536
+          },
+          {
+            "lat_deg": 50.989,
+            "lon_deg": 2.575
+          },
+          {
+            "lat_deg": 50.955,
+            "lon_deg": 2.601
+          },
+          {
+            "lat_deg": 50.912,
+            "lon_deg": 2.579
+          },
+          {
+            "lat_deg": 50.876,
+            "lon_deg": 2.597
+          },
+          {
+            "lat_deg": 50.811,
+            "lon_deg": 2.669
+          },
+          {
+            "lat_deg": 50.751,
+            "lon_deg": 2.759
+          },
+          {
+            "lat_deg": 50.712,
+            "lon_deg": 2.84
+          },
+          {
+            "lat_deg": 50.716,
+            "lon_deg": 2.862
+          },
+          {
+            "lat_deg": 50.727,
+            "lon_deg": 2.922
+          },
+          {
+            "lat_deg": 50.767,
+            "lon_deg": 3.023
+          },
+          {
+            "lat_deg": 50.779,
+            "lon_deg": 3.107
+          },
+          {
+            "lat_deg": 50.749,
+            "lon_deg": 3.155
+          },
+          {
+            "lat_deg": 50.732,
+            "lon_deg": 3.182
+          },
+          {
+            "lat_deg": 50.663,
+            "lon_deg": 3.235
+          },
+          {
+            "lat_deg": 50.591,
+            "lon_deg": 3.25
+          },
+          {
+            "lat_deg": 50.532,
+            "lon_deg": 3.273
+          },
+          {
+            "lat_deg": 50.507,
+            "lon_deg": 3.316
+          },
+          {
+            "lat_deg": 50.499,
+            "lon_deg": 3.477
+          },
+          {
+            "lat_deg": 50.477,
+            "lon_deg": 3.595
+          },
+          {
+            "lat_deg": 50.457,
+            "lon_deg": 3.627
+          },
+          {
+            "lat_deg": 50.325,
+            "lon_deg": 3.667
+          },
+          {
+            "lat_deg": 50.306,
+            "lon_deg": 3.689
+          },
+          {
+            "lat_deg": 50.322,
+            "lon_deg": 3.719
+          },
+          {
+            "lat_deg": 50.344,
+            "lon_deg": 3.748
+          },
+          {
+            "lat_deg": 50.347,
+            "lon_deg": 3.789
+          },
+          {
+            "lat_deg": 50.339,
+            "lon_deg": 3.858
+          },
+          {
+            "lat_deg": 50.336,
+            "lon_deg": 3.95
+          },
+          {
+            "lat_deg": 50.321,
+            "lon_deg": 4.044
+          },
+          {
+            "lat_deg": 50.246,
+            "lon_deg": 4.175
+          },
+          {
+            "lat_deg": 50.222,
+            "lon_deg": 4.17
+          },
+          {
+            "lat_deg": 50.178,
+            "lon_deg": 4.144
+          },
+          {
+            "lat_deg": 50.144,
+            "lon_deg": 4.135
+          },
+          {
+            "lat_deg": 50.13,
+            "lon_deg": 4.158
+          },
+          {
+            "lat_deg": 50.094,
+            "lon_deg": 4.192
+          },
+          {
+            "lat_deg": 50.053,
+            "lon_deg": 4.184
+          },
+          {
+            "lat_deg": 50.024,
+            "lon_deg": 4.15
+          },
+          {
+            "lat_deg": 50,
+            "lon_deg": 4.137
+          },
+          {
+            "lat_deg": 49.984,
+            "lon_deg": 4.137
+          },
+          {
+            "lat_deg": 49.972,
+            "lon_deg": 4.149
+          },
+          {
+            "lat_deg": 49.96,
+            "lon_deg": 4.176
+          },
+          {
+            "lat_deg": 49.945,
+            "lon_deg": 4.369
+          },
+          {
+            "lat_deg": 49.96,
+            "lon_deg": 4.545
+          },
+          {
+            "lat_deg": 50.002,
+            "lon_deg": 4.656
+          },
+          {
+            "lat_deg": 50.047,
+            "lon_deg": 4.675
+          },
+          {
+            "lat_deg": 50.097,
+            "lon_deg": 4.707
+          },
+          {
+            "lat_deg": 50.139,
+            "lon_deg": 4.773
+          },
+          {
+            "lat_deg": 50.153,
+            "lon_deg": 4.819
+          },
+          {
+            "lat_deg": 50.136,
+            "lon_deg": 4.861
+          },
+          {
+            "lat_deg": 49.96,
+            "lon_deg": 4.79
+          },
+          {
+            "lat_deg": 49.915,
+            "lon_deg": 4.842
+          },
+          {
+            "lat_deg": 49.847,
+            "lon_deg": 4.849
+          },
+          {
+            "lat_deg": 49.788,
+            "lon_deg": 4.868
+          },
+          {
+            "lat_deg": 49.789,
+            "lon_deg": 4.931
+          },
+          {
+            "lat_deg": 49.778,
+            "lon_deg": 5.007
+          },
+          {
+            "lat_deg": 49.757,
+            "lon_deg": 5.061
+          },
+          {
+            "lat_deg": 49.721,
+            "lon_deg": 5.124
+          },
+          {
+            "lat_deg": 49.689,
+            "lon_deg": 5.215
+          },
+          {
+            "lat_deg": 49.678,
+            "lon_deg": 5.279
+          },
+          {
+            "lat_deg": 49.651,
+            "lon_deg": 5.302
+          },
+          {
+            "lat_deg": 49.62,
+            "lon_deg": 5.354
+          },
+          {
+            "lat_deg": 49.554,
+            "lon_deg": 5.435
+          },
+          {
+            "lat_deg": 49.511,
+            "lon_deg": 5.507
+          },
+          {
+            "lat_deg": 49.511,
+            "lon_deg": 5.542
+          },
+          {
+            "lat_deg": 49.528,
+            "lon_deg": 5.61
+          },
+          {
+            "lat_deg": 49.539,
+            "lon_deg": 5.71
+          },
+          {
+            "lat_deg": 49.538,
+            "lon_deg": 5.79
+          },
+          {
+            "lat_deg": 49.505,
+            "lon_deg": 5.823
+          },
+          {
+            "lat_deg": 49.49,
+            "lon_deg": 5.901
+          },
+          {
+            "lat_deg": 49.478,
+            "lon_deg": 5.929
+          },
+          {
+            "lat_deg": 49.455,
+            "lon_deg": 5.959
+          },
+          {
+            "lat_deg": 49.445,
+            "lon_deg": 6.011
+          },
+          {
+            "lat_deg": 49.455,
+            "lon_deg": 6.074
+          },
+          {
+            "lat_deg": 49.485,
+            "lon_deg": 6.12
+          },
+          {
+            "lat_deg": 49.499,
+            "lon_deg": 6.181
+          },
+          {
+            "lat_deg": 49.494,
+            "lon_deg": 6.242
+          },
+          {
+            "lat_deg": 49.478,
+            "lon_deg": 6.277
+          },
+          {
+            "lat_deg": 49.453,
+            "lon_deg": 6.344
+          },
+          {
+            "lat_deg": 49.458,
+            "lon_deg": 6.382
+          },
+          {
+            "lat_deg": 49.443,
+            "lon_deg": 6.458
+          },
+          {
+            "lat_deg": 49.395,
+            "lon_deg": 6.534
+          },
+          {
+            "lat_deg": 49.346,
+            "lon_deg": 6.566
+          },
+          {
+            "lat_deg": 49.32,
+            "lon_deg": 6.575
+          },
+          {
+            "lat_deg": 49.291,
+            "lon_deg": 6.608
+          },
+          {
+            "lat_deg": 49.161,
+            "lon_deg": 6.735
+          },
+          {
+            "lat_deg": 49.154,
+            "lon_deg": 6.776
+          },
+          {
+            "lat_deg": 49.174,
+            "lon_deg": 6.821
+          },
+          {
+            "lat_deg": 49.202,
+            "lon_deg": 6.85
+          },
+          {
+            "lat_deg": 49.208,
+            "lon_deg": 6.891
+          },
+          {
+            "lat_deg": 49.195,
+            "lon_deg": 6.958
+          },
+          {
+            "lat_deg": 49.18,
+            "lon_deg": 7.001
+          },
+          {
+            "lat_deg": 49.123,
+            "lon_deg": 7.022
+          },
+          {
+            "lat_deg": 49.113,
+            "lon_deg": 7.037
+          },
+          {
+            "lat_deg": 49.125,
+            "lon_deg": 7.066
+          },
+          {
+            "lat_deg": 49.128,
+            "lon_deg": 7.117
+          },
+          {
+            "lat_deg": 49.114,
+            "lon_deg": 7.2
+          },
+          {
+            "lat_deg": 49.13,
+            "lon_deg": 7.313
+          },
+          {
+            "lat_deg": 49.153,
+            "lon_deg": 7.404
+          },
+          {
+            "lat_deg": 49.152,
+            "lon_deg": 7.451
+          },
+          {
+            "lat_deg": 49.086,
+            "lon_deg": 7.525
+          },
+          {
+            "lat_deg": 49.062,
+            "lon_deg": 7.611
+          },
+          {
+            "lat_deg": 49.042,
+            "lon_deg": 7.799
+          },
+          {
+            "lat_deg": 49.011,
+            "lon_deg": 8.001
+          },
+          {
+            "lat_deg": 48.986,
+            "lon_deg": 8.081
+          },
+          {
+            "lat_deg": 48.974,
+            "lon_deg": 8.135
+          },
+          {
+            "lat_deg": 48.886,
+            "lon_deg": 8.14
+          },
+          {
+            "lat_deg": 48.873,
+            "lon_deg": 8.124
+          },
+          {
+            "lat_deg": 48.699,
+            "lon_deg": 7.923
+          },
+          {
+            "lat_deg": 48.636,
+            "lon_deg": 7.838
+          },
+          {
+            "lat_deg": 48.547,
+            "lon_deg": 7.795
+          },
+          {
+            "lat_deg": 48.41,
+            "lon_deg": 7.765
+          },
+          {
+            "lat_deg": 48.28,
+            "lon_deg": 7.706
+          },
+          {
+            "lat_deg": 48.157,
+            "lon_deg": 7.617
+          },
+          {
+            "lat_deg": 48.064,
+            "lon_deg": 7.584
+          },
+          {
+            "lat_deg": 48.003,
+            "lon_deg": 7.608
+          },
+          {
+            "lat_deg": 47.906,
+            "lon_deg": 7.593
+          },
+          {
+            "lat_deg": 47.774,
+            "lon_deg": 7.539
+          },
+          {
+            "lat_deg": 47.674,
+            "lon_deg": 7.529
+          },
+          {
+            "lat_deg": 47.607,
+            "lon_deg": 7.565
+          }
+        ]
+      }
+    ]
+  },
+  "rouge": {
+    "_aide": {
+      "unite": "Identifiant du drone dans le catalogue.",
+      "nombre": "Taille de l'essaim.",
+      "tactique": "Comportement de l'essaim : 'direct', 'disperse', 'fourmi', 'plan_de_vol' (algos/global/comportement/…) ou l'identifiant complet d'un algorithme de comportement (MODELE § 8.2, § 12).",
+      "concentration_max": "Nombre maximal de drones portes sur une meme cible ; fixe le nombre de groupes (MODELE § 6.1).",
+      "etalement_s": "Tactique 'disperse' : duree sur laquelle les departs sont etales.",
+      "fourmi_eclatement_rayon_km": "Tactique 'fourmi' : distance au centre ou le couloir eclate vers les cibles.",
+      "fourmi_largeur_couloir_km": "Tactiques 'fourmi' et 'plan_de_vol' : largeur du couloir compact.",
+      "plan_de_vol": "Tactique 'plan_de_vol' : points de passage de l'essaim, liste de {lat_deg, lon_deg} ; apres le dernier, chaque drone rejoint sa cible.",
+      "plan_de_vol[].lat_deg": "Latitude du point de passage (WGS84).",
+      "plan_de_vol[].lon_deg": "Longitude du point de passage (WGS84).",
+      "surcharges": "Valeurs qui remplacent celles de l'unite pour ce scenario (cles et unites du fichier d'unite)."
+    },
+    "unite": "vecteurs/drones/drone_reaction_notionnel",
+    "nombre": 1000,
+    "tactique": "fourmi",
+    "concentration_max": 300,
+    "etalement_s": 120,
+    "fourmi_eclatement_rayon_km": 60,
+    "fourmi_largeur_couloir_km": 6,
+    "surcharges": {}
+  },
+  "bleu": {
+    "_aide": {
+      "avions": "Groupes de vecteurs defensifs en attente : avions et drones defensifs (armes, intercepteurs a usage unique, brouilleurs) ; chaque groupe a son type et son effectif.",
+      "avions[].unite": "Identifiant de l'avion dans le catalogue.",
+      "avions[].nombre": "Nombre d'avions du groupe.",
+      "avions[].altitude_m": "Altitude de vol du groupe, en orbite comme en mise a poste.",
+      "avions[].surcharges": "Valeurs qui remplacent celles de l'avion pour ce groupe.",
+      "avions[].surcharges_emport": "Valeurs qui remplacent celles de son arme pour ce groupe.",
+      "avions[].orbites_placees": "Orbites placees a la main (editeur) : liste de {lat_deg, lon_deg}, une par avion ; les avions en plus sont places au hasard.",
+      "sol": "Postes sol-air, repartis a parts egales sur les cibles.",
+      "radar": "Couverture radar : continue le long de la frontiere, a l'horizon du type de radar choisi (MODELE § 2).",
+      "conduite": "Centre de conduite des avions.",
+      "ordres": "Ordres donnes en cours de raid (editeur) : a l'instant t_s, les avions cites rallient le point ; la conduite les reprend une fois arrives.",
+      "ordres[].t_s": "Instant de l'ordre depuis le debut du raid.",
+      "ordres[].avions": "Numeros des avions concernes (ordre de creation : groupes dans l'ordre du scenario).",
+      "ordres[].lat_deg": "Latitude du point a rallier (WGS84).",
+      "ordres[].lon_deg": "Longitude du point a rallier (WGS84).",
+      "reseau": "Reseau d'information entre radars, centre de conduite et avions (MODELE § 15.2)."
+    },
+    "avions": [
+      {
+        "unite": "vecteurs/avions/turbopropulseur_ir_notionnel",
+        "nombre": 20,
+        "altitude_m": 1000,
+        "surcharges": {},
+        "surcharges_emport": {},
+        "orbites_placees": [
+          {
+            "lat_deg": 47.183164,
+            "lon_deg": 5.330945
+          },
+          {
+            "lat_deg": 46.863727,
+            "lon_deg": 4.947404
+          },
+          {
+            "lat_deg": 46.441177,
+            "lon_deg": 4.705179
+          },
+          {
+            "lat_deg": 46.543965,
+            "lon_deg": 5.073764
+          },
+          {
+            "lat_deg": 46.16174,
+            "lon_deg": 5.148096
+          },
+          {
+            "lat_deg": 45.776282,
+            "lon_deg": 5.196783
+          },
+          {
+            "lat_deg": 45.466978,
+            "lon_deg": 5.250538
+          },
+          {
+            "lat_deg": 45.190545,
+            "lon_deg": 5.62641
+          },
+          {
+            "lat_deg": 44.878469,
+            "lon_deg": 5.407685
+          },
+          {
+            "lat_deg": 44.568578,
+            "lon_deg": 4.890066
+          },
+          {
+            "lat_deg": 44.68546,
+            "lon_deg": 4.287173
+          },
+          {
+            "lat_deg": 44.751599,
+            "lon_deg": 3.689456
+          },
+          {
+            "lat_deg": 44.637439,
+            "lon_deg": 3.11763
+          },
+          {
+            "lat_deg": 44.199614,
+            "lon_deg": 2.942703
+          },
+          {
+            "lat_deg": 44.109693,
+            "lon_deg": 2.459424
+          },
+          {
+            "lat_deg": 44.254747,
+            "lon_deg": 1.928384
+          },
+          {
+            "lat_deg": 44.296353,
+            "lon_deg": 1.408647
+          },
+          {
+            "lat_deg": 44.366499,
+            "lon_deg": 0.765075
+          },
+          {
+            "lat_deg": 44.524606,
+            "lon_deg": 0.183329
+          },
+          {
+            "lat_deg": 44.78006,
+            "lon_deg": 0.052447
+          }
+        ]
+      },
+      {
+        "unite": "vecteurs/avions/turbopropulseur_laser_notionnel",
+        "nombre": 30,
+        "altitude_m": 1000,
+        "surcharges": {},
+        "surcharges_emport": {},
+        "orbites_placees": [
+          {
+            "lat_deg": 45.257615,
+            "lon_deg": 0.238308
+          },
+          {
+            "lat_deg": 45.583428,
+            "lon_deg": 0.289985
+          },
+          {
+            "lat_deg": 45.959949,
+            "lon_deg": 0.472649
+          },
+          {
+            "lat_deg": 45.837626,
+            "lon_deg": 0.620832
+          },
+          {
+            "lat_deg": 46.157557,
+            "lon_deg": 0.412046
+          },
+          {
+            "lat_deg": 46.540645,
+            "lon_deg": 0.121461
+          },
+          {
+            "lat_deg": 46.946855,
+            "lon_deg": -0.170429
+          },
+          {
+            "lat_deg": 47.072376,
+            "lon_deg": -0.245878
+          },
+          {
+            "lat_deg": 47.275029,
+            "lon_deg": -0.617775
+          },
+          {
+            "lat_deg": 47.422562,
+            "lon_deg": -1.28017
+          },
+          {
+            "lat_deg": 47.604223,
+            "lon_deg": -1.520354
+          },
+          {
+            "lat_deg": 47.747159,
+            "lon_deg": -1.718249
+          },
+          {
+            "lat_deg": 47.936925,
+            "lon_deg": -1.158399
+          },
+          {
+            "lat_deg": 47.847626,
+            "lon_deg": -0.547012
+          },
+          {
+            "lat_deg": 47.872311,
+            "lon_deg": 0.039631
+          },
+          {
+            "lat_deg": 48.200602,
+            "lon_deg": 0.156831
+          },
+          {
+            "lat_deg": 48.508693,
+            "lon_deg": 0.265061
+          },
+          {
+            "lat_deg": 48.294126,
+            "lon_deg": 0.79384
+          },
+          {
+            "lat_deg": 48.371728,
+            "lon_deg": 1.205534
+          },
+          {
+            "lat_deg": 48.635499,
+            "lon_deg": 1.688389
+          },
+          {
+            "lat_deg": 49.01856,
+            "lon_deg": 2.018367
+          },
+          {
+            "lat_deg": 49.310704,
+            "lon_deg": 2.513835
+          },
+          {
+            "lat_deg": 49.084557,
+            "lon_deg": 2.976272
+          },
+          {
+            "lat_deg": 48.856318,
+            "lon_deg": 3.477758
+          },
+          {
+            "lat_deg": 48.737774,
+            "lon_deg": 3.851644
+          },
+          {
+            "lat_deg": 48.460095,
+            "lon_deg": 4.218489
+          },
+          {
+            "lat_deg": 48.356753,
+            "lon_deg": 4.86496
+          },
+          {
+            "lat_deg": 48.176686,
+            "lon_deg": 5.403985
+          },
+          {
+            "lat_deg": 47.953382,
+            "lon_deg": 5.796362
+          },
+          {
+            "lat_deg": 47.485523,
+            "lon_deg": 5.590397
+          }
+        ]
+      },
+      {
+        "unite": "vecteurs/drones_defensifs/drone_arme_notionnel",
+        "nombre": 40,
+        "altitude_m": 300,
+        "surcharges": {},
+        "surcharges_emport": {},
+        "orbites_placees": [
+          {
+            "lat_deg": 46.679455,
+            "lon_deg": 2.007384
+          },
+          {
+            "lat_deg": 48.814263,
+            "lon_deg": -4.406732
+          },
+          {
+            "lat_deg": 43.042994,
+            "lon_deg": 6.649927
+          },
+          {
+            "lat_deg": 42.814708,
+            "lon_deg": -1.38774
+          },
+          {
+            "lat_deg": 49.197132,
+            "lon_deg": 7.77626
+          },
+          {
+            "lat_deg": 50.992837,
+            "lon_deg": 1.647853
+          },
+          {
+            "lat_deg": 43.70716,
+            "lon_deg": 2.599714
+          },
+          {
+            "lat_deg": 46.368916,
+            "lon_deg": 7.103402
+          },
+          {
+            "lat_deg": 46.342842,
+            "lon_deg": -1.691796
+          },
+          {
+            "lat_deg": 48.753571,
+            "lon_deg": 0.032373
+          },
+          {
+            "lat_deg": 49.173933,
+            "lon_deg": 3.848377
+          },
+          {
+            "lat_deg": 44.466895,
+            "lon_deg": -0.031229
+          },
+          {
+            "lat_deg": 46.887594,
+            "lon_deg": 2.151681
+          },
+          {
+            "lat_deg": 48.955991,
+            "lon_deg": -4.131189
+          },
+          {
+            "lat_deg": 42.988788,
+            "lon_deg": 6.344353
+          },
+          {
+            "lat_deg": 43.021005,
+            "lon_deg": -1.528222
+          },
+          {
+            "lat_deg": 48.971552,
+            "lon_deg": 7.847957
+          },
+          {
+            "lat_deg": 50.923659,
+            "lon_deg": 1.995774
+          },
+          {
+            "lat_deg": 43.809023,
+            "lon_deg": 2.314192
+          },
+          {
+            "lat_deg": 46.169938,
+            "lon_deg": 6.93546
+          },
+          {
+            "lat_deg": 46.558983,
+            "lon_deg": -1.575727
+          },
+          {
+            "lat_deg": 48.808989,
+            "lon_deg": 0.370859
+          },
+          {
+            "lat_deg": 49.015171,
+            "lon_deg": 4.102721
+          },
+          {
+            "lat_deg": 44.678563,
+            "lon_deg": -0.159334
+          },
+          {
+            "lat_deg": 46.939197,
+            "lon_deg": 2.479563
+          },
+          {
+            "lat_deg": 48.901381,
+            "lon_deg": -3.791407
+          },
+          {
+            "lat_deg": 43.129696,
+            "lon_deg": 6.095264
+          },
+          {
+            "lat_deg": 43.230352,
+            "lon_deg": -1.395933
+          },
+          {
+            "lat_deg": 48.793932,
+            "lon_deg": 7.625324
+          },
+          {
+            "lat_deg": 50.708459,
+            "lon_deg": 2.125568
+          },
+          {
+            "lat_deg": 44.034218,
+            "lon_deg": 2.245193
+          },
+          {
+            "lat_deg": 46.13622,
+            "lon_deg": 6.607271
+          },
+          {
+            "lat_deg": 46.63042,
+            "lon_deg": -1.257746
+          },
+          {
+            "lat_deg": 48.667916,
+            "lon_deg": 0.646373
+          },
+          {
+            "lat_deg": 48.785618,
+            "lon_deg": 4.071898
+          },
+          {
+            "lat_deg": 44.882104,
+            "lon_deg": -0.007104
+          },
+          {
+            "lat_deg": 46.79503,
+            "lon_deg": 2.741856
+          },
+          {
+            "lat_deg": 48.691979,
+            "lon_deg": -3.645748
+          },
+          {
+            "lat_deg": 43.36034,
+            "lon_deg": 6.089702
+          },
+          {
+            "lat_deg": 43.284532,
+            "lon_deg": -1.089146
+          }
+        ]
+      },
+      {
+        "unite": "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel",
+        "nombre": 0,
+        "altitude_m": 300,
+        "surcharges": {},
+        "surcharges_emport": {},
+        "orbites_placees": []
+      },
+      {
+        "unite": "vecteurs/drones_defensifs/brouilleur_notionnel",
+        "nombre": 10,
+        "altitude_m": 300,
+        "surcharges": {},
+        "surcharges_emport": {},
+        "orbites_placees": [
+          {
+            "lat_deg": 48.797119,
+            "lon_deg": 7.276539
+          },
+          {
+            "lat_deg": 50.509946,
+            "lon_deg": 1.941836
+          },
+          {
+            "lat_deg": 44.213496,
+            "lon_deg": 2.446639
+          },
+          {
+            "lat_deg": 46.292908,
+            "lon_deg": 6.36363
+          },
+          {
+            "lat_deg": 46.502859,
+            "lon_deg": -0.979307
+          },
+          {
+            "lat_deg": 48.437469,
+            "lon_deg": 0.650748
+          },
+          {
+            "lat_deg": 48.657972,
+            "lon_deg": 3.781898
+          },
+          {
+            "lat_deg": 44.923586,
+            "lon_deg": 0.31209
+          },
+          {
+            "lat_deg": 46.564492,
+            "lon_deg": 2.740499
+          },
+          {
+            "lat_deg": 48.486168,
+            "lon_deg": -3.802073
+          }
+        ]
+      }
+    ],
+    "sol": {
+      "_aide": {
+        "unite": "Identifiant du poste dans le catalogue.",
+        "nombre": "Nombre de postes sol-air.",
+        "munitions": "Stock total de munitions sol, partage a parts egales entre les postes.",
+        "surcharges": "Valeurs qui remplacent celles du poste pour ce scenario."
+      },
+      "unite": "sites/postes/poste_sol_air_notionnel",
+      "nombre": 400,
+      "munitions": 2000,
+      "surcharges": {}
+    },
+    "radar": {
+      "_aide": {
+        "unite": "Identifiant du radar dans le catalogue.",
+        "surcharges": "Valeurs qui remplacent celles du radar pour ce scenario.",
+        "disposition": "'frontiere' : radars repartis le long de la frontiere ; 'sites' : radars places un a un (MODELE § 15.1).",
+        "sites": "Positions des radars en disposition 'sites'.",
+        "sites[].lat_deg": "Latitude du radar.",
+        "sites[].lon_deg": "Longitude du radar."
+      },
+      "unite": "capteurs/radars/radar_basse_altitude_notionnel",
+      "surcharges": {},
+      "disposition": "sites",
+      "sites": [
+        {
+          "lat_deg": 47.421269,
+          "lon_deg": 7.350396
+        },
+        {
+          "lat_deg": 46.219391,
+          "lon_deg": 6.451765
+        },
+        {
+          "lat_deg": 45.925241,
+          "lon_deg": 7.363065
+        },
+        {
+          "lat_deg": 44.893008,
+          "lon_deg": 7.021315
+        },
+        {
+          "lat_deg": 44.002951,
+          "lon_deg": 7.83528
+        },
+        {
+          "lat_deg": 43.04548,
+          "lon_deg": 6.878273
+        },
+        {
+          "lat_deg": 43.205492,
+          "lon_deg": 5.21868
+        },
+        {
+          "lat_deg": 43.009072,
+          "lon_deg": 3.476221
+        },
+        {
+          "lat_deg": 42.115305,
+          "lon_deg": 2.666995
+        },
+        {
+          "lat_deg": 42.454645,
+          "lon_deg": 1.110706
+        },
+        {
+          "lat_deg": 42.575372,
+          "lon_deg": -0.589344
+        },
+        {
+          "lat_deg": 43.12782,
+          "lon_deg": -1.998267
+        },
+        {
+          "lat_deg": 44.398949,
+          "lon_deg": -1.547302
+        },
+        {
+          "lat_deg": 45.343902,
+          "lon_deg": -1.287558
+        },
+        {
+          "lat_deg": 45.589956,
+          "lon_deg": -1.518006
+        },
+        {
+          "lat_deg": 46.592577,
+          "lon_deg": -2.2377
+        },
+        {
+          "lat_deg": 47.348918,
+          "lon_deg": -2.579036
+        },
+        {
+          "lat_deg": 47.83952,
+          "lon_deg": -3.937045
+        },
+        {
+          "lat_deg": 48.395844,
+          "lon_deg": -4.929277
+        },
+        {
+          "lat_deg": 48.824344,
+          "lon_deg": -4.152641
+        },
+        {
+          "lat_deg": 48.740583,
+          "lon_deg": -2.359631
+        },
+        {
+          "lat_deg": 49.617754,
+          "lon_deg": -2.065522
+        },
+        {
+          "lat_deg": 49.565738,
+          "lon_deg": -0.752948
+        },
+        {
+          "lat_deg": 50.103621,
+          "lon_deg": 0.437507
+        },
+        {
+          "lat_deg": 51.111878,
+          "lon_deg": 1.571774
+        },
+        {
+          "lat_deg": 50.953093,
+          "lon_deg": 3.255846
+        },
+        {
+          "lat_deg": 50.201526,
+          "lon_deg": 4.544738
+        },
+        {
+          "lat_deg": 49.756176,
+          "lon_deg": 5.905428
+        },
+        {
+          "lat_deg": 49.305919,
+          "lon_deg": 7.650096
+        },
+        {
+          "lat_deg": 48.362786,
+          "lon_deg": 8.040289
+        }
+      ]
+    },
+    "conduite": {
+      "_aide": {
+        "delai_reaction_s": "Duree detection -> decision -> ordre de mise a poste.",
+        "pas_decision_s": "Periode de replanification des mises a poste (MODELE § 8.3).",
+        "interception_profondeur_km": "Profondeur dans la zone ou l'on veut intercepter ; sert aux abaques (MODELE § 3.2).",
+        "pistage": "Algorithme qui regroupe les detections en pistes (algos/global/pistage/…).",
+        "allocation": "Algorithme qui affecte les avions libres aux pistes (algos/global/allocation/…)."
+      },
+      "delai_reaction_s": 90,
+      "pas_decision_s": 5,
+      "interception_profondeur_km": 50,
+      "pistage": "global/pistage/cellules",
+      "allocation": "global/allocation/densite_pistes"
+    },
+    "reseau": {
+      "_aide": {
+        "mode": "'complet' : tout le monde parle avec tout le monde, sans delai ; 'liaisons' : seules les liaisons listees portent l'information (MODELE § 15.2).",
+        "centre_lat_deg": "Latitude du centre de conduite ; null : au centre du theatre.",
+        "centre_lon_deg": "Longitude du centre de conduite ; null : au centre du theatre.",
+        "liaisons": "Liaisons du reseau en mode 'liaisons'.",
+        "liaisons[].de": "Extremite : 'conduite' (CDC principal), 'centre:<k>' (autre CDC), 'radar:<i>' (R<i+1>), 'avions:<g>' (groupe g de bleu.avions) ou 'sol:<i>' (postes sol de la cible C<i+1>).",
+        "liaisons[].vers": "Autre extremite, memes noms ; une liaison porte l'information dans les deux sens.",
+        "liaisons[].moyen": "Moyen de communication : identifiant d'une unite de unites/liaisons/.",
+        "conduite_ciblee": "Vrai : le centre de conduite compte parmi les cibles de l'essaim ; frappe, il est detruit (MODELE § 15.4).",
+        "pannes": "Pannes et destructions datees (editeur, mode ordres) : a l'instant t_s, l'element cesse de fonctionner.",
+        "pannes[].t_s": "Instant de la panne depuis le debut du raid.",
+        "pannes[].element": "Element en panne : 'conduite', 'centre:<k>', 'radar:<i>' ou 'liaison:<k>' (k-ieme liaison de la liste).",
+        "pannes[].duree_s": "Duree de la panne ; null : definitive.",
+        "centres": "Centres de detection et de controle supplementaires (CDC 2, CDC 3...) : liste de {nom, lat_deg, lon_deg} ; noeuds 'centre:<k>' (MODELE § 18).",
+        "centres[].nom": "Nom affiche du centre.",
+        "centres[].lat_deg": "Latitude du centre.",
+        "centres[].lon_deg": "Longitude du centre."
+      },
+      "mode": "complet",
+      "centre_lat_deg": 46.680537,
+      "centre_lon_deg": 2.642404,
+      "liaisons": [],
+      "conduite_ciblee": false,
+      "pannes": [],
+      "centres": [
+        {
+          "nom": "CDC 2",
+          "lat_deg": 48.540997,
+          "lon_deg": -4.55946
+        },
+        {
+          "nom": "CDC 3",
+          "lat_deg": 50.989596,
+          "lon_deg": 2.067367
+        }
+      ]
+    }
+  },
+  "simulation": {
+    "_aide": {
+      "pas_s": "Pas de temps ; 0,5 s = 111 m parcourus par un drone a 800 km/h.",
+      "graine": "Graine du generateur aleatoire : meme graine, meme deroulement."
+    },
+    "pas_s": 0.5,
+    "graine": 42
+  }
+}

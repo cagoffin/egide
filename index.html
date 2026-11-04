@@ -16,6 +16,7 @@
   <symbol id="i-balayage" viewBox="0 0 24 24"><path d="M3 20h18M5 16l4-6 4 3 6-8"/><circle cx="9" cy="10" r="1"/><circle cx="13" cy="13" r="1"/></symbol>
   <symbol id="i-profil" viewBox="0 0 24 24"><path d="M2 19l6-9 4 5 3-4 7 8H2zM2 7h20"/></symbol>
   <symbol id="i-journal" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><path d="M12 2l2.2 4.6L19 7.3l-3.5 3.4.8 4.9L12 13.4l-4.3 2.2.8-4.9L5 7.3l4.8-.7z"/><path d="M5 20h14"/></symbol>
   <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17v.5"/></symbol>
 </svg>
 
@@ -43,7 +44,8 @@
     <button data-panneau="balayage" aria-expanded="false" title="Balayage d'un réglage sur plusieurs raids (3)"><svg><use href="#i-balayage"/></svg><span>Balayage</span></button>
     <button data-panneau="profil" aria-expanded="false" title="Profil du plan de vol au-dessus du relief (4)"><svg><use href="#i-profil"/></svg><span>Profil</span></button>
     <button data-panneau="journal" aria-expanded="false" title="Qui a vu quoi, qui a informé qui, quand (5)"><svg><use href="#i-journal"/></svg><span>Journal</span></button>
-    <button data-panneau="aide" aria-expanded="false" title="Commandes et symboles (6)"><svg><use href="#i-aide"/></svg><span>Aide</span></button>
+    <button data-panneau="autoconfig" aria-expanded="false" title="Auto-configuration : menaces, moyens, zone, répartition optimisée (6)"><svg><use href="#i-auto"/></svg><span>Auto</span></button>
+    <button data-panneau="aide" aria-expanded="false" title="Commandes et symboles (7)"><svg><use href="#i-aide"/></svg><span>Aide</span></button>
   </nav>
 
   <section class="tiroir" data-tiroir="scenario" aria-label="Réglages du scénario" hidden>
@@ -52,6 +54,7 @@
     <label class="interrupteur" title="Relief du théâtre : il masque radars et liaisons radio (MODELE § 16). Fabriquer un terrain réel : node outils/terrain.js.">Terrain <select name="terrain"><option value="">Terre lisse</option></select></label>
     <label class="interrupteur" title="Le centre de conduite devient une cible de l'essaim ; à la première frappe, il est détruit (MODELE § 15.4)."><input type="checkbox" name="conduite_ciblee">Le CDC est une cible de l'essaim</label>
     <div class="prereglages">
+      <select name="bibliotheque" aria-label="Charger un scénario de la bibliothèque"></select>
       <select name="prereglage" aria-label="Charger un réglage enregistré"></select>
       <div class="ligne">
         <input name="nom_prereglage" placeholder="Nom du réglage" aria-label="Nom du réglage à enregistrer">
@@ -106,6 +109,37 @@
     <ol class="journal" data-zone="journal"></ol>
   </section>
 
+  <section class="tiroir large" data-tiroir="autoconfig" id="autoconfig" aria-label="Auto-configuration" hidden>
+    <header><h2>Auto-configuration</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+    <p class="note">Indiquez les menaces à considérer, les moyens disponibles et la zone à défendre : l'outil place radars, centres, cibles,
+      postes, avions et drones défensifs, essaie plusieurs répartitions en simulation et garde celle qui minimise les frappes (MODELE § 20).</p>
+    <h3>1 · Menaces</h3>
+    <div class="menaces" data-zone="menaces"></div>
+    <h3>2 · Moyens disponibles</h3>
+    <div class="grille-moyens" data-zone="moyens"></div>
+    <h3>3 · Zone à défendre</h3>
+    <div class="zone-choix">
+      <label><input type="radio" name="source_zone" value="pays" checked>Pays <input name="pays" list="liste-pays" placeholder="France"></label>
+      <datalist id="liste-pays"></datalist>
+      <label><input type="radio" name="source_zone" value="dessinee">Zone dessinée <select name="zone_dessinee"></select></label>
+    </div>
+    <h3>4 · Recherche</h3>
+    <div class="ligne">
+      <label>Raids par essai et par menace <input type="number" name="tirages_autoconfig" value="3" min="1" max="20"></label>
+      <button data-action="autoconfig" class="principal">Lancer</button>
+    </div>
+    <p data-champ="autoconfig_etat" role="status"></p>
+    <ol class="essais" data-zone="essais"></ol>
+    <div class="resultat-autoconfig" hidden>
+      <div data-zone="resultat"></div>
+      <div class="ligne">
+        <button data-action="autoconfig_appliquer" class="principal">Appliquer</button>
+        <button data-action="autoconfig_enregistrer">Ranger dans la bibliothèque</button>
+        <button data-action="autoconfig_exporter">Exporter le scénario</button>
+      </div>
+    </div>
+  </section>
+
   <section class="tiroir" data-tiroir="aide" aria-label="Commandes et symboles" hidden>
     <header><h2>Aide</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
     <h3>Symboles</h3>
@@ -127,7 +161,7 @@
       <dt>E</dt><dd>Éditer le scénario</dd>
       <dt>V</dt><dd>Vue du CDC : ce que sait la conduite</dd>
       <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
-      <dt>1 à 6</dt><dd>Ouvrir un panneau (hors édition)</dd>
+      <dt>1 à 7</dt><dd>Ouvrir un panneau (hors édition)</dd>
       <dt>Molette</dt><dd>Zoom</dd>
       <dt>Clic droit glissé</dt><dd>Incliner et tourner la carte</dd>
       <dt>Double-clic</dt><dd>Recadrer</dd>

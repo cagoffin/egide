@@ -186,6 +186,18 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .journal .tir { border-color: var(--sol); }
 .journal .autre { border-color: var(--hostile); }
 
+/* Auto-configuration. */
+#autoconfig label { display: grid; gap: 3px; font-size: 12px; color: var(--texte-secondaire); }
+.menaces { display: grid; gap: 6px; }
+#autoconfig .ligne-menace { display: grid; grid-template-columns: auto 1fr 7em; align-items: center; gap: 8px; color: var(--texte); font-size: 13px; }
+.grille-moyens { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.grille-moyens input { inline-size: 100%; }
+.zone-choix { display: grid; gap: 8px; }
+#autoconfig .zone-choix label { display: flex; gap: 8px; align-items: center; color: var(--texte); font-size: 13px; }
+.essais { font-size: 12px; padding-inline-start: 20px; color: var(--texte-secondaire); }
+.essais b { color: var(--texte); }
+.resultat-autoconfig { border-block-start: 1px solid var(--trait); padding-block-start: 8px; }
+
 /* Balayage (dans son panneau). */
 #balayage label { display: grid; gap: 4px; font-size: 12px; color: var(--texte-secondaire); }
 #balayage label.large { flex: 1 1 200px; }

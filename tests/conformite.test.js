@@ -9,7 +9,7 @@ import {charger_unites, unite_brute, unite_si} from "../src/moteur/catalogue.js"
 import {RACINE, ids_unites_disque, lire_fichier} from "../src/moteur/catalogue_node.js";
 import {OUTILS} from "../src/moteur/outils.js";
 import {creer_hasard} from "../src/moteur/hasard.js";
-import {index_algos, index_cartes, index_unites} from "../outils/indexer.js";
+import {index_algos, index_cartes, index_scenarios, index_unites} from "../outils/indexer.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
 
 // Ce qu'un algorithme n'a pas le droit d'écrire : il reçoit tout en argument et ne dépend que de ses entrées.
@@ -91,6 +91,7 @@ test("index : unites/index.json et algos/index.json sont à jour (sinon : node o
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "unites", "index.json"), "utf-8")), index_unites());
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "algos", "index.json"), "utf-8")), await index_algos());
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "cartes", "index.json"), "utf-8")), index_cartes());
+  assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "scenarios", "index.json"), "utf-8")), index_scenarios());
 });
 
 test("conformité cartes : chaque source n'emploie que des clés documentées, et toute source tierce est attribuée", () => {

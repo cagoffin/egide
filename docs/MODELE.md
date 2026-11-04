@@ -494,3 +494,32 @@ rayon y échappe avec la probabilité exp(−t / τ). Le bilan compte les drones
 
 Le scénario de référence porte un groupe vide de chaque famille : ses bilans sont inchangés, et les curseurs
 « Drones défensifs » du panneau Scénario les remplissent.
+
+## 20 · Auto-configuration (jalon 11)
+### 20.1 Construction
+La demande réunit les menaces à considérer (tactique et nombre de drones, une ou plusieurs), les moyens disponibles
+(radars, centres, cibles à défendre, postes et munitions sol, avions, drones défensifs) et une zone : un pays
+(`cartes/frontieres/pays.json`, Natural Earth, domaine public ; on retient son contour le plus étendu, la métropole
+plutôt qu'une île) ou une zone dessinée dans l'éditeur. Le scénario construit :
+- centre le théâtre sur le barycentre de la zone, de rayon le rayon circonscrit, et pose la zone comme zone protégée
+  (les incursions s'y comptent) ;
+- répartit les cibles dans la zone par tirage du point le plus éloigné des points déjà retenus parmi des candidats
+  intérieurs ; le CDC principal au barycentre s'il est dans la zone, sinon sur la cible la plus centrale ; les autres
+  centres de la même façon ;
+- pose les radars à pas régulier le long du contour (disposition « sites », § 15.1).
+
+### 20.2 Recherche de la répartition
+Trois paramètres décrivent la répartition : `avions` (fraction du chemin du centre de la zone vers des points du
+contour régulièrement espacés, où orbitent les avions : 0,35, 0,6 ou 0,85), `drones` (éloignement des drones
+défensifs autour des cibles, en fraction de la moitié du rayon : 0,1 ou 0,5) et `radars` (poussée des radars
+au-delà du contour, en fraction de leur portée : 0 ou 0,5). Partant de (0,6 ; 0,1 ; 0), la recherche essaie tour à
+tour les autres valeurs de chaque paramètre et garde celles qui baissent les frappes moyennes, toutes menaces et
+toutes graines confondues (nombres aléatoires communs, § 14.3). La répartition **uniforme** (orbites tirées au
+hasard sur le disque du théâtre, radars sur le contour) sert de référence : l'écart retenu − uniforme est donné
+avec son IC à 95 % sur les raids appariés, et déclaré significatif si z > 3. Recherche locale, pas optimum global :
+elle trouve une bonne répartition parmi celles décrites, pas la meilleure possible.
+
+### 20.3 Bibliothèque
+`node src/autoconfig.js` écrit le scénario dans `scenarios/` et réindexe la bibliothèque (`scenarios/index.json`) ;
+dans l'interface, le résultat s'applique, se range dans la bibliothèque du navigateur ou s'exporte. La liste
+« Bibliothèque » du panneau Scénario charge un scénario du dépôt ou du navigateur comme nouvelle base.

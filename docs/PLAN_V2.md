@@ -43,7 +43,7 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 8 | Lisibilité de l'information : impulsions animées le long des liaisons, journal « qui a vu quoi, qui a informé qui, quand », chaîne complète dans l'inspecteur | Chaque détection, transmission, mission et tir du moteur apparaît, à son instant, dans le journal | **fait** (MODELE § 17) |
 | 9 | Centre de détection et de contrôle (CDC) : plusieurs centres, fusion des pistes, diffusion aux avions, aux batteries sol (désignation : tir plus tôt quand elles sont prévenues) et aux autres centres | Un CDC unique relié à tout, sans délai, redonne les bilans d'aujourd'hui | **fait** (MODELE § 18) ; reste : partage de charge entre centres, saturation d'un centre |
 | 10 | Essaims de drones défensifs, notionnels par classe : armés, brouilleurs, intercepteurs kamikazes | Conformité du catalogue ; effet mesuré en duel apparié | **fait** (MODELE § 19) |
-| 11 | Auto-configuration : menaces à considérer, moyens disponibles du catalogue (quantités), zone dessinée ou pays (Natural Earth, domaine public), répartition des radars, CDC, batteries et avions qui minimise les frappes, vérifiée par simulation, enregistrée dans une bibliothèque de scénarios | La répartition proposée fait au moins aussi bien qu'une répartition uniforme, à IC 95 % | à faire |
+| 11 | Auto-configuration : menaces à considérer, moyens disponibles du catalogue (quantités), zone dessinée ou pays (Natural Earth, domaine public), répartition des radars, CDC, batteries et avions qui minimise les frappes, vérifiée par simulation, enregistrée dans une bibliothèque de scénarios | La répartition proposée fait au moins aussi bien qu'une répartition uniforme, à IC 95 % | **fait** (MODELE § 20) : recherche locale sur trois paramètres ; reste : répartition des postes par cible, nombre de radars optimisé, recherche globale |
 
 ## Idées retenues
 
@@ -115,4 +115,6 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Carte | **Terrain réel d'exemple** : fabriquer et livrer avec le dépôt un terrain réel du théâtre de référence (`node outils/terrain.js`, depuis un poste qui a le réseau) | 2 | à faire |
 | Défense | **Brouillage calibré** : relier la constante de temps du brouillage à des classes notionnelles de brouilleur et de cible (l'effet pèse lourd sur le bilan : 30 brouilleurs font passer les frappes de 404 à 134 ± 98) | 10 | à faire |
 | Défense | **Bases et autonomie des drones défensifs** : décollage depuis des bases placées, endurance, retour et relance | 10 | à faire |
+| Auto-configuration | **Moyens au plus juste** : chercher les moyens les plus réduits qui tiennent un seuil de frappes (l'autre objectif proposé) | 11 | à faire |
+| Auto-configuration | **Postes inégaux** : répartir les postes sol selon l'exposition de chaque cible plutôt qu'à parts égales | 11 | à faire |
 | Carte | **Théâtres prédéfinis** : choisir le centre du théâtre par un nom de lieu, liste de théâtres d'exemple | 0 | à faire |
