@@ -238,12 +238,14 @@
       <button data-action="reseau_complet" title="Revenir au réseau complet : tout le monde parle avec tout le monde, sans délai">Réseau complet</button>
       <button data-action="reseau_auto" title="Relier chaque unité équipée aux centres C2 avec qui elle partage un moyen à portée (le plus rapide)">Relier automatiquement</button>
       <button data-outil="plan" aria-pressed="false" title="Ajouter un point au plan de vol de l'essaim (P)">Plan de vol</button>
+      <button data-outil="gomme" aria-pressed="false" title="Gomme : effacer l'unité cliquée (X). Pendant un dépôt, Maj+clic efface aussi">Gomme</button>
+      <button data-action="tout_effacer" title="Vider la carte : radars, batteries, avions, drones, C2, liaisons, zones (Ctrl+Z pour revenir)">Tout effacer</button>
       <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
       <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, les radars, le CDC ou les liaisons sélectionnés (Suppr)">Mettre hors service</button>
       <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
       <button data-action="terminer_edition" class="principal">Terminer</button>
       <p class="aide-edition seulement-edition">Glisser pour déplacer, rectangle pour sélectionner, clic droit pour envoyer la sélection.
-        Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue.</p>
+        Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface la sélection ; Gomme (X) ou Maj+clic pendant un dépôt efface l'unité visée. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue.</p>
       <p class="aide-edition seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b> : sélectionner des avions (clic, Maj+clic, rectangle),
         puis clic droit pour les envoyer depuis le CDC ; sélectionner un radar, le CDC ou une liaison, puis Suppr pour le mettre hors service.
         Tout est enregistré dans le scénario et rejoué à l'identique.</p>

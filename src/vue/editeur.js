@@ -5,13 +5,16 @@ import {COULEURS} from "./couleurs.js";
 import {ecran, geo_depuis_ecran} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, modifications_ajout_cible, modifications_ajout_passage,
-  modifications_ajout_centre, modifications_ajout_liaison, modifications_ajout_radar, modifications_panne, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
+  modifications_ajout_centre, modifications_ajout_liaison, modifications_ajout_radar, modifications_panne, modifications_tout_effacer, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
 import {element_visible} from "./calques.js";
 import {modifications_depot} from "./deploiement.js";
 import {format_duree} from "./format.js";
 
-const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", k: "centre", l: "liaison", p: "plan", z: "zone"};
+const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", k: "centre", l: "liaison", p: "plan", z: "zone", x: "gomme"};
+// Couleurs du curseur de dépôt : vert pour ajouter, rouge pour effacer (Maj enfoncée, ou outil Gomme).
+const AJOUT = "#4cc47a";
+const EFFACEMENT = "#e5574b";
 // En deçà de 4 px, un appui est un clic, pas un glisser : on ne déplace rien par mégarde.
 const SEUIL_GLISSER = 4;
 
@@ -22,7 +25,7 @@ const SEUIL_GLISSER = 4;
  */
 export function creer_editeur(env) {
   // mode « edition » : on prépare le scénario à t = 0 ; mode « ordres » : en pause au cours du raid, on envoie des avions.
-  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null, depot: null};
+  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null, depot: null, maj: false};
   const elements = () => elements_editables(env.monde(), env.brut(), etat.mode).filter((e) => element_visible(env.calques(), e));
   const vers_ecran = (geo) => ecran(env.camera(), geo);
   const local = (e) => {
@@ -70,6 +73,21 @@ export function creer_editeur(env) {
     env.appliquer(modifications);
   }
 
+  /** Rendre vrai si un clic efface : outil Gomme, ou Maj enfoncée pendant un dépôt. */
+  const en_effacement = () => etat.outil === "gomme" || (etat.outil === "depot" && etat.maj);
+
+  /** Effacer l'unité sous le point écran `p` (radar, batterie, site, C2, avion, liaison, zone, point de passage). */
+  function effacer(p) {
+    const touche = element_sous(elements(), vers_ecran, p, 14);
+    if (!touche) return env.signaler("Rien à effacer ici : visez une unité.");
+    if (touche.type === "conduite") return env.signaler("Le CDC principal ne s'efface pas : déplacez-le.");
+    const modifications = modifications_suppression(env.monde(), env.brut(), [touche.cle]);
+    if (!Object.keys(modifications).length) return env.signaler("Cette unité ne peut pas être effacée (il faut au moins un site à défendre).");
+    env.signaler("");
+    etat.selection = etat.selection.filter((cle) => cle !== touche.cle);
+    env.appliquer(modifications);
+  }
+
   /** Outil liaison : un clic sur un premier nœud (radar, conduite, avion), un clic sur le second, et la liaison existe. */
   function relier(p) {
     const touche = element_sous(elements(), vers_ecran, p, 14);
@@ -96,6 +114,7 @@ export function creer_editeur(env) {
     }
     if (e.button !== 0) return;
     const geo = geo_depuis_ecran(env.camera(), p);
+    if (en_effacement()) return effacer(p);
     if (etat.outil === "depot" && etat.depot) return deposer(etat.depot, p);
     if (etat.outil === "cible") return env.appliquer(modifications_ajout_cible(env.monde(), geo));
     if (etat.outil === "radar") return env.appliquer(modifications_ajout_radar(env.monde(), geo));
@@ -121,6 +140,7 @@ export function creer_editeur(env) {
 
   function suivre(e) {
     etat.curseur = local(e);
+    etat.maj = e.shiftKey;
     const geste = etat.geste;
     if (!geste) return;
     const p = local(e);
@@ -194,6 +214,10 @@ export function creer_editeur(env) {
     env.zoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, local(e));
   }), {passive: false});
   addEventListener("keydown", clavier);
+  // Maj suivie à part : le curseur de dépôt passe au rouge dès qu'on l'enfonce, sans attendre un mouvement.
+  addEventListener("keydown", (e) => e.key === "Shift" && (etat.maj = true));
+  addEventListener("keyup", (e) => e.key === "Shift" && (etat.maj = false));
+  addEventListener("blur", () => (etat.maj = false));
   // Glisser-déposer depuis la palette : la vue entière reçoit le dépôt, carte comprise.
   env.vue.addEventListener("dragover", (e) => {
     if (!e.dataTransfer.types.includes("text/egide-unite")) return;
@@ -214,11 +238,43 @@ export function creer_editeur(env) {
     if (bouton?.dataset.action === "terminer_edition") activer(false);
     if (bouton?.dataset.action === "reseau_complet") env.appliquer(modifications_reseau_complet());
     if (bouton?.dataset.action === "reseau_auto") env.reseau_auto();
+    if (bouton?.dataset.action === "tout_effacer") {
+      etat.selection = [];
+      // Le message suit le rechargement, qui efface l'ancien.
+      Promise.resolve(env.appliquer(modifications_tout_effacer(env.brut())))
+        .then(() => env.signaler("Carte vidée : il reste le CDC principal et un site à défendre. Ctrl+Z (Annuler) revient en arrière."));
+    }
     if (bouton?.dataset.action === "mettre_hors_service") {
       env.appliquer(modifications_panne(env.brut(), env.monde(), etat.selection));
       etat.selection = [];
     }
   });
+
+  /** Curseur de dépôt et d'effacement : « + unité » en vert, « − Effacer » en rouge, l'unité visée cerclée de rouge. */
+  function dessiner_curseur(ctx) {
+    if (!etat.curseur || (!etat.depot && etat.outil !== "gomme")) return;
+    const {x, y} = etat.curseur;
+    ctx.font = "bold 13px system-ui, sans-serif";
+    if (!en_effacement()) {
+      ctx.fillStyle = AJOUT;
+      ctx.fillText(`+ ${env.nom(etat.depot)}`, x + 12, y - 10);
+      return;
+    }
+    const touche = element_sous(elements(), vers_ecran, etat.curseur, 14);
+    ctx.fillStyle = EFFACEMENT;
+    ctx.fillText(touche ? "− Effacer" : "−", x + 12, y - 10);
+    if (!touche) return;
+    const p = vers_ecran(touche.geo);
+    ctx.strokeStyle = EFFACEMENT;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 15, 0, 2 * Math.PI);
+    ctx.moveTo(p.x - 7, p.y - 7);
+    ctx.lineTo(p.x + 7, p.y + 7);
+    ctx.moveTo(p.x + 7, p.y - 7);
+    ctx.lineTo(p.x - 7, p.y + 7);
+    ctx.stroke();
+  }
 
   /** Dessiner zones, plan de vol et ordres (toujours) puis, en édition, la sélection, le glisser, le rectangle, le brouillon. */
   function dessiner(ctx, camera, monde) {
@@ -228,11 +284,7 @@ export function creer_editeur(env) {
     if (calques.missions) dessiner_ordres(ctx, camera, monde);
     if (!etat.actif) return;
     dessiner_brouillon(ctx, camera);
-    if (etat.depot && etat.curseur) {
-      ctx.font = "12px system-ui, sans-serif";
-      ctx.fillStyle = COULEURS.selection;
-      ctx.fillText(`+ ${env.nom(etat.depot)}`, etat.curseur.x + 12, etat.curseur.y - 10);
-    }
+    dessiner_curseur(ctx);
     if (etat.liaison && etat.curseur) {
       const p = ecran(camera, etat.liaison.geo);
       ctx.strokeStyle = COULEURS.selection;

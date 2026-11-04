@@ -214,8 +214,7 @@ export function modifications_suppression(monde, brut, cles) {
     if (restantes.length) Object.assign(modifications, {"theatre.cibles_placees": restantes, "theatre.cibles_nombre": restantes.length});
   }
   const radars = positions_radars(monde.scenario);
-  // Comme pour les cibles, on garde au moins un radar.
-  const radarsOtes = cles.some((c) => c.startsWith("radar:")) && radars.some((_, i) => !choisis.has(`radar:${i}`));
+  const radarsOtes = cles.some((c) => c.startsWith("radar:"));
   if (radarsOtes) Object.assign(modifications, sites_radars(monde, brut, undefined, (i) => !choisis.has(`radar:${i}`)));
   const centresOtes = cles.some((c) => c.startsWith("centre:"));
   if (centresOtes) modifications["bleu.reseau.centres"] = (brut.bleu.reseau.centres ?? []).filter((_, k) => !choisis.has(`centre:${k}`));
@@ -304,4 +303,22 @@ export function element_sous(elements, versEcran, point, rayonPx = 10) {
     if (ecart <= meilleure) [meilleure, retenu] = [ecart, element];
   }
   return retenu;
+}
+
+/**
+ * Rendre les modifications qui vident la carte : plus de radar, de batterie, de poste, de vecteur défensif, d'autre
+ * centre, de liaison, d'équipement, de zone, de plan de vol ni d'ordre. Restent le CDC principal et un site sensible
+ * au centre du théâtre : sans cible, l'essaim n'aurait nulle part où aller. Ctrl+Z revient en arrière.
+ */
+export function modifications_tout_effacer(brut) {
+  const {origine_lat_deg: lat_deg, origine_lon_deg: lon_deg} = brut.theatre;
+  return {
+    "theatre.cibles_placees": [{lat_deg, lon_deg}], "theatre.cibles_nombre": 1, "theatre.zones": [],
+    "rouge.plan_de_vol": [], ...(brut.rouge.tactique === "plan_de_vol" ? {"rouge.tactique": "direct"} : {}),
+    "bleu.avions": brut.bleu.avions.map((g) => ({...g, nombre: 0, orbites_placees: []})),
+    "bleu.sol.nombre": 0, "bleu.sol.munitions": 0, "bleu.sol.batteries": [],
+    "bleu.radar.disposition": "sites", "bleu.radar.sites": [],
+    "bleu.reseau.mode": "complet", "bleu.reseau.liaisons": [], "bleu.reseau.centres": [], "bleu.reseau.equipements": [], "bleu.reseau.pannes": [],
+    ...("ordres" in brut.bleu ? {"bleu.ordres": []} : {}),
+  };
 }

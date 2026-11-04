@@ -98,7 +98,7 @@ function resoudre_radar(radar, fichiers) {
   // Un site peut citer sa propre unité ou ses surcharges (déploiement, MODELE § 21.1) : sa hauteur fixe celle du site.
   const propres = (radar.sites ?? []).map((s) => (s.unite || s.surcharges ? unite_si(s.unite || radar.unite, fichiers, s.surcharges) : null));
   const sites = (radar.sites ?? []).map((s, i) => vers_geo([s], (propres[i] ?? unite).hauteur_antenne)[0]);
-  if (disposition === "sites" && sites.length === 0) throw new ScenarioInvalide("disposition « sites » : au moins un radar placé");
+  // Zéro site est permis (carte vidée dans l'éditeur) : personne ne détecte rien.
   const detection = DISPOSITIONS_RADAR[disposition] ?? unite.algos.detection;
   const resolu = {...unite, algos: {...unite.algos, detection}, disposition, sites};
   if (propres.some(Boolean)) resolu.sites_unites = propres.map((p) => p && {id: p.id, nom: p.nom, hauteur_antenne: p.hauteur_antenne, portee_max: p.portee_max, pays: p.pays, icone: p.icone});

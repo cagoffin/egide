@@ -142,7 +142,8 @@ test("radars placés : la disposition frontière matérialisée détecte comme l
   const aveugle = simuler(loin, {registre: REGISTRE, journal: false});
   assert.ok(aveugle.drones.every((d) => d.detection === null), "un radar à 1 400 km ne voit rien");
   assert.ok(bilan(aveugle).fuites > bilan(monde).fuites, "sans pistes, la conduite ne guide personne : plus de frappes");
-  assert.throws(() => scenario({"bleu.radar.disposition": "sites"}), /au moins un radar/);
+  const sansRadar = simuler(scenario({...PETIT, "bleu.radar.disposition": "sites", "bleu.radar.sites": []}), {registre: REGISTRE, journal: false});
+  assert.ok(sansRadar.drones.every((d) => d.detection === null), "sans radar, rien n'est détecté");
   assert.throws(() => scenario({"bleu.radar.disposition": "partout"}), /disposition/);
 });
 

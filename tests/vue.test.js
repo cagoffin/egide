@@ -272,7 +272,7 @@ test("éditeur : déplacer, ajouter ou supprimer un radar inscrit tous les radar
   assert.equal(ajout["bleu.radar.sites"].length, radars.length + 1);
   const moins = modifications_suppression(MONDE, REFERENCE, ["radar:2"]);
   assert.equal(moins["bleu.radar.sites"].length, radars.length - 1);
-  assert.deepEqual(modifications_suppression(MONDE, REFERENCE, radars.map((r) => r.cle)), {}, "on garde au moins un radar");
+  assert.deepEqual(modifications_suppression(MONDE, REFERENCE, radars.map((r) => r.cle))["bleu.radar.sites"], [], "on peut ôter tous les radars");
   const places = creer_monde(scenario(ajout), {registre: REGISTRE});
   assert.equal(positions_radars(places.scenario).length, radars.length + 1);
 });

@@ -99,8 +99,7 @@ def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
         for s in brutes
     ]
     sites = [_vers_geo([s], (p or unite)["hauteur_antenne"])[0] for s, p in zip(brutes, propres, strict=True)]
-    if disposition == "sites" and not sites:
-        raise ScenarioInvalideError("disposition « sites » : au moins un radar place")
+    # Zero site est permis (carte videe dans l'editeur) : personne ne detecte rien.
     detection = DISPOSITIONS_RADAR[disposition] or unite["algos"]["detection"]
     resolu = {**unite, "algos": {**unite["algos"], "detection": detection}, "disposition": disposition, "sites": sites}
     if any(propres):

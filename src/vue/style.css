@@ -197,10 +197,12 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .palette .quantite select { max-inline-size: 9.5em; }
 .palette button.unite-palette[aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
 .vue[data-outil="depot"] #scope { cursor: copy; }
+.vue[data-outil="gomme"] #scope { cursor: not-allowed; }
+.barre-edition [data-action="tout_effacer"] { color: var(--hostile); border-color: var(--hostile); }
 .barre-edition { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; padding: 7px 10px; max-inline-size: 900px; }
 .barre-edition[hidden] { display: none; }
 .barre-edition [aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
-.vue[data-mode="ordres"] .barre-edition :is([data-outil]:not([data-outil="selection"]), [name="moyen_liaison"], [data-action="reseau_complet"], [data-action="reseau_auto"]),
+.vue[data-mode="ordres"] .barre-edition :is([data-outil]:not([data-outil="selection"]), [name="moyen_liaison"], [data-action="reseau_complet"], [data-action="reseau_auto"], [data-action="tout_effacer"]),
 .vue[data-mode="ordres"] .seulement-edition,
 .vue[data-mode="edition"] .seulement-ordres, .vue:not([data-mode]) .seulement-ordres { display: none; }
 .aide-edition { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: var(--texte-secondaire); text-align: center; }

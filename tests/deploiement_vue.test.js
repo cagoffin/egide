@@ -150,3 +150,19 @@ test("fiche : modèle, algorithmes, moyens et effectifs se règlent par chemins,
   assert.equal(brut.bleu.reseau.centres[0].allocation, undefined);
   assert.ok(brut.bleu.reseau.equipements.some((e) => e.moyens.includes("liaisons/satellite_notionnelle")));
 });
+
+import {modifications_tout_effacer} from "../src/vue/edition.js";
+import {bilan, simuler} from "../src/moteur/monde.js";
+
+test("tout effacer : carte vide sauf le CDC et un site ; le raid tourne, rien n'est détecté, tout frappe ; puis on redéploie", () => {
+  let {brut, monde} = deposer(REFERENCE, "sites/postes/batterie_moyenne_portee_notionnelle");
+  brut = modifier_scenario(brut, modifications_tout_effacer(brut));
+  monde = monde_de(brut);
+  assert.deepEqual(elements_editables(monde, brut).map((e) => e.type).sort(), ["cible", "conduite"]);
+  const b = bilan(simuler(resoudre_scenario(brut, FICHIERS), {registre: REGISTRE, journal: false}));
+  assert.equal(b.detruits_air + b.detruits_sol, 0);
+  ({brut, monde} = deposer(brut, "capteurs/radars/radar_longue_portee_notionnel"));
+  assert.equal(brut.bleu.radar.sites.length, 1, "le premier radar redéposé est seul sur la carte");
+  ({brut, monde} = deposer(brut, "vecteurs/avions/turbopropulseur_ir_notionnel", {quantite: 3}));
+  assert.equal(monde.avions.length, 3);
+});
