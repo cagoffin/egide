@@ -30,7 +30,7 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 2 | Globe et carte 2,5D (MapLibre), sources configurables, relief dans le moteur (masquage radar), couverture réelle, tuiles hors ligne (PMTiles) | Sur relief plat, l'horizon calculé retrouve le § 2 | **fond de carte fait** (MapLibre embarqué, 5 fonds, relief ombré et 3D, bâtiments 3D, globe) ; relief dans le moteur et hors ligne à faire |
 | 3 | Éditeur façon jeu de stratégie : palette, glisser-déposer, sélection, groupes Ctrl+1–9, ordres enchaînés, plans de vol, vue en profil, zones dessinées, ordres en direct rejoués | Un raid avec ordres en direct se rejoue à l'identique | **fait** : cibles, orbites, plan de vol, zones, sélection, groupes, envoi, annulation, ordres en cours de raid rejoués, vue en profil |
 | 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | **fait** : explorateur `catalogue.html`, inspecteur au clic, renvois au modèle vérifiés |
-| 5 | Preuve : convergence en pas de temps, sensibilité (Morris, Sobol), duel A/B, empreinte de reproductibilité, dossier de preuve | Les résultats publiés portent leur empreinte et leur convergence | à faire |
+| 5 | Preuve : convergence en pas de temps, sensibilité (Morris, Sobol), duel A/B, empreinte de reproductibilité, dossier de preuve | Les résultats publiés portent leur empreinte et leur convergence | **outils faits** en ligne de commande (`src/preuve.js` : empreinte, convergence, duel apparié, Morris, dossier) ; Sobol et duel en écran partagé à faire |
 | 6 | Idées ci-dessous, par lots | Selon l'idée | à faire |
 
 ## Idées retenues
@@ -64,6 +64,16 @@ scenarios/                                  placements, plans de vol, zones, mé
 
 ## Suggestions au fil de l'eau
 Nouvelles idées proposées pendant le développement, à trier avec l'utilisateur.
+- *Jalon 5* — **Réglages inertes** : le criblage de Morris montre qu'un réglage peut n'avoir aucun effet (rouge.etalement_s
+  ne joue qu'en tactique dispersée). Griser dans l'interface les réglages que l'algorithme en jeu ne lit pas, en
+  croisant `meta.parametres` et le scénario.
+- *Jalon 5* — **Un générateur par entité** : tirer le hasard de chaque drone et de chaque tireur dans son propre flux
+  (graine dérivée de la graine du raid et de l'identifiant), pour que deux variantes d'un duel restent synchronisées
+  plus longtemps et que le gain des nombres communs monte.
+- *Jalon 5* — **Pas adaptatif vérifié** : choisir automatiquement le plus grand pas qui passe le test de convergence,
+  et l'inscrire dans le dossier.
+- *Jalon 5* — **Tornade dans l'interface** : afficher le résultat de Morris en diagramme μ*–σ et en tornade, cliquer
+  un facteur pour lancer son balayage.
 
 - *Jalon 0* — **Autonomie et sites de lancement** : maintenant que le moteur couvre le globe, les drones peuvent
   partir de sites réels à des centaines de km avec une autonomie, ce qui contraint les routes possibles et donc les

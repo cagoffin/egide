@@ -277,3 +277,52 @@ Un clic sur une entité ouvre son inspection, mise à jour en direct :
 ### 13.3 Preuve des renvois
 Le code renvoie au modèle par « MODELE § x » ; `tests/conformite.test.js` vérifie que chaque renvoi du code, des
 algorithmes et des analyses désigne une section existante de ce document.
+
+## 14 · Outils de preuve (jalon 5)
+### 14.1 Empreinte de reproductibilité
+Un résultat n'a de valeur que si on peut le refaire. Chaque résultat des outils de preuve porte une empreinte :
+SHA-256 de quatre parties, chacune hachée à part pour dire ce qui a changé entre deux résultats :
+- `scenario` : le scénario v2 complet, en JSON canonique (clés triées, blocs `_aide` retirés) ;
+- `unites` : les fichiers d'unités chargés, bases et emports compris ;
+- `algos` : pour chaque algorithme que le scénario fait tourner, sa fiche `meta` et le code de chacune de ses fonctions ;
+- `moteur` : le code de `src/moteur/`.
+
+Le hasard ne dépend que de la graine (§ 8.1, mulberry32) : deux résultats de même empreinte, mêmes graines et mêmes
+tirages sont identiques au bit près. Le résultat porte aussi ses écarts au scénario de référence, chemin par chemin.
+
+### 14.2 Convergence en pas de temps
+Le moteur avance par pas fixe Δt (0,5 s par défaut : 111 m pour un drone à 800 km/h). Un résultat ne doit pas dépendre
+de ce choix. La campagne est rejouée à plusieurs pas, sur les mêmes graines, et chaque pas est comparé au plus fin
+tirage par tirage : différence moyenne d̄, écart-type s_d, écart réduit apparié z = |d̄| / (s_d / √n). Un pas est
+conforme si, pour chaque grandeur, z ≤ 3 (écart indiscernable du hasard) ou |d̄| ≤ 1 % de la valeur au pas fin
+(écart réel mais négligeable : la durée du raid, par exemple, se mesure à un pas près).
+
+### 14.3 Duel A/B à nombres aléatoires communs
+Comparer deux variantes d'un scénario (une tactique contre une autre, 30 avions contre 40) sur les mêmes graines :
+le tirage i de A et le tirage i de B partent de la même graine. Les différences sont alors appariées : leur variance
+est Var(A) + Var(B) − 2 Cov(A, B), plus petite que celle de deux campagnes indépendantes dès que les deux variantes
+réagissent dans le même sens au même hasard. Le gain des nombres communs, (Var A + Var B) / Var(B − A), dit combien de
+tirages indépendants il faudrait de plus pour la même précision. Verdict : « B > A » ou « B < A » si z > 3,
+« indiscernable » sinon. Un seul générateur sert tout le raid : dès que les variantes divergent, leurs tirages se
+désynchronisent, et le gain baisse — il est mesuré, jamais supposé.
+
+### 14.4 Criblage de sensibilité de Morris
+Quels réglages pèsent vraiment sur une grandeur ? La méthode de Morris (Morris 1991 ; Campolongo, Cariboni et
+Saltelli 2007) répond avec r (k + 1) évaluations pour k facteurs. Chaque facteur est ramené à [0, 1] sur sa plage
+[min, max], sur une grille de p niveaux (p pair) ; le pas vaut Δ = p / (2(p − 1)). Une trajectoire part d'un point de
+la moitié basse de la grille et augmente chaque facteur de Δ à son tour, dans un ordre tiré au hasard. L'effet
+élémentaire du facteur i est EEᵢ = (y(x + Δᵢeᵢ) − y(x)) / Δᵢ, Δᵢ étant le pas réellement fait après arrondi d'un
+facteur entier : il se lit comme la variation de la grandeur quand le facteur parcourt toute sa plage. Sur r
+trajectoires :
+- μ* = moyenne des |EEᵢ| : l'influence du facteur, qui sert au classement ;
+- μ = moyenne des EEᵢ : le sens de l'effet ;
+- σ = écart-type des EEᵢ : grand devant μ*, l'effet dépend des autres facteurs (non-linéarité, interactions).
+
+Chaque point est la moyenne de quelques raids aux mêmes graines. Le bruit de Monte-Carlo d'un effet élémentaire est
+estimé par 1,96 √2 σ̄_moyenne / Δ : un μ* en dessous ne se distingue pas du hasard. Morris classe ; une décomposition
+de variance (Sobol) chiffrera ensuite la part de chaque facteur.
+
+### 14.5 Dossier de preuve
+`node src/preuve.js dossier` écrit un dossier Markdown : empreinte, écarts au scénario de référence, résultats avec
+leur IC à 95 %, convergence en pas de temps, unités et algorithmes en jeu (fidélité, sources, hypothèses), limites
+connues et commande pour le reproduire.

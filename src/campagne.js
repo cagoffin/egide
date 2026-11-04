@@ -6,12 +6,14 @@
 //   node src/campagne.js --scenario scenarios/autre.json             # un scénario v1 est migré à la lecture
 //
 // Toute valeur du scénario se surcharge par son chemin (unités d'affichage), y compris celles d'une unité :
-// --rouge.surcharges.vitesse_kmh 600. Résultats : resultats/campagnes/*.json
+// --rouge.surcharges.vitesse_kmh 600. Résultats : resultats/campagnes/*.json, avec leur empreinte de reproductibilité
+// et leurs écarts au scénario de référence (MODELE § 14.1).
 import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {GRANDEURS, mener_campagne} from "./moteur/campagne.js";
-import {charger_tous_algos, charger_unites_scenario} from "./moteur/catalogue_node.js";
+import {charger_tous_algos, charger_unites_scenario, RACINE} from "./moteur/catalogue_node.js";
+import {differentiel, empreinte} from "./moteur/preuve.js";
 import {en_v2, modifier_scenario} from "./moteur/scenario.js";
 
 function lire_arguments(liste) {
@@ -53,7 +55,11 @@ async function principal() {
     afficher(cheminBalaye ? `${cheminBalaye} = ${valeur}` : "scénario", resume);
     return {valeur, resume};
   });
-  const chemin = enregistrer(options.sortie, {scenario: brut, tirages: options.tirages, chemin_balaye: cheminBalaye, resultats});
+  const reference = JSON.parse(readFileSync(join(RACINE, "scenarios", "reference.json"), "utf-8"));
+  const trace = await empreinte(brut, fichiers, registre);
+  const chemin = enregistrer(options.sortie, {
+    empreinte: trace, differentiel: differentiel(reference, brut), scenario: brut, tirages: options.tirages, chemin_balaye: cheminBalaye, resultats,
+  });
   console.log(`→ ${chemin}`);
 }
 
