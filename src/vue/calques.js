@@ -1,0 +1,54 @@
+// Calques de la situation : chaque famille d'entités s'affiche ou se masque, et ce qui est masqué ne se survole ni
+// ne se sélectionne. Pur, sauf la mémoire du navigateur (protégée : elle peut manquer).
+
+/** Les calques, par groupe, dans l'ordre du panneau. */
+export const CALQUES = [
+  {id: "avions_ir", groupe: "Défense", libelle: "Avions IR"},
+  {id: "avions_laser", groupe: "Défense", libelle: "Avions laser"},
+  {id: "missions", groupe: "Défense", libelle: "Mises à poste et ordres"},
+  {id: "radars", groupe: "Défense", libelle: "Radars"},
+  {id: "couverture", groupe: "Défense", libelle: "Couverture radar"},
+  {id: "balayage", groupe: "Défense", libelle: "Faisceau radar"},
+  {id: "postes", groupe: "Défense", libelle: "Bulles des postes sol"},
+  {id: "drones_detectes", groupe: "Menace", libelle: "Drones détectés"},
+  {id: "drones_inconnus", groupe: "Menace", libelle: "Drones non détectés"},
+  {id: "plots", groupe: "Menace", libelle: "Plots radar"},
+  {id: "plan", groupe: "Menace", libelle: "Plan de vol"},
+  {id: "tirs", groupe: "Engagements", libelle: "Tirs et destructions"},
+  {id: "cibles", groupe: "Théâtre", libelle: "Cibles"},
+  {id: "zones", groupe: "Théâtre", libelle: "Zones"},
+  {id: "anneaux", groupe: "Théâtre", libelle: "Anneaux de distance"},
+];
+
+const CLE = "egide.calques";
+
+/** Rendre tous les calques visibles. */
+export const calques_par_defaut = () => Object.fromEntries(CALQUES.map((c) => [c.id, true]));
+
+/** Rendre les calques mémorisés, complétés par défaut (un calque nouveau est visible). */
+export function lire_calques(stockage = globalThis.localStorage) {
+  try {
+    return {...calques_par_defaut(), ...JSON.parse(stockage?.getItem(CLE) ?? "{}")};
+  } catch {
+    return calques_par_defaut();
+  }
+}
+
+/** Mémoriser les calques ; rendre faux si le navigateur refuse. */
+export function memoriser_calques(calques, stockage = globalThis.localStorage) {
+  try {
+    stockage.setItem(CLE, JSON.stringify(calques));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Rendre vrai si l'élément éditable ou survolé `element` ({type, guidage?, objet?}) est sur un calque visible. */
+export function element_visible(calques, element) {
+  const avion = element.type === "avion" ? (element.guidage ?? element.objet?.guidage) : null;
+  if (avion) return calques[avion === "ir" ? "avions_ir" : "avions_laser"];
+  if (element.type === "drone") return calques[element.objet.detection === null ? "drones_inconnus" : "drones_detectes"];
+  const calque = {cible: "cibles", radar: "radars", passage: "plan", zone: "zones"}[element.type];
+  return calque ? calques[calque] : true;
+}

@@ -1,6 +1,7 @@
 // Logique de l'éditeur, sans DOM : chaque geste devient des modifications par chemin du scénario, comme un curseur.
 // L'annulation, l'export, les préréglages et le rejeu marchent donc d'office (MODELE § 12). Pur, testé.
 import {depuis_ecef, direct, geo_deg, inverse, vers_degres, vers_ecef} from "../moteur/geodesie.js";
+import {positions_radars} from "../moteur/radars.js";
 
 /** Rendre une position géographique en {lat_deg, lon_deg} arrondis au millionième de degré (≈ 0,1 m). */
 export const en_degres = (geo) => ({
@@ -23,14 +24,15 @@ export function barycentre(points) {
 const points_geo = (points) => (points ?? []).map((p) => geo_deg(p.lat_deg, p.lon_deg, 0));
 
 /**
- * Rendre les éléments éditables, avec leur position : en mode « edition », cibles, orbites d'avions, points du plan
- * de vol et zones (par leur barycentre) ; en mode « ordres », les seuls avions, là où ils sont à cet instant.
+ * Rendre les éléments éditables, avec leur position : en mode « edition », cibles, orbites d'avions, radars, points
+ * du plan de vol et zones (par leur barycentre) ; en mode « ordres », les seuls avions, là où ils sont à cet instant.
  */
 export function elements_editables(monde, brut, mode = "edition") {
   if (mode === "ordres") return monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.geo}));
   return [
     ...monde.cibles.map((cible, indice) => ({cle: `cible:${indice}`, type: "cible", indice, geo: cible.geo})),
-    ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite})),
+    ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite, guidage: avion.guidage})),
+    ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
     ...points_geo(brut.rouge.plan_de_vol).map((geo, indice) => ({cle: `passage:${indice}`, type: "passage", indice, geo})),
     ...(brut.theatre.zones ?? []).map((zone, indice) => ({cle: `zone:${indice}`, type: "zone", indice, geo: barycentre(points_geo(zone.points))})),
   ];
@@ -55,6 +57,7 @@ export function modifications_deplacement(monde, brut, cles, de, vers) {
     if (!avions.some((avion) => choisis.has(`avion:${avion.id}`))) return;
     modifications[`bleu.avions.${g}.orbites_placees`] = avions.map((avion) => en_degres(bouge(`avion:${avion.id}`, avion.orbite) ?? avion.orbite));
   });
+  if (cles.some((c) => c.startsWith("radar:"))) Object.assign(modifications, sites_radars(monde, (i, geo) => bouge(`radar:${i}`, geo)));
   if (cles.some((c) => c.startsWith("passage:"))) {
     modifications["rouge.plan_de_vol"] = (brut.rouge.plan_de_vol ?? []).map((p, i) => en_degres(bouge(`passage:${i}`, geo_deg(p.lat_deg, p.lon_deg)) ?? geo_deg(p.lat_deg, p.lon_deg)));
   }
@@ -66,6 +69,18 @@ export function modifications_deplacement(monde, brut, cles, de, vers) {
   }
   return modifications;
 }
+
+/**
+ * Rendre les modifications qui inscrivent tous les radars affichés comme sites placés (MODELE § 15.1) : `deplacer(i,
+ * geo)` rend la nouvelle position du radar i ou null, `garder(i)` dit s'il reste, `ajouts` s'ajoutent à la fin.
+ */
+function sites_radars(monde, deplacer = () => null, garder = () => true, ajouts = []) {
+  const sites = positions_radars(monde.scenario).map((geo, i) => (garder(i) ? en_degres(deplacer(i, geo) ?? geo) : null)).filter(Boolean);
+  return {"bleu.radar.disposition": "sites", "bleu.radar.sites": [...sites, ...ajouts.map(en_degres)]};
+}
+
+/** Rendre les modifications qui ajoutent un radar en `geo` (les radars affichés deviennent des sites placés). */
+export const modifications_ajout_radar = (monde, geo) => sites_radars(monde, undefined, undefined, [geo]);
 
 /** Rendre les modifications qui ajoutent une zone protégée de sommets `points` (au moins trois). */
 export function modifications_ajout_zone(brut, points) {
@@ -92,7 +107,7 @@ export function modifications_ajout_passage(brut, geo) {
   return {"rouge.plan_de_vol": [...(brut.rouge.plan_de_vol ?? []), en_degres(geo)], "rouge.tactique": "plan_de_vol"};
 }
 
-/** Rendre les modifications qui suppriment les cibles et points de passage `cles` (les avions ne se suppriment pas). */
+/** Rendre les modifications qui suppriment cibles, radars, points de passage et zones `cles` (pas les avions). */
 export function modifications_suppression(monde, brut, cles) {
   const choisis = new Set(cles);
   const modifications = {};
@@ -100,6 +115,11 @@ export function modifications_suppression(monde, brut, cles) {
     const restantes = cibles_en_degres(monde).filter((_, i) => !choisis.has(`cible:${i}`));
     // Une zone sans cible n'a pas de sens : on garde au moins une cible.
     if (restantes.length) Object.assign(modifications, {"theatre.cibles_placees": restantes, "theatre.cibles_nombre": restantes.length});
+  }
+  const radars = positions_radars(monde.scenario);
+  // Comme pour les cibles, on garde au moins un radar.
+  if (cles.some((c) => c.startsWith("radar:")) && radars.some((_, i) => !choisis.has(`radar:${i}`))) {
+    Object.assign(modifications, sites_radars(monde, undefined, (i) => !choisis.has(`radar:${i}`)));
   }
   if (cles.some((c) => c.startsWith("passage:"))) {
     modifications["rouge.plan_de_vol"] = (brut.rouge.plan_de_vol ?? []).filter((_, i) => !choisis.has(`passage:${i}`));

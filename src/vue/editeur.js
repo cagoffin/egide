@@ -5,22 +5,23 @@ import {COULEURS} from "./couleurs.js";
 import {ecran, geo_depuis_ecran} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, modifications_ajout_cible, modifications_ajout_passage,
-  modifications_ajout_zone, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
+  modifications_ajout_radar, modifications_ajout_zone, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
+import {element_visible} from "./calques.js";
 import {format_duree} from "./format.js";
 
-const TOUCHES_OUTILS = {s: "selection", c: "cible", p: "plan", z: "zone"};
+const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", p: "plan", z: "zone"};
 // En deçà de 4 px, un appui est un clic, pas un glisser : on ne déplace rien par mégarde.
 const SEUIL_GLISSER = 4;
 
 /**
- * Rendre l'éditeur branché sur `env` : {vue, toile, barre, camera(), monde(), brut(), appliquer(modifs), annuler(),
- * panoramique(dx, dy), zoom(facteur, point), sur_activation(actif)}.
+ * Rendre l'éditeur branché sur `env` : {vue, toile, barre, camera(), monde(), brut(), calques(), appliquer(modifs),
+ * annuler(), panoramique(dx, dy), zoom(facteur, point), sur_activation(actif)}. Un calque masqué ne s'édite pas.
  */
 export function creer_editeur(env) {
   // mode « edition » : on prépare le scénario à t = 0 ; mode « ordres » : en pause au cours du raid, on envoie des avions.
   const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null};
-  const elements = () => elements_editables(env.monde(), env.brut(), etat.mode);
+  const elements = () => elements_editables(env.monde(), env.brut(), etat.mode).filter((e) => element_visible(env.calques(), e));
   const vers_ecran = (geo) => ecran(env.camera(), geo);
   const local = (e) => {
     const cadre = env.vue.getBoundingClientRect();
@@ -58,6 +59,7 @@ export function creer_editeur(env) {
     if (e.button !== 0) return;
     const geo = geo_depuis_ecran(env.camera(), p);
     if (etat.outil === "cible") return env.appliquer(modifications_ajout_cible(env.monde(), geo));
+    if (etat.outil === "radar") return env.appliquer(modifications_ajout_radar(env.monde(), geo));
     if (etat.outil === "plan") return env.appliquer(modifications_ajout_passage(env.brut(), geo));
     if (etat.outil === "zone") {
       // Double-clic (ou Entrée) : la zone se ferme ; le second clic du double-clic n'ajoute pas de sommet.
@@ -155,9 +157,10 @@ export function creer_editeur(env) {
 
   /** Dessiner zones, plan de vol et ordres (toujours) puis, en édition, la sélection, le glisser, le rectangle, le brouillon. */
   function dessiner(ctx, camera, monde) {
-    dessiner_zones(ctx, camera, monde);
-    dessiner_plan(ctx, camera, monde);
-    dessiner_ordres(ctx, camera, monde);
+    const calques = env.calques();
+    if (calques.zones) dessiner_zones(ctx, camera, monde);
+    if (calques.plan) dessiner_plan(ctx, camera, monde);
+    if (calques.missions) dessiner_ordres(ctx, camera, monde);
     if (!etat.actif) return;
     dessiner_brouillon(ctx, camera);
     const choisis = elements().filter((element) => etat.selection.includes(element.cle));

@@ -63,6 +63,10 @@ export const AIDE = {
   radar: {
     unite: "Identifiant du radar dans le catalogue.",
     surcharges: "Valeurs qui remplacent celles du radar pour ce scenario.",
+    disposition: "'frontiere' : radars repartis le long de la frontiere ; 'sites' : radars places un a un (MODELE § 15.1).",
+    sites: "Positions des radars en disposition 'sites'.",
+    "sites[].lat_deg": "Latitude du radar.",
+    "sites[].lon_deg": "Longitude du radar.",
   },
   conduite: {
     delai_reaction_s: "Duree detection -> decision -> ordre de mise a poste.",

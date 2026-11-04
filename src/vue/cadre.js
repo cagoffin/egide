@@ -9,12 +9,12 @@ import {format_distance} from "./format.js";
 const ESPACEMENT_ANNEAUX = 50_000;
 const POLICE_PETITE = "11px system-ui, sans-serif";
 
-/** Tracer les anneaux tous les 50 km, la frontière de la zone et la limite de couverture radar basse altitude. */
-export function dessiner_anneaux(ctx, camera, monde) {
+/** Tracer la frontière de la zone et, selon les calques, les anneaux tous les 50 km et la couverture radar. */
+export function dessiner_anneaux(ctx, camera, monde, calques) {
   const {origine, zone_rayon: zone} = monde.scenario.theatre;
   ctx.lineWidth = 1;
   ctx.font = POLICE_PETITE;
-  for (let rayon = ESPACEMENT_ANNEAUX; rayon < monde.rayonDetection; rayon += ESPACEMENT_ANNEAUX) {
+  for (let rayon = ESPACEMENT_ANNEAUX; calques.anneaux && rayon < monde.rayonDetection; rayon += ESPACEMENT_ANNEAUX) {
     ctx.strokeStyle = COULEURS.grille;
     chemin_cercle(ctx, camera, origine, rayon);
     ctx.stroke();
@@ -26,9 +26,26 @@ export function dessiner_anneaux(ctx, camera, monde) {
   ctx.lineWidth = 1.5;
   chemin_cercle(ctx, camera, origine, zone, 144);
   ctx.stroke();
+  if (calques.couverture) dessiner_couverture(ctx, camera, monde);
+}
+
+/** Tracer la couverture radar : le cercle de la couverture frontière, ou la portée de chaque radar placé. */
+function dessiner_couverture(ctx, camera, monde) {
+  const {origine} = monde.scenario.theatre;
+  const sites = monde.couverture.sites;
   ctx.setLineDash([6, 6]);
   ctx.strokeStyle = COULEURS.ami;
   ctx.lineWidth = 1;
+  if (sites) {
+    ctx.fillStyle = "rgba(74, 152, 232, 0.05)";
+    for (const site of sites) {
+      chemin_cercle(ctx, camera, site.geo, site.portee, 96);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    return;
+  }
   chemin_cercle(ctx, camera, origine, monde.rayonDetection, 144);
   ctx.stroke();
   ctx.setLineDash([]);
@@ -39,17 +56,23 @@ export function dessiner_anneaux(ctx, camera, monde) {
   ctx.textAlign = "start";
 }
 
-/** Tracer le faisceau tournant du radar : un secteur de 40° qui s'estompe, en azimut vrai. */
+/** Tracer le faisceau tournant : depuis le centre (couverture frontière) ou depuis chaque radar placé. */
 export function dessiner_balayage(ctx, camera, monde, angle) {
-  const {origine} = monde.scenario.theatre;
+  const sites = monde.couverture.sites;
+  if (!sites) return dessiner_faisceau(ctx, camera, monde.scenario.theatre.origine, monde.rayonDetection, angle);
+  for (const site of sites) dessiner_faisceau(ctx, camera, site.geo, site.portee, angle);
+}
+
+/** Tracer un faisceau : un secteur de 40° qui s'estompe, en azimut vrai, de rayon `rayon` autour de `origine`. */
+function dessiner_faisceau(ctx, camera, origine, rayon, angle) {
   const traine = (40 * Math.PI) / 180;
   const centre = ecran(camera, origine);
   const pas = 12;
   for (let i = 0; i < pas; i++) {
     const a0 = angle - traine + (traine * i) / pas;
     const a1 = a0 + traine / pas;
-    const p0 = ecran(camera, direct(origine, a0, monde.rayonDetection));
-    const p1 = ecran(camera, direct(origine, a1, monde.rayonDetection));
+    const p0 = ecran(camera, direct(origine, a0, rayon));
+    const p1 = ecran(camera, direct(origine, a1, rayon));
     ctx.fillStyle = `rgba(74, 152, 232, ${(0.16 * (i + 1)) / pas})`;
     ctx.beginPath();
     ctx.moveTo(centre.x, centre.y);

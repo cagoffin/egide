@@ -6,6 +6,7 @@ import {ecran} from "./ecran.js";
 import {echapper, LIBELLES_FIDELITE} from "./fiches.js";
 import {format_decimal, format_duree, format_entier} from "./format.js";
 import {ms_vers_kmh} from "../moteur/unites.js";
+import {positions_radars} from "../moteur/radars.js";
 
 const ETATS = {orbite: "en orbite", ralliement: "en route vers son point", engagement: "au contact d'un drone",
   poste: "à poste, en attente", retour: "retour vers son orbite"};
@@ -102,7 +103,31 @@ function inspection_cible(indice, monde) {
 }
 
 /** Rendre le HTML de l'inspection de `cible` ({type: avion|drone|cible, id}) dans le monde. */
+function inspection_radar(indice, monde) {
+  const {radar} = monde.scenario;
+  const geo = positions_radars(monde.scenario)[indice];
+  const site = monde.couverture.sites?.[indice];
+  const disposition = radar.disposition === "sites"
+    ? "placé dans l'éditeur"
+    : "matérialise la couverture « frontière » ; le déplacer dans l'éditeur place tous les radars un à un";
+  const vus = monde.drones.filter((d) => d.detection !== null).length;
+  return `<h3>Radar R${indice + 1}</h3>
+    <p>${lien_fiche("unite", radar.id, radar.nom)} ${fidelite(radar.fidelite)}</p>
+    <table>${[
+      ligne("Position", position(geo)),
+      ligne("Disposition", disposition),
+      ligne("Antenne", `${format_entier(radar.hauteur_antenne)} m`),
+      ligne("Portée instrumentée", `${format_entier(radar.portee_max / 1000)} km`),
+      site ? ligne("Portée contre l'essaim", `${format_entier(site.portee / 1000)} km (horizon radar)`) : "",
+      ligne("Détection", lien_fiche("algo", radar.algos.detection, radar.algos.detection)),
+    ].join("")}</table>
+    <h4>Réseau</h4>
+    <p>Relié à toute la défense : chaque détection profite aussitôt à tous (réseau entièrement connecté, docs/MODELE.md § 15.2).
+      ${format_entier(vus)} drones détectés depuis le début du raid par l'ensemble des radars.</p>`;
+}
+
 export function inspection(cible, monde) {
+  if (cible.type === "radar") return inspection_radar(cible.id, monde);
   if (cible.type === "avion") return inspection_avion(monde.avions[cible.id], monde);
   if (cible.type === "drone") return inspection_drone(monde.drones[cible.id], monde);
   return inspection_cible(cible.id, monde);
@@ -112,6 +137,7 @@ export function inspection(cible, monde) {
 export function position_inspectee(cible, monde) {
   if (cible.type === "avion") return monde.avions[cible.id]?.geo ?? null;
   if (cible.type === "cible") return monde.cibles[cible.id]?.geo ?? null;
+  if (cible.type === "radar") return positions_radars(monde.scenario)[cible.id] ?? null;
   const drone = monde.drones[cible.id];
   return drone && drone.vivant && !drone.arrive ? drone.geo : null;
 }

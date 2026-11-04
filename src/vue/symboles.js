@@ -6,14 +6,14 @@ import {avancement} from "./effets.js";
 
 const TAILLE = 6;
 
-/** Tracer les bulles sol et les cibles, avec le nombre de drones arrivés et l'éclair des impacts récents. */
-export function dessiner_cibles(ctx, camera, monde, effets, maintenant) {
+/** Tracer les bulles sol (calque « postes ») et les cibles (calque « cibles »), frappes et impacts récents. */
+export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques) {
   const {sol} = monde.scenario;
   const munitionsInitiales = monde.postes.length ? sol.munitions : 0;
   monde.cibles.forEach((cible, indice) => {
     const ecran = projeter_ecran(camera, cible.geo);
     const postes = monde.postes.filter((poste) => poste.cible === indice);
-    if (postes.length) {
+    if (postes.length && calques.postes) {
       const restantes = postes.reduce((somme, poste) => somme + poste.munitions, 0);
       const part = restantes / (munitionsInitiales / monde.cibles.length);
       ctx.fillStyle = `rgba(184, 134, 11, ${0.05 + 0.13 * part})`;
@@ -23,6 +23,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant) {
       ctx.fill();
       ctx.stroke();
     }
+    if (!calques.cibles) return;
     const frappe = effets.liste.some((effet) => effet.type === "impact" && effet.cible === indice);
     ctx.fillStyle = frappe ? COULEURS.hostile : COULEURS.fond;
     ctx.strokeStyle = COULEURS.texte;
@@ -37,7 +38,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant) {
       ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
     }
   });
-  dessiner_impacts(ctx, camera, monde, effets, maintenant);
+  if (calques.cibles) dessiner_impacts(ctx, camera, monde, effets, maintenant);
 }
 
 function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
@@ -54,8 +55,8 @@ function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
 }
 
 /** Tracer les drones en vol : plots d'historique estompés, puis le symbole hostile (gris tant que non détecté). */
-export function dessiner_drones(ctx, camera, monde, traces) {
-  for (const [, plots] of traces.plots) {
+export function dessiner_drones(ctx, camera, monde, traces, calques) {
+  for (const [, plots] of calques.plots ? traces.plots : []) {
     plots.forEach((plot, rang) => {
       const ecran = projeter_ecran(camera, plot);
       ctx.fillStyle = `rgba(229, 87, 75, ${0.12 + (0.4 * rang) / plots.length})`;
@@ -64,6 +65,7 @@ export function dessiner_drones(ctx, camera, monde, traces) {
   }
   for (const drone of monde.drones) {
     if (!drone.vivant || drone.arrive || monde.t < drone.depart) continue;
+    if (!calques[drone.detection === null ? "drones_inconnus" : "drones_detectes"]) continue;
     const ecran = projeter_ecran(camera, drone.geo);
     ctx.fillStyle = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
     ctx.beginPath();
@@ -76,11 +78,12 @@ export function dessiner_drones(ctx, camera, monde, traces) {
 }
 
 /** Tracer les avions : dôme ami, ligne pointillée vers le point de mise à poste, estompés une fois vides. */
-export function dessiner_avions(ctx, camera, monde) {
+export function dessiner_avions(ctx, camera, monde, calques) {
   for (const avion of monde.avions) {
+    if (!calques[avion.guidage === "ir" ? "avions_ir" : "avions_laser"]) continue;
     const ecran = projeter_ecran(camera, avion.geo);
     ctx.globalAlpha = avion.munitions === 0 ? 0.35 : 1;
-    if (avion.etat === "ralliement" && avion.point) {
+    if (calques.missions && avion.etat === "ralliement" && avion.point) {
       const but = projeter_ecran(camera, avion.point);
       ctx.strokeStyle = COULEURS.ami;
       ctx.setLineDash([3, 4]);
@@ -126,4 +129,28 @@ export function dessiner_tirs(ctx, camera, effets, maintenant) {
       ctx.stroke();
     }
   }
+}
+
+/**
+ * Tracer les radars : symbole d'installation amie (cadre bleu) et parabole, numérotés R1, R2… En disposition
+ * « frontière », ce sont les positions qui matérialisent la couverture (MODELE § 15.1).
+ */
+export function dessiner_radars(ctx, camera, positions) {
+  ctx.font = "11px system-ui, sans-serif";
+  positions.forEach((geo, i) => {
+    const p = projeter_ecran(camera, geo);
+    ctx.fillStyle = COULEURS.fond;
+    ctx.strokeStyle = COULEURS.ami;
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(p.x - 8, p.y - 6, 16, 12);
+    ctx.strokeRect(p.x - 8, p.y - 6, 16, 12);
+    // Parabole : un arc ouvert vers le haut et son mât.
+    ctx.beginPath();
+    ctx.arc(p.x, p.y - 3, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.moveTo(p.x, p.y + 2);
+    ctx.lineTo(p.x, p.y + 5);
+    ctx.stroke();
+    ctx.fillStyle = COULEURS.ami;
+    ctx.fillText(`R${i + 1}`, p.x + 11, p.y + 4);
+  });
 }

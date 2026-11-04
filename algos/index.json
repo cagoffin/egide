@@ -36,6 +36,12 @@
     "fidelite": "notionnel"
   },
   {
+    "id": "global/detection/sites_radar",
+    "nom": "Radars placés",
+    "role": "detection",
+    "fidelite": "notionnel"
+  },
+  {
     "id": "global/mouvement/croisiere_geodesique",
     "nom": "Croisière géodésique",
     "role": "mouvement",

@@ -240,3 +240,60 @@ test("inspecteur : une cible explique sa défense — bulle, cadence, Pk", () =>
   const html = inspection({type: "cible", id: 0}, RAID);
   for (const attendu of ["Comment est-elle défendue ?", "un tir toutes les", "Pk 0,7"]) assert.ok(html.includes(attendu), attendu);
 });
+
+import {modifications_ajout_radar} from "../src/vue/edition.js";
+import {positions_radars, sites_frontiere} from "../src/moteur/radars.js";
+import {CALQUES, calques_par_defaut, element_visible, lire_calques, memoriser_calques} from "../src/vue/calques.js";
+import {trouver_sous_curseur} from "../src/vue/scope.js";
+import {ecran} from "../src/vue/ecran.js";
+
+test("radars : la couverture frontière se matérialise en radars espacés de √3 d au plus, sur la frontière", () => {
+  const s = scenario();
+  const sites = sites_frontiere(s);
+  assert.ok(sites.length >= 3);
+  const rayon = s.theatre.zone_rayon;
+  for (const site of sites) assert.ok(Math.abs(inverse(s.theatre.origine, site).distance - rayon) < 1);
+  const ecart = inverse(sites[0], sites[1]).distance;
+  const portee = Math.min(s.radar.portee_max, 4124 * (Math.sqrt(s.radar.hauteur_antenne) + Math.sqrt(s.rouge.altitude)));
+  assert.ok(ecart <= Math.sqrt(3) * portee * 1.001, `${ecart} > √3 × ${portee}`);
+  assert.equal(positions_radars(s), positions_radars(s), "calculées une fois par scénario");
+});
+
+test("éditeur : déplacer, ajouter ou supprimer un radar inscrit tous les radars comme sites placés", () => {
+  const radars = elements_editables(MONDE, REFERENCE).filter((e) => e.type === "radar");
+  assert.equal(radars.length, sites_frontiere(MONDE.scenario).length);
+  const vers = direct(radars[0].geo, 0, 20_000);
+  const deplace = modifications_deplacement(MONDE, REFERENCE, ["radar:0"], radars[0].geo, vers);
+  assert.equal(deplace["bleu.radar.disposition"], "sites");
+  assert.equal(deplace["bleu.radar.sites"].length, radars.length);
+  assert.ok(inverse(geo_deg(deplace["bleu.radar.sites"][0].lat_deg, deplace["bleu.radar.sites"][0].lon_deg), vers).distance < 1);
+  assert.deepEqual(deplace["bleu.radar.sites"][1], en_degres(radars[1].geo), "les autres ne bougent pas");
+  const ajout = modifications_ajout_radar(MONDE, MONDE.scenario.theatre.origine);
+  assert.equal(ajout["bleu.radar.sites"].length, radars.length + 1);
+  const moins = modifications_suppression(MONDE, REFERENCE, ["radar:2"]);
+  assert.equal(moins["bleu.radar.sites"].length, radars.length - 1);
+  assert.deepEqual(modifications_suppression(MONDE, REFERENCE, radars.map((r) => r.cle)), {}, "on garde au moins un radar");
+  const places = creer_monde(scenario(ajout), {registre: REGISTRE});
+  assert.equal(positions_radars(places.scenario).length, radars.length + 1);
+});
+
+test("calques : tout visible par défaut, mémoire protégée, masqué = ni survolé ni sélectionné", () => {
+  assert.ok(CALQUES.every((c) => calques_par_defaut()[c.id]));
+  assert.deepEqual(lire_calques(null), calques_par_defaut());
+  const casse = {getItem: () => { throw new Error("refus"); }, setItem: () => { throw new Error("refus"); }};
+  assert.deepEqual(lire_calques(casse), calques_par_defaut());
+  assert.equal(memoriser_calques(calques_par_defaut(), casse), false);
+  const memoire = new Map();
+  const stockage = {getItem: (k) => memoire.get(k) ?? null, setItem: (k, v) => memoire.set(k, v)};
+  memoriser_calques({...calques_par_defaut(), radars: false}, stockage);
+  assert.equal(lire_calques(stockage).radars, false);
+  const sans = {...calques_par_defaut(), radars: false, avions_ir: false};
+  assert.equal(element_visible(sans, {type: "radar"}), false);
+  assert.equal(element_visible(sans, {type: "avion", guidage: "ir"}), false);
+  assert.equal(element_visible(sans, {type: "avion", objet: {guidage: "laser"}}), true);
+  const camera = creer_camera(800, 800, 250_000, MONDE.scenario.theatre.origine);
+  const radar = positions_radars(MONDE.scenario)[0];
+  const p = ecran(camera, radar);
+  assert.equal(trouver_sous_curseur(camera, MONDE, p)?.type, "radar");
+  assert.notEqual(trouver_sous_curseur(camera, MONDE, p, sans)?.type, "radar");
+});

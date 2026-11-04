@@ -9,23 +9,42 @@
 <link rel="stylesheet" href="src/vue/style.css">
 <script type="module" src="src/vue/app.js"></script>
 </head>
-<body>
-<header class="bandeau">
-  <h1>Égide</h1>
-  <p class="sous-titre">Défense du territoire face à un essaim de drones</p>
-  <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
-  <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions.">Éditer le scénario</button>
-  <fieldset class="tactiques">
-    <legend>Tactique de l'essaim</legend>
-    <label title="Chaque groupe arrive d'un cap différent, en vague serrée."><input type="radio" name="tactique" value="direct">Groupes directs</label>
-    <label title="Chaque drone vient seul, de n'importe où, avec des départs étalés."><input type="radio" name="tactique" value="disperse">Dispersés</label>
-    <label title="Tout l'essaim entre par un couloir compact puis éclate vers les cibles."><input type="radio" name="tactique" value="fourmi">Fourmi</label>
-    <label title="L'essaim suit le plan de vol dessiné dans l'éditeur, puis rejoint ses cibles."><input type="radio" name="tactique" value="plan_de_vol">Plan de vol</label>
-  </fieldset>
-</header>
+<body class="page-jeu">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-scenario" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-calques" viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5zM2 13l10 5 10-5M2 18l10 5 10-5"/></symbol>
+  <symbol id="i-balayage" viewBox="0 0 24 24"><path d="M3 20h18M5 16l4-6 4 3 6-8"/><circle cx="9" cy="10" r="1"/><circle cx="13" cy="13" r="1"/></symbol>
+  <symbol id="i-profil" viewBox="0 0 24 24"><path d="M2 19l6-9 4 5 3-4 7 8H2zM2 7h20"/></symbol>
+  <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17v.5"/></symbol>
+</svg>
 
-<main class="poste">
-  <aside class="colonne" aria-label="Réglages du scénario">
+<main class="vue" id="vue" aria-label="Situation aérienne">
+  <div id="carte" aria-label="Fond de carte"></div>
+  <canvas id="scope" aria-label="Situation : zone défendue, radars, avions, drones, cibles"></canvas>
+
+  <header class="barre-haut">
+    <h1>Égide</h1>
+    <fieldset class="tactiques" title="Tactique de l'essaim">
+      <legend>Essaim</legend>
+      <label title="Chaque groupe arrive d'un cap différent, en vague serrée."><input type="radio" name="tactique" value="direct">Directs</label>
+      <label title="Chaque drone vient seul, de n'importe où, avec des départs étalés."><input type="radio" name="tactique" value="disperse">Dispersés</label>
+      <label title="Tout l'essaim entre par un couloir compact puis éclate vers les cibles."><input type="radio" name="tactique" value="fourmi">Fourmi</label>
+      <label title="L'essaim suit le plan de vol dessiné dans l'éditeur, puis rejoint ses cibles."><input type="radio" name="tactique" value="plan_de_vol">Plan de vol</label>
+    </fieldset>
+    <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, radars, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions. (E)">Éditer</button>
+    <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
+  </header>
+
+  <nav class="rail" aria-label="Panneaux">
+    <button data-panneau="scenario" aria-expanded="false" title="Réglages du scénario (1)"><svg><use href="#i-scenario"/></svg><span>Scénario</span></button>
+    <button data-panneau="calques" aria-expanded="false" title="Calques et fond de carte (2)"><svg><use href="#i-calques"/></svg><span>Calques</span></button>
+    <button data-panneau="balayage" aria-expanded="false" title="Balayage d'un réglage sur plusieurs raids (3)"><svg><use href="#i-balayage"/></svg><span>Balayage</span></button>
+    <button data-panneau="profil" aria-expanded="false" title="Profil du plan de vol au-dessus du relief (4)"><svg><use href="#i-profil"/></svg><span>Profil</span></button>
+    <button data-panneau="aide" aria-expanded="false" title="Commandes et symboles (5)"><svg><use href="#i-aide"/></svg><span>Aide</span></button>
+  </nav>
+
+  <section class="tiroir" data-tiroir="scenario" aria-label="Réglages du scénario" hidden>
+    <header><h2>Scénario</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
     <div id="reglages"></div>
     <div class="prereglages">
       <select name="prereglage" aria-label="Charger un réglage enregistré"></select>
@@ -38,98 +57,125 @@
         <button data-action="reinitialiser">Revenir à la référence</button>
       </div>
     </div>
-  </aside>
+  </section>
 
-  <section class="ecran" aria-label="Situation aérienne">
-    <div class="vue" id="vue">
-      <div id="carte" aria-label="Fond de carte"></div>
-      <canvas id="scope" aria-label="Situation : zone défendue, avions, drones, cibles"></canvas>
-      <aside class="inspecteur" aria-label="Inspecteur" hidden>
-        <button data-action="fermer_inspecteur" aria-label="Fermer l'inspecteur">Fermer</button>
-        <div data-zone="inspection"></div>
-      </aside>
-      <div class="barre-edition" role="toolbar" aria-label="Outils d'édition" hidden>
-        <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
-        <button data-outil="cible" aria-pressed="false" title="Ajouter une cible (C)">Cible</button>
-        <button data-outil="plan" aria-pressed="false" title="Ajouter un point au plan de vol de l'essaim (P)">Plan de vol</button>
-        <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
-        <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
-        <button data-action="terminer_edition" class="principal">Terminer</button>
-        <p class="aide-edition seulement-edition">Glisser pour déplacer, tracer un rectangle pour sélectionner, clic droit pour envoyer la sélection.
-          Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue.</p>
-        <p class="aide-edition seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b> : sélectionner des avions (clic, Maj+clic, rectangle),
-          puis clic droit pour les envoyer. L'ordre est enregistré dans le scénario et rejoué à l'identique. Terminer, puis Lire pour reprendre.</p>
-      </div>
-      <details class="reglages-carte">
-        <summary>Carte</summary>
-        <select name="fond_carte" aria-label="Fond de carte"></select>
-        <label><input type="checkbox" name="ombrage">Relief ombré</label>
-        <label><input type="checkbox" name="relief_3d">Relief 3D</label>
-        <label><input type="checkbox" name="batiments">Bâtiments 3D</label>
-        <label><input type="checkbox" name="globe">Globe</label>
-        <label><input type="checkbox" name="scope_seul">Scope seul</label>
-      </details>
+  <section class="tiroir" data-tiroir="calques" aria-label="Calques et fond de carte" hidden>
+    <header><h2>Calques</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+    <div class="reglages-carte">
+      <h3>Fond de carte</h3>
+      <select name="fond_carte" aria-label="Fond de carte"></select>
+      <label><input type="checkbox" name="ombrage">Relief ombré</label>
+      <label><input type="checkbox" name="relief_3d">Relief 3D</label>
+      <label><input type="checkbox" name="batiments">Bâtiments 3D</label>
+      <label><input type="checkbox" name="globe">Globe</label>
+      <label><input type="checkbox" name="scope_seul">Scope seul (sans carte)</label>
     </div>
-    <p class="legende">
-      <span class="ami-plein">Avion IR</span><span class="ami-creux">Avion laser</span>
-      <span class="hostile">Drone détecté</span><span class="inconnu">Drone non détecté</span>
-      <span class="sol">Bulle sol, plus pâle à court de munitions</span>
-    </p>
+    <div data-zone="calques"></div>
+    <div class="ligne"><button data-action="calques_tous">Tout afficher</button><button data-action="calques_aucun">Tout masquer</button></div>
+  </section>
+
+  <section class="tiroir large" data-tiroir="balayage" id="balayage" aria-label="Balayage" hidden>
+    <header><h2>Balayage</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+    <p class="note">Fait varier un réglage et rejoue le raid sur plusieurs graines pour chaque valeur. Chaque point est une moyenne ; le trait vertical, son intervalle de confiance à 95 %.</p>
+    <div class="ligne">
+      <label>Réglage <select name="cle_balayee"></select></label>
+      <label class="large">Valeurs <input name="valeurs"></label>
+      <label>Raids par valeur <input type="number" name="tirages" value="20" min="5" max="500"></label>
+      <button data-action="balayer" class="principal">Lancer</button>
+    </div>
+    <p data-champ="progression" role="status"></p>
+    <div data-zone="courbes"></div>
+    <details><summary>Résultats en tableau</summary><div data-zone="table"></div></details>
+  </section>
+
+  <section class="tiroir large" data-tiroir="profil" id="profil" aria-label="Profil du plan de vol" hidden>
+    <header><h2>Profil du plan de vol</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+    <div data-zone="profil"><p class="note-profil">Dessinez un plan de vol dans l'éditeur (outil Plan de vol) pour voir son profil.</p></div>
+  </section>
+
+  <section class="tiroir" data-tiroir="aide" aria-label="Commandes et symboles" hidden>
+    <header><h2>Aide</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+    <h3>Symboles</h3>
+    <ul class="legende">
+      <li><i class="ami-plein"></i>Avion à roquettes IR</li>
+      <li><i class="ami-creux"></i>Avion à roquettes laser</li>
+      <li><i class="radar"></i>Radar (R1, R2…)</li>
+      <li><i class="hostile"></i>Drone détecté</li>
+      <li><i class="inconnu"></i>Drone non détecté</li>
+      <li><i class="cible"></i>Cible (C1, C2…)</li>
+      <li><i class="sol"></i>Bulle sol, plus pâle à court de munitions</li>
+    </ul>
+    <h3>Commandes</h3>
+    <dl class="touches">
+      <dt>Espace</dt><dd>Lire ou suspendre</dd>
+      <dt>← →</dt><dd>Reculer ou avancer de 30 s</dd>
+      <dt>E</dt><dd>Éditer le scénario</dd>
+      <dt>1 à 5</dt><dd>Ouvrir un panneau (hors édition)</dd>
+      <dt>Molette</dt><dd>Zoom</dd>
+      <dt>Clic droit glissé</dt><dd>Incliner et tourner la carte</dd>
+      <dt>Double-clic</dt><dd>Recadrer</dd>
+      <dt>Clic</dt><dd>Inspecter une entité</dd>
+      <dt>Échap</dt><dd>Fermer le panneau ou l'inspecteur</dd>
+    </dl>
+  </section>
+
+  <div class="colonne-droite">
+    <aside id="tableau" class="hud" aria-label="Bilan du raid" aria-live="off">
+      <dl class="chiffres">
+        <div class="hostile"><dt>En vol</dt><dd data-champ="en_vol">0</dd></div>
+        <div class="ami"><dt>Abattus air</dt><dd data-champ="detruits_air">0</dd></div>
+        <div class="sol"><dt>Abattus sol</dt><dd data-champ="detruits_sol">0</dd></div>
+        <div class="frappes"><dt>Frappes</dt><dd data-champ="frappes">0</dd></div>
+      </dl>
+      <details class="details-bilan">
+        <summary>Munitions, flotte, cibles</summary>
+        <p class="jauge ami"><span>Roquettes des avions</span><span class="piste"><i data-jauge="munitions_air"></i></span><b data-champ="munitions_air"></b></p>
+        <p class="jauge sol"><span>Munitions sol</span><span class="piste"><i data-jauge="munitions_sol"></i></span><b data-champ="munitions_sol"></b></p>
+        <h3>Flotte armée</h3>
+        <dl class="flotte">
+          <div><dt>Orbite</dt><dd data-champ="avions_orbite">0</dd></div>
+          <div><dt>En route</dt><dd data-champ="avions_ralliement">0</dd></div>
+          <div><dt>Contact</dt><dd data-champ="avions_engagement">0</dd></div>
+          <div><dt>À poste</dt><dd data-champ="avions_poste">0</dd></div>
+          <div><dt>À court</dt><dd data-champ="avions_vides">0</dd></div>
+        </dl>
+        <h3>Frappes par cible</h3>
+        <ol class="cibles" data-liste="cibles"></ol>
+      </details>
+    </aside>
+    <aside class="inspecteur" aria-label="Inspecteur" hidden>
+      <button data-action="fermer_inspecteur" aria-label="Fermer l'inspecteur">×</button>
+      <div data-zone="inspection"></div>
+    </aside>
+  </div>
+
+  <div class="bas">
+    <div class="barre-edition" role="toolbar" aria-label="Outils d'édition" hidden>
+      <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
+      <button data-outil="cible" aria-pressed="false" title="Ajouter une cible (C)">Cible</button>
+      <button data-outil="radar" aria-pressed="false" title="Ajouter un radar (R)">Radar</button>
+      <button data-outil="plan" aria-pressed="false" title="Ajouter un point au plan de vol de l'essaim (P)">Plan de vol</button>
+      <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
+      <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
+      <button data-action="terminer_edition" class="principal">Terminer</button>
+      <p class="aide-edition seulement-edition">Glisser pour déplacer, rectangle pour sélectionner, clic droit pour envoyer la sélection.
+        Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue.</p>
+      <p class="aide-edition seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b> : sélectionner des avions (clic, Maj+clic, rectangle),
+        puis clic droit pour les envoyer. L'ordre est enregistré dans le scénario et rejoué à l'identique.</p>
+    </div>
     <div class="transport">
       <button data-action="lire" class="principal">Lire</button>
-      <button data-action="debut" aria-label="Revenir au début du raid">Début</button>
+      <button data-action="debut" aria-label="Revenir au début du raid" title="Revenir au début">⏮</button>
       <input type="range" name="temps" min="0" max="100" step="1" value="0" aria-label="Instant du raid">
       <output data-champ="horloge">0:00</output>
       <fieldset class="vitesses"><legend>Vitesse</legend><div data-zone="vitesses"></div></fieldset>
-      <label class="graine">Graine <input type="number" name="graine" min="0" step="1"></label>
-      <button data-action="autre_graine">Autre raid</button>
+      <label class="graine" title="Graine du hasard : une même graine rejoue le même raid">Graine <input type="number" name="graine" min="0" step="1"></label>
+      <button data-action="autre_graine" title="Tirer une autre graine">Autre raid</button>
     </div>
-    <details class="profil" id="profil">
-      <summary>Profil du plan de vol</summary>
-      <div data-zone="profil"><p class="note-profil">Dessinez un plan de vol dans l'éditeur (outil Plan de vol) pour voir son profil.</p></div>
-    </details>
-    <p class="astuce">Espace : lire ou suspendre. Flèches : ±30 s. Molette : zoom. Clic droit glissé : incliner et tourner la carte. Double-clic : recadrer. Clic sur une entité : l'inspecter.</p>
-  </section>
-
-  <aside id="tableau" class="colonne" aria-label="Bilan du raid" aria-live="off">
-    <h2>Bilan du raid</h2>
-    <dl class="chiffres">
-      <div class="hostile"><dt>Drones en vol</dt><dd data-champ="en_vol">0</dd></div>
-      <div class="ami"><dt>Détruits par les avions</dt><dd data-champ="detruits_air">0</dd></div>
-      <div class="sol"><dt>Détruits au sol</dt><dd data-champ="detruits_sol">0</dd></div>
-      <div class="frappes"><dt>Frappes sur les cibles</dt><dd data-champ="frappes">0</dd></div>
-    </dl>
-    <h3>Munitions restantes</h3>
-    <p class="jauge ami"><span>Roquettes des avions</span><span class="piste"><i data-jauge="munitions_air"></i></span><b data-champ="munitions_air"></b></p>
-    <p class="jauge sol"><span>Munitions sol</span><span class="piste"><i data-jauge="munitions_sol"></i></span><b data-champ="munitions_sol"></b></p>
-    <h3>Flotte armée</h3>
-    <dl class="flotte">
-      <div><dt>En orbite</dt><dd data-champ="avions_orbite">0</dd></div>
-      <div><dt>En route</dt><dd data-champ="avions_ralliement">0</dd></div>
-      <div><dt>Au contact</dt><dd data-champ="avions_engagement">0</dd></div>
-      <div><dt>À poste</dt><dd data-champ="avions_poste">0</dd></div>
-      <div><dt>À court</dt><dd data-champ="avions_vides">0</dd></div>
-    </dl>
-    <h3>Frappes par cible</h3>
-    <ol class="cibles" data-liste="cibles"></ol>
-  </aside>
-</main>
-
-<section id="balayage" aria-labelledby="titre-balayage">
-  <h2 id="titre-balayage">Balayage</h2>
-  <p>Fait varier un réglage et rejoue le raid sur plusieurs graines pour chaque valeur. Chaque point est une moyenne ; le trait vertical, son intervalle de confiance à 95 %.</p>
-  <div class="ligne">
-    <label>Réglage <select name="cle_balayee"></select></label>
-    <label class="large">Valeurs <input name="valeurs"></label>
-    <label>Raids par valeur <input type="number" name="tirages" value="20" min="5" max="500"></label>
-    <button data-action="balayer" class="principal">Lancer le balayage</button>
   </div>
-  <p data-champ="progression" role="status"></p>
-  <div data-zone="courbes"></div>
-  <details><summary>Voir les résultats en tableau</summary><div data-zone="table"></div></details>
-</section>
 
-<p data-champ="message" class="message" role="status"></p>
+  <p data-champ="message" class="message" role="status"></p>
+</main>
 <div id="infobulle" role="tooltip" hidden></div>
 </body>
 </html>

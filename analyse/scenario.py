@@ -67,6 +67,23 @@ def _resoudre_avions(groupes: list, fichiers: dict) -> list[dict]:
     return resolus
 
 
+# Algorithme de detection impose par chaque disposition des radars (None : celui de l'unite). MODELE § 15.1.
+DISPOSITIONS_RADAR = {"frontiere": None, "sites": "global/detection/sites_radar"}
+
+
+def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
+    """Rendre le radar resolu : unite, disposition, sites et algorithme de detection."""
+    unite = unite_si(radar["unite"], fichiers, radar.get("surcharges"))
+    disposition = radar.get("disposition", "frontiere")
+    if disposition not in DISPOSITIONS_RADAR:
+        raise ScenarioInvalideError(f"disposition des radars inconnue « {disposition} »")
+    sites = _vers_geo(radar.get("sites"), unite["hauteur_antenne"])
+    if disposition == "sites" and not sites:
+        raise ScenarioInvalideError("disposition « sites » : au moins un radar place")
+    detection = DISPOSITIONS_RADAR[disposition] or unite["algos"]["detection"]
+    return {**unite, "algos": {**unite["algos"], "detection": detection}, "disposition": disposition, "sites": sites}
+
+
 def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
     """Rendre le scenario resolu en unites SI, meme structure que resoudre_scenario() en JavaScript.
 
@@ -112,7 +129,7 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
             },
             "avions": _resoudre_avions(bleu["avions"], fichiers),
             "sol": {**sol, "nombre": bleu["sol"]["nombre"], "munitions": bleu["sol"]["munitions"]},
-            "radar": unite_si(bleu["radar"]["unite"], fichiers, bleu["radar"].get("surcharges")),
+            "radar": _resoudre_radar(bleu["radar"], fichiers),
             "conduite": convertir_objet(bleu["conduite"]),
             # Ordres tries par instant : le moteur les applique dans l'ordre, sans revenir en arriere.
             "ordres": sorted(

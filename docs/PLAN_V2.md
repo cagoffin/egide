@@ -31,7 +31,8 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 3 | Éditeur façon jeu de stratégie : palette, glisser-déposer, sélection, groupes Ctrl+1–9, ordres enchaînés, plans de vol, vue en profil, zones dessinées, ordres en direct rejoués | Un raid avec ordres en direct se rejoue à l'identique | **fait** : cibles, orbites, plan de vol, zones, sélection, groupes, envoi, annulation, ordres en cours de raid rejoués, vue en profil |
 | 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | **fait** : explorateur `catalogue.html`, inspecteur au clic, renvois au modèle vérifiés |
 | 5 | Preuve : convergence en pas de temps, sensibilité (Morris, Sobol), duel A/B, empreinte de reproductibilité, dossier de preuve | Les résultats publiés portent leur empreinte et leur convergence | **outils faits** en ligne de commande (`src/preuve.js` : empreinte, convergence, duel apparié, Morris, dossier) ; Sobol et duel en écran partagé à faire |
-| 6 | Idées ci-dessous, par lots | Selon l'idée | à faire |
+| 6 | Idées ci-dessous, par lots | Selon l'idée | **en cours** : interface centrée sur la carte, radars placés et déplaçables, calques par type d'unité |
+| 7 | Réseau d'information : liaisons paramétrables entre unités, synoptique de connectivité, situation perçue par unité | Avec un réseau entièrement connecté sans délai, bilans identiques à aujourd'hui | à faire |
 
 ## Idées retenues
 
@@ -57,6 +58,15 @@ scenarios/                                  placements, plans de vol, zones, mé
 - Coût-efficacité : coût par interception, ratio d'échange.
 - Cartes de chaleur (couverture réelle, couloirs de fuite) et enveloppes de tir.
 - Missions défis ; rouge contre bleu à deux joueurs.
+
+**Réseau et gestion de l'information** (demandé par l'utilisateur)
+- Relier les unités entre elles par des moyens de communication : liaisons filaires, radio, satellite, optiques, entre
+  unités de la défense comme entre drones de l'essaim, et liaisons mixtes.
+- Chaque liaison paramétrable comme le reste (fichiers d'unités de liaison : débit, latence, portée, visibilité
+  directe, sensibilité au brouillage) ; un radar n'alimente pas forcément tout le monde.
+- Vue synoptique de la connectivité sur la carte : qui parle à qui, par quel moyen, avec quel retard ; l'information
+  disponible pour chaque unité devient sa situation perçue.
+- Par défaut, et jusque-là : tout le monde parle avec tout le monde, sans délai (MODELE § 15.2).
 
 **Interopérabilité**
 - Export ASTERIX des plots et pistes simulés (UDP) vers un système C2 ou des outils de test d'interfaces radar.

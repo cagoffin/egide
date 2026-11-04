@@ -83,7 +83,7 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
 - Lancer seulement les tests des fichiers touchés.
 - Ne pas modifier README ni docs/PLAN.md sans demande : l'utilisateur les reprend avant chaque version.
   docs/MODELE.md, lui, se met à jour avec le code qui l'applique.
-- **Avant toute pose de tag de version, rappeler à l'utilisateur de mettre à jour le README.**
+- **README : mis à jour seulement lors de la pose d'un tag de version** (captures et GIF refaits à ce moment-là), jamais entre deux tags.
 - Ne jamais tuer un processus qu'on n'a pas lancé soi-même.
 
 ## Vérifications avant commit

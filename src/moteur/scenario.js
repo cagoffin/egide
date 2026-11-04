@@ -71,6 +71,19 @@ function resoudre_avions(groupes, fichiers) {
   });
 }
 
+/** Algorithme de détection imposé par chaque disposition des radars (null : celui de l'unité). MODELE § 15.1. */
+export const DISPOSITIONS_RADAR = {frontiere: null, sites: "global/detection/sites_radar"};
+
+function resoudre_radar(radar, fichiers) {
+  const unite = unite_si(radar.unite, fichiers, radar.surcharges);
+  const disposition = radar.disposition ?? "frontiere";
+  if (!(disposition in DISPOSITIONS_RADAR)) throw new ScenarioInvalide(`disposition des radars inconnue « ${disposition} » (${Object.keys(DISPOSITIONS_RADAR).join(", ")})`);
+  const sites = vers_geo(radar.sites, unite.hauteur_antenne);
+  if (disposition === "sites" && sites.length === 0) throw new ScenarioInvalide("disposition « sites » : au moins un radar placé");
+  const detection = DISPOSITIONS_RADAR[disposition] ?? unite.algos.detection;
+  return {...unite, algos: {...unite.algos, detection}, disposition, sites};
+}
+
 /**
  * Rendre le scénario résolu et figé, en unités SI, que consomme le moteur : chaque groupe porte les paramètres de
  * son unité (catalogue `fichiers`, voir charger_unites) et ses surcharges. Lève ScenarioInvalide sinon.
@@ -107,7 +120,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
       },
       avions: resoudre_avions(bleu.avions, fichiers),
       sol: {...unite_si(bleu.sol.unite, fichiers, bleu.sol.surcharges), nombre: bleu.sol.nombre, munitions: bleu.sol.munitions},
-      radar: unite_si(bleu.radar.unite, fichiers, bleu.radar.surcharges),
+      radar: resoudre_radar(bleu.radar, fichiers),
       conduite: convertir_objet(bleu.conduite),
       // Ordres triés par instant : le moteur les applique dans l'ordre, sans revenir en arrière.
       ordres: (bleu.ordres ?? []).map((o) => ({t: o.t_s, avions: o.avions, point: geo_deg(o.lat_deg, o.lon_deg, 0)})).sort((a, b) => a.t - b.t),
@@ -172,7 +185,7 @@ export function migrer_v1(v1) {
       avions,
       sol: {_aide: AIDE.sol, unite: UNITES_V1.poste, nombre: v1.sol_postes_nombre, munitions: v1.sol_roquettes_nombre + v1.sol_missiles_nombre,
         surcharges: {portee_km: v1.sol_portee_km, pk: v1.sol_pk, engagements_par_passage: v1.sol_engagements_par_passage}},
-      radar: {_aide: AIDE.radar, unite: UNITES_V1.radar, surcharges: {hauteur_antenne_m: v1.radar_hauteur_antenne_m, portee_max_km: v1.radar_portee_max_km}},
+      radar: {_aide: AIDE.radar, unite: UNITES_V1.radar, surcharges: {hauteur_antenne_m: v1.radar_hauteur_antenne_m, portee_max_km: v1.radar_portee_max_km}, disposition: "frontiere", sites: []},
       conduite: {
         _aide: AIDE.conduite, delai_reaction_s: v1.delai_reaction_s, pas_decision_s: v1.avions_pas_decision_s,
         interception_profondeur_km: v1.interception_profondeur_km, pistage: "global/pistage/cellules", allocation: "global/allocation/densite_pistes",

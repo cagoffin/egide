@@ -172,7 +172,9 @@
         "detection": "global/detection/couverture_frontiere"
       },
       "hauteur_antenne": 20,
-      "portee_max": 250000
+      "portee_max": 250000,
+      "disposition": "frontiere",
+      "sites": []
     },
     "conduite": {
       "delai_reaction": 90,

@@ -127,3 +127,21 @@ test("ordres : à l'instant dit, les avions cités rallient le point, puis la co
   assert.ok(plusPres < 500, `au plus près : ${plusPres} m`);
   assert.deepEqual(bilan(simuler(s, {registre: REGISTRE, journal: false})), bilan(simuler(s, {registre: REGISTRE, journal: false})));
 });
+
+test("radars placés : la disposition frontière matérialisée détecte comme la frontière ; sans radar proche, rien n'est vu", async () => {
+  const {sites_frontiere} = await import("../src/moteur/radars.js");
+  const en_degres = (g) => ({lat_deg: (g.lat * 180) / Math.PI, lon_deg: (g.lon * 180) / Math.PI});
+  const reference = scenario(PETIT);
+  const sites = sites_frontiere(reference).map(en_degres);
+  assert.ok(sites.length >= 3);
+  const places = scenario({...PETIT, "bleu.radar.disposition": "sites", "bleu.radar.sites": sites});
+  assert.equal(places.radar.algos.detection, "global/detection/sites_radar");
+  const monde = simuler(places, {registre: REGISTRE, journal: false});
+  assert.ok(monde.drones.every((d) => d.detection !== null), "chaque drone qui franchit la frontière est vu");
+  const loin = scenario({...PETIT, "bleu.radar.disposition": "sites", "bleu.radar.sites": [{lat_deg: 60, lon_deg: 2.5}]});
+  const aveugle = simuler(loin, {registre: REGISTRE, journal: false});
+  assert.ok(aveugle.drones.every((d) => d.detection === null), "un radar à 1 400 km ne voit rien");
+  assert.ok(bilan(aveugle).fuites > bilan(monde).fuites, "sans pistes, la conduite ne guide personne : plus de frappes");
+  assert.throws(() => scenario({"bleu.radar.disposition": "sites"}), /au moins un radar/);
+  assert.throws(() => scenario({"bleu.radar.disposition": "partout"}), /disposition/);
+});

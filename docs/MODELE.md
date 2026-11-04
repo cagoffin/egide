@@ -326,3 +326,30 @@ de variance (Sobol) chiffrera ensuite la part de chaque facteur.
 `node src/preuve.js dossier` écrit un dossier Markdown : empreinte, écarts au scénario de référence, résultats avec
 leur IC à 95 %, convergence en pas de temps, unités et algorithmes en jeu (fidélité, sources, hypothèses), limites
 connues et commande pour le reproduire.
+
+## 15 · Radars placés et réseau (jalon 6)
+### 15.1 Disposition des radars
+Deux dispositions, au choix du scénario (`bleu.radar.disposition`) :
+- **frontière** (référence, § 2) : des radars jalonnent la frontière ; un drone est vu dès qu'il entre à moins de
+  d = min(horizon radar, portée max) de la zone. Pour l'affichage et l'édition, cette couverture est matérialisée par
+  n = ⌈2π R / (√3 d)⌉ radars (3 au moins) répartis sur le cercle de la zone : deux voisins sont à √3 d au plus l'un de
+  l'autre, si bien que tout drone qui franchit la frontière passe à moins de d de l'un d'eux ;
+- **sites** : chaque radar est placé sur la carte (`bleu.radar.sites`). Un drone est vu dès qu'il est dans la portée
+  d'au moins un site, en distance oblique entre positions ECEF : ‖P_drone − P_site‖² ≤ d² + (h_drone − h_antenne)².
+  Les drones apparaissent au-delà de la couverture la plus lointaine et, au moins, de la frontière.
+
+Dans l'éditeur, déplacer, ajouter ou supprimer un radar fait passer le scénario en disposition « sites » en y
+inscrivant la position de tous les radars affichés. La détection reste mémorisée : un drone vu une fois reste pisté.
+
+### 15.2 Réseau d'information
+Pour l'instant, tout le monde parle avec tout le monde : la détection d'un radar profite immédiatement à toute la
+défense. Le réseau de liaisons (filaires, radio, satellite, optiques, entre unités et entre drones) est une évolution
+prévue, paramétrable comme le reste (docs/PLAN_V2.md).
+
+### 15.3 Interface centrée sur la carte
+La carte (ou le scope) occupe tout l'écran. Le reste flotte par-dessus et se replie : barre de tactique et d'édition
+en haut, rail de panneaux à gauche (scénario, calques, balayage, profil, aide ; un à la fois, touches 1 à 5), bilan
+compact en haut à droite avec ses détails repliés, inspecteur dessous, lecture en bas. Les **calques** affichent ou
+masquent chaque famille d'entités (avions IR, avions laser, radars, couverture, bulles sol, drones détectés ou non,
+plots, plan de vol, tirs, cibles, zones, anneaux) ; une entité masquée ne se survole, ne s'inspecte ni ne s'édite.
+C'est un filtre d'affichage : la simulation n'en dépend pas.

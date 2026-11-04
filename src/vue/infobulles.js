@@ -17,6 +17,13 @@ export function decrire(survol, monde) {
     const munitions = postes.reduce((somme, p) => somme + p.munitions, 0);
     return `Cible C${survol.indice + 1}\n${postes.length} postes sol, ${munitions} munitions\n${monde.fuites[survol.indice]} drones arrivés`;
   }
+  if (survol.type === "radar") {
+    const {radar} = monde.scenario;
+    const site = monde.couverture.sites?.[survol.indice];
+    const disposition = radar.disposition === "sites" ? "placé" : "de la couverture frontière (le déplacer le place)";
+    const portee = site ? `\nportée contre l'essaim : ${Math.round(site.portee / 1000)} km` : "";
+    return `Radar R${survol.indice + 1}, ${disposition}\nantenne à ${radar.hauteur_antenne} m${portee}`;
+  }
   const drone = survol.objet;
   const vu = drone.detection === null ? "pas encore détecté" : `détecté depuis ${format_duree(monde.t - drone.detection)}`;
   return `Drone ${drone.id + 1}, vise C${drone.cible + 1}\n${vu}`;

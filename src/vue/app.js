@@ -1,12 +1,14 @@
 // Point d'entrée de l'interface : charge le scénario, branche réglages, scope, lecture, tableau et balayage.
 import {AlgoInvalide, charger_algos, ids_algos} from "../moteur/algos.js";
 import {CatalogueInvalide, charger_unites} from "../moteur/catalogue.js";
+import {positions_radars} from "../moteur/radars.js";
 import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalide} from "../moteur/scenario.js";
 import {brancher_balayage, montrer} from "./balayage.js";
 import {creer_camera, deplacer, zoomer} from "./camera.js";
 import {cadrer_carte, creer_carte} from "./carte.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
+import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
 import {creer_editeur} from "./editeur.js";
 import {dessiner_inspection, inspection} from "./inspecteur.js";
 import {dessiner_profil} from "./profil.js";
@@ -17,6 +19,7 @@ import {format_duree} from "./format.js";
 import {decrire} from "./infobulles.js";
 import {MULTIPLICATEURS, aller_a, avancer_temps_reel, creer_lecteur} from "./lecteur.js";
 import {enregistrer_prereglage, exporter_scenario, lire_prereglages} from "./prereglages.js";
+import {brancher_panneaux} from "./panneaux.js";
 import {construire_reglages} from "./reglages.js";
 import {dessiner_scope, trouver_sous_curseur} from "./scope.js";
 import {mettre_a_jour_tableau} from "./tableau.js";
@@ -29,7 +32,8 @@ const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 
 const etat = {base: null, modifications: {}, fichiers: {}, registre: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
   camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null,
-  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: [], inspection: null, derniereInspection: 0};
+  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: [], inspection: null, derniereInspection: 0,
+  calques: lire_calques(), panneaux: null};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 
@@ -76,7 +80,8 @@ async function charger() {
   etat.traces = creer_traces();
   etat.effets = creer_effets();
   const {monde} = etat.lecteur;
-  const existe = {avion: monde.avions, drone: monde.drones, cible: monde.cibles}[etat.inspection?.type]?.[etat.inspection?.id];
+  const nombres = {avion: monde.avions.length, drone: monde.drones.length, cible: monde.cibles.length, radar: positions_radars(monde.scenario).length};
+  const existe = etat.inspection && etat.inspection.id < nombres[etat.inspection.type];
   if (etat.inspection && !existe) inspecter(null);
   $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
   $("[name='graine']").value = brut.simulation.graine;
@@ -129,7 +134,7 @@ function image(maintenant, precedent) {
     const ctx = $("#scope").getContext("2d");
     ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);
     dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
-      angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol});
+      angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques});
     etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
     dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
@@ -185,7 +190,12 @@ function brancher_transport() {
   $("[data-action='autre_graine']").addEventListener("click", () => modifier({"simulation.graine": Math.floor(Math.random() * 1e6)}));
   document.querySelectorAll("[name='tactique']").forEach((bouton) => bouton.addEventListener("change", () => modifier({"rouge.tactique": bouton.value})));
   addEventListener("keydown", (e) => {
-    if (e.target.closest("input, select, textarea")) return;
+    if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
+    const edition = etat.editeur?.est_actif();
+    const panneau = /^Digit([1-5])$/.exec(e.code)?.[1];
+    if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
+    if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
+    if (e.key === "Escape" && !edition && !etat.inspection) etat.panneaux.fermer();
     if (e.code === "Space") (e.preventDefault(), basculer_lecture());
     if (e.code === "ArrowRight") sauter_a(etat.lecteur.monde.t + 30);
     if (e.code === "ArrowLeft") sauter_a(Math.max(0, etat.lecteur.monde.t - 30));
@@ -199,6 +209,8 @@ function brancher_scope() {
   let glisse = null;
   // Zoom et déplacement propres au scope ; en édition, c'est l'éditeur qui reçoit la souris.
   const scope_libre = () => etat.camera?.type === "scope" && !etat.editeur?.est_actif();
+  // Les panneaux flottent dans la vue : seuls les gestes faits sur la carte ou le scope la concernent.
+  const sur_la_vue = (e) => e.target === toile || Boolean(e.target.closest("#carte"));
   toile.addEventListener("wheel", (e) => {
     if (!scope_libre()) return;
     e.preventDefault();
@@ -208,7 +220,7 @@ function brancher_scope() {
   toile.addEventListener("pointerup", () => (glisse = null));
   vue.addEventListener("dblclick", (e) => {
     // En édition, le double-clic ferme une zone : il ne doit pas recadrer la vue.
-    if (etat.editeur?.est_actif()) return;
+    if (etat.editeur?.est_actif() || !sur_la_vue(e)) return;
     e.preventDefault();
     cadrer(true);
   });
@@ -220,8 +232,9 @@ function brancher_scope() {
   // Survol écouté sur la vue entière : sur la carte, le canevas laisse passer la souris à MapLibre.
   vue.addEventListener("pointermove", (e) => {
     if (glisse || !etat.camera || !etat.lecteur) return;
+    if (!sur_la_vue(e)) return void (etat.survol = null, montrer(infobulle, null));
     const cadre = vue.getBoundingClientRect();
-    etat.survol = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top});
+    etat.survol = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques);
     montrer(infobulle, etat.survol && decrire(etat.survol, etat.lecteur.monde), e.clientX, e.clientY);
   });
   vue.addEventListener("pointerleave", () => (etat.survol = null, montrer(infobulle, null)));
@@ -229,11 +242,11 @@ function brancher_scope() {
   let appui = null;
   vue.addEventListener("pointerdown", (e) => (appui = {x: e.clientX, y: e.clientY}));
   vue.addEventListener("click", (e) => {
-    if (etat.editeur?.est_actif() || e.target.closest(".inspecteur, .reglages-carte, .barre-edition")) return;
+    if (etat.editeur?.est_actif() || !sur_la_vue(e)) return;
     if (appui && Math.hypot(e.clientX - appui.x, e.clientY - appui.y) > 4) return;
     const cadre = vue.getBoundingClientRect();
-    const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top});
-    if (touche) inspecter({type: touche.type, id: touche.type === "cible" ? touche.indice : touche.objet.id});
+    const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques);
+    if (touche) inspecter({type: touche.type, id: ["cible", "radar"].includes(touche.type) ? touche.indice : touche.objet.id});
   });
   $("[data-action='fermer_inspecteur']").addEventListener("click", () => inspecter(null));
   addEventListener("keydown", (e) => e.key === "Escape" && !etat.editeur?.est_actif() && inspecter(null));
@@ -328,7 +341,7 @@ async function rafraichir_profil() {
   const panneau = $("#profil");
   const zone = panneau.querySelector("[data-zone='profil']");
   const {rouge} = etat.lecteur?.scenario ?? {};
-  if (!panneau.open || !rouge) return;
+  if (panneau.hidden || !rouge) return;
   if (rouge.plan_de_vol.length < 2) {
     zone.innerHTML = `<p class="note-profil">Dessinez un plan de vol d'au moins deux points dans l'éditeur pour voir son profil.</p>`;
     return;
@@ -353,7 +366,7 @@ function brancher_editeur() {
   const bouton = $("[data-action='editer']");
   etat.editeur = creer_editeur({
     vue: $("#vue"), toile: $("#scope"), barre: $(".barre-edition"),
-    camera: () => etat.camera, monde: () => etat.lecteur.monde, brut: brut_courant,
+    camera: () => etat.camera, monde: () => etat.lecteur.monde, brut: brut_courant, calques: () => etat.calques,
     appliquer: appliquer_edition, annuler: annuler_edition,
     panoramique: (dx, dy) => {
       if (etat.camera.type === "carte") etat.carte.panBy([-dx, -dy], {duration: 0});
@@ -366,11 +379,35 @@ function brancher_editeur() {
     sur_activation: (actif, mode) => {
       bouton.setAttribute("aria-pressed", String(actif));
       if (!actif) return;
+      // Pour éditer, on dégage la vue : les panneaux se replient.
+      etat.panneaux.fermer();
       etat.lecteur.enLecture = false;
       if (mode === "edition") sauter_a(0);
     },
   });
   bouton.addEventListener("click", () => etat.editeur.activer(!etat.editeur.est_actif()));
+}
+
+// Pastille de légende de chaque calque (classes définies dans style.css).
+const PASTILLES = {avions_ir: "ami-plein", avions_laser: "ami-creux", missions: "trait-ami", radars: "radar", couverture: "trait-ami",
+  balayage: "faisceau", postes: "sol", drones_detectes: "hostile", drones_inconnus: "inconnu", plots: "plots", plan: "trait-hostile",
+  tirs: "eclat", cibles: "cible", zones: "zone", anneaux: "trait"};
+
+function brancher_calques() {
+  const zone = $("[data-zone='calques']");
+  const groupes = [...new Set(CALQUES.map((c) => c.groupe))];
+  zone.innerHTML = groupes.map((groupe) => `<h3>${groupe}</h3>${CALQUES.filter((c) => c.groupe === groupe).map((c) =>
+    `<label class="calque"><input type="checkbox" name="calque" value="${c.id}"><i class="${PASTILLES[c.id] ?? ""}"></i>${c.libelle}</label>`).join("")}`).join("");
+  const afficher = () => zone.querySelectorAll("[name='calque']").forEach((c) => (c.checked = etat.calques[c.value]));
+  const changer = (calques) => {
+    etat.calques = calques;
+    memoriser_calques(calques);
+    afficher();
+  };
+  zone.addEventListener("change", (e) => changer({...etat.calques, [e.target.value]: e.target.checked}));
+  $("[data-action='calques_tous']").addEventListener("click", () => changer(calques_par_defaut()));
+  $("[data-action='calques_aucun']").addEventListener("click", () => changer(Object.fromEntries(CALQUES.map((c) => [c.id, false]))));
+  afficher();
 }
 
 async function demarrer() {
@@ -383,7 +420,8 @@ async function demarrer() {
   brancher_transport();
   brancher_scope();
   brancher_editeur();
-  $("#profil").addEventListener("toggle", rafraichir_profil);
+  brancher_calques();
+  etat.panneaux = brancher_panneaux($("#vue"), $(".rail"), (id) => id === "profil" && rafraichir_profil());
   brancher_prereglages();
   brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));
   await charger();
