@@ -170,6 +170,17 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .palette[hidden] { display: none; }
 .palette h2 { font-size: 15px; margin: 12px 0 4px; }
 .palette .aide-palette { font-size: 12px; color: var(--texte-secondaire); margin: 0 0 8px; }
+.sauvegarde-deploiement { display: grid; gap: 6px; margin-block-end: 10px; }
+.sauvegarde-deploiement .ligne { display: flex; gap: 6px; flex-wrap: wrap; }
+.bouton-fichier { background: var(--panneau); border: 1px solid var(--trait); border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: 13.3px; }
+.bouton-fichier:focus-within { outline: 2px solid var(--ami); }
+.fiche label { display: grid; gap: 3px; font-size: 12px; color: var(--texte-secondaire); margin-block: 6px; }
+.fiche select, .fiche input:not([type="checkbox"]) { inline-size: 100%; }
+.fiche fieldset { border: 1px solid var(--trait); border-radius: 6px; padding: 4px 8px; margin-block: 6px; }
+.fiche fieldset label { display: flex; align-items: center; gap: 6px; color: var(--texte); margin-block: 3px; }
+.fiche legend { font-size: 12px; color: var(--texte-secondaire); }
+.fiche .note { font-size: 12px; color: var(--texte-secondaire); }
+.fiche section + section { border-block-start: 1px solid var(--trait); margin-block-start: 8px; }
 .palette .quantite { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; color: var(--texte-secondaire); margin-block-end: 6px; }
 .palette .quantite input { inline-size: 5em; }
 .palette details { border-block-start: 1px solid var(--trait); padding-block: 4px; }

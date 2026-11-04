@@ -11,6 +11,7 @@ import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
 import {creer_editeur} from "./editeur.js";
 import {choisir_moyen, modifications_reseau_auto, palette} from "./deploiement.js";
+import {fiches} from "./fiche.js";
 import {libelle_noeud, MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {resume_situation} from "./situation.js";
 import {FAMILLES, lignes_journal} from "./journal.js";
@@ -144,6 +145,7 @@ function image(maintenant, precedent) {
     dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
       angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques, percue: etat.vue_pc});
     etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
+    rafraichir_fiche();
     dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
   }
@@ -154,6 +156,70 @@ function rafraichir_inspection(maintenant, forcer = false) {
   if (!etat.inspection || (!forcer && maintenant - etat.derniereInspection < 250)) return;
   etat.derniereInspection = maintenant;
   $("[data-zone='inspection']").innerHTML = inspection(etat.inspection, etat.lecteur.monde);
+}
+
+/** Montrer la fiche de déploiement des éléments sélectionnés dans l'éditeur ; refaite quand la sélection ou le scénario change. */
+function rafraichir_fiche() {
+  const editeur = etat.editeur;
+  const cles = editeur?.est_actif() && editeur.mode() === "edition" ? editeur.selection() : [];
+  const signature = `${cles.join(",")}|${etat.historique.length}|${JSON.stringify(etat.modifications).length}|${Boolean(etat.lecteur)}`;
+  if (signature === etat.signature_fiche) return;
+  etat.signature_fiche = signature;
+  $(".fiche").hidden = !cles.length;
+  if (!cles.length || !etat.lecteur) return;
+  const nom = (id) => etat.noms_unites?.[id] ?? id;
+  etat.fiches = fiches(cles, etat.lecteur.monde, brut_courant(), {index: etat.index_unites ?? [], algos: etat.index_algos ?? [], nom});
+  $("[data-zone='fiche']").innerHTML = etat.fiches.map((f, i) => `<section><h3>${echapper_html(f.titre)}</h3>${f.note ? `<p class="note">${echapper_html(f.note)}</p>` : ""}
+    ${f.controles.map((c, j) => controle_html(c, i, j)).join("")}</section>`).join("");
+}
+
+/** Rendre le HTML d'un contrôle de fiche, repéré par sa fiche `i` et son rang `j`. */
+function controle_html(c, i, j) {
+  const repere = `data-fiche="${i}" data-controle="${j}"`;
+  const option = (o) => `<option value="${echapper_html(o.valeur)}" ${o.valeur === c.valeur ? "selected" : ""}>${echapper_html(o.libelle.replace(/ \(notionnel(le)?\)$/, ""))}</option>`;
+  if (c.type === "choix") return `<label>${c.libelle}<select ${repere}>${c.options.map(option).join("")}</select></label>`;
+  if (c.type === "nombre") return `<label>${c.libelle}<input type="number" ${repere} value="${c.valeur}" min="${c.min}" step="${c.pas}"></label>`;
+  if (c.type === "texte") return `<label>${c.libelle}<input ${repere} value="${echapper_html(c.valeur)}"></label>`;
+  return `<fieldset ${repere}><legend>${c.libelle} (aucun : tout moyen accepté)</legend>${c.options.map((o) =>
+    `<label><input type="checkbox" value="${echapper_html(o.valeur)}" ${c.valeur.includes(o.valeur) ? "checked" : ""}>${echapper_html(o.libelle.replace(/ \(notionnel(le)?\)$/, ""))}</label>`).join("")}</fieldset>`;
+}
+
+/** Appliquer le réglage d'un contrôle de fiche changé par l'utilisateur. */
+function brancher_fiche() {
+  $("[data-zone='fiche']").addEventListener("change", (e) => {
+    const porteur = e.target.closest("[data-controle]");
+    if (!porteur) return;
+    const controle = etat.fiches[Number(porteur.dataset.fiche)].controles[Number(porteur.dataset.controle)];
+    const valeur = controle.type === "cases" ? [...porteur.querySelectorAll("input:checked")].map((c) => c.value)
+      : controle.type === "nombre" ? Number(e.target.value) : e.target.value;
+    appliquer_edition(controle.modifications(valeur));
+  });
+}
+
+/** Brancher la sauvegarde du déploiement (bibliothèque du navigateur, export) et l'import d'un fichier de scénario. */
+function brancher_sauvegarde() {
+  $("[data-action='ranger_deploiement']").addEventListener("click", () => {
+    const nom = $("[name='nom_deploiement']").value.trim() || brut_courant().nom;
+    const brut = {...brut_courant(), nom};
+    $("[data-champ='message']").textContent = enregistrer_dans_bibliotheque(nom, brut) ? `« ${nom} » rangé dans la bibliothèque : panneau Scénario pour le recharger.` : "Ce navigateur refuse d'enregistrer : exportez le scénario.";
+    remplir_bibliotheque();
+  });
+  $("[data-action='exporter_deploiement']").addEventListener("click", () => {
+    const nom = $("[name='nom_deploiement']").value.trim();
+    exporter_scenario(nom ? {...brut_courant(), nom} : brut_courant(), `egide-${(nom || "deploiement").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`);
+  });
+  for (const champ of ["importer_deploiement", "importer_scenario"]) {
+    $(`[name='${champ}']`).addEventListener("change", async (e) => {
+      const fichier = e.target.files[0];
+      e.target.value = "";
+      if (!fichier) return;
+      try {
+        await remplacer_base(JSON.parse(await fichier.text()));
+      } catch (erreur) {
+        $("[data-champ='message']").textContent = `Fichier illisible : ${erreur.message}`;
+      }
+    });
+  }
 }
 
 function inspecter(cible) {
@@ -534,6 +600,8 @@ function remplir_palette(index) {
 /** Proposer dans la barre d'édition les moyens de liaison du catalogue (unites/liaisons/), radio par défaut. */
 async function remplir_moyens() {
   const index = await lire_json("unites/index.json");
+  etat.index_unites = index;
+  etat.index_algos = await lire_json("algos/index.json");
   remplir_palette(index);
   const moyens = index.filter((u) => u.famille === "liaisons" && !u.base);
   const choix = $("[name='moyen_liaison']");
@@ -572,6 +640,8 @@ async function demarrer() {
   });
   brancher_prereglages();
   brancher_bibliotheque();
+  brancher_fiche();
+  brancher_sauvegarde();
   brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));
   await charger();
   rafraichir_reglages();

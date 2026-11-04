@@ -62,6 +62,7 @@
       </div>
       <div class="ligne">
         <button data-action="exporter">Exporter le scénario</button>
+        <label class="bouton-fichier" title="Recharger un scénario exporté (JSON)">Importer<input type="file" name="importer_scenario" accept=".json,application/json" hidden></label>
         <button data-action="reinitialiser">Revenir à la référence</button>
       </div>
     </div>
@@ -204,12 +205,23 @@
       <button data-action="fermer_inspecteur" aria-label="Fermer l'inspecteur">×</button>
       <div data-zone="inspection"></div>
     </aside>
+    <aside class="inspecteur fiche" aria-label="Fiche de l'unité sélectionnée" hidden>
+      <div data-zone="fiche"></div>
+    </aside>
   </div>
 
   <aside class="palette" aria-label="Palette du catalogue : unités à déployer" hidden>
     <h2>Déployer</h2>
     <p class="aide-palette">Cliquez une unité puis la carte (autant de fois qu'il faut, Échap pour finir), ou glissez-la sur la carte.
       Moyens de communication et armements se déposent sur une unité déjà placée.</p>
+    <div class="sauvegarde-deploiement">
+      <input name="nom_deploiement" placeholder="Nom du déploiement" aria-label="Nom du déploiement à enregistrer">
+      <div class="ligne">
+        <button data-action="ranger_deploiement" class="principal" title="Ranger le scénario complet dans la bibliothèque de ce navigateur (panneau Scénario pour le recharger)">Enregistrer</button>
+        <button data-action="exporter_deploiement" title="Télécharger le scénario complet (JSON), à recharger par « Importer »">Exporter</button>
+        <label class="bouton-fichier" title="Recharger un scénario exporté">Importer<input type="file" name="importer_deploiement" accept=".json,application/json" hidden></label>
+      </div>
+    </div>
     <label class="quantite">Vecteurs par dépôt <input type="number" name="quantite_depot" value="1" min="1" max="200" step="1"></label>
     <div data-zone="palette"></div>
   </aside>

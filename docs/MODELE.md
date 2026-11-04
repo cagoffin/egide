@@ -547,3 +547,10 @@ qu'ils citent, comme chez une unité fille (§ 10.1). Un centre secondaire peut 
 L'éditeur ne tire une liaison que sur un moyen commun aux deux bouts, en préférant le plus rapide. « Relier
 automatiquement » relie toute paire de nœuds qui partagent un moyen, si la distance tient dans sa portée et, pour un
 moyen à vue directe, si l'horizon (et le relief) le permet. Le moteur ne lit que les liaisons qui en résultent (§ 15.2).
+
+### 21.5 Éditeur de déploiement
+En mode édition, la palette « Déployer » liste le catalogue par famille. On clique une unité puis la carte, ou on la
+glisse. Un moyen de communication ou un armement se dépose sur une unité déjà placée. Chaque dépôt et chaque réglage
+de la fiche (modèle, algorithmes par rôle, munitions, effectifs, moyens) est une modification par chemin du scénario.
+L'annulation, l'export, la bibliothèque et le rejeu valent donc d'office. Un groupe de vecteurs grossit à chaque dépôt :
+les orbites des avions déjà placés sont figées et les nouveaux orbitent au point déposé.

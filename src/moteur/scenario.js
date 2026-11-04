@@ -96,7 +96,7 @@ function resoudre_radar(radar, fichiers) {
   const disposition = radar.disposition ?? "frontiere";
   if (!(disposition in DISPOSITIONS_RADAR)) throw new ScenarioInvalide(`disposition des radars inconnue « ${disposition} » (${Object.keys(DISPOSITIONS_RADAR).join(", ")})`);
   // Un site peut citer sa propre unité ou ses surcharges (déploiement, MODELE § 21.1) : sa hauteur fixe celle du site.
-  const propres = (radar.sites ?? []).map((s) => (s.unite || s.surcharges ? unite_si(s.unite ?? radar.unite, fichiers, s.surcharges) : null));
+  const propres = (radar.sites ?? []).map((s) => (s.unite || s.surcharges ? unite_si(s.unite || radar.unite, fichiers, s.surcharges) : null));
   const sites = (radar.sites ?? []).map((s, i) => vers_geo([s], (propres[i] ?? unite).hauteur_antenne)[0]);
   if (disposition === "sites" && sites.length === 0) throw new ScenarioInvalide("disposition « sites » : au moins un radar placé");
   const detection = DISPOSITIONS_RADAR[disposition] ?? unite.algos.detection;
@@ -112,7 +112,7 @@ function resoudre_radar(radar, fichiers) {
 function resoudre_sol(sol, fichiers) {
   const resolu = {...unite_si(sol.unite, fichiers, sol.surcharges), nombre: sol.nombre, munitions: sol.munitions};
   if ((sol.batteries ?? []).length) {
-    resolu.batteries = sol.batteries.map((b) => ({geo: vers_geo([b], 0)[0], munitions: b.munitions, unite: unite_si(b.unite ?? sol.unite, fichiers, b.surcharges)}));
+    resolu.batteries = sol.batteries.map((b) => ({geo: vers_geo([b], 0)[0], munitions: b.munitions, unite: unite_si(b.unite || sol.unite, fichiers, b.surcharges)}));
   }
   return resolu;
 }

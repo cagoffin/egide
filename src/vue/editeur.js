@@ -358,5 +358,5 @@ export function creer_editeur(env) {
     ctx.textAlign = "start";
   }
 
-  return {activer, dessiner, armer_depot, est_actif: () => etat.actif};
+  return {activer, dessiner, armer_depot, est_actif: () => etat.actif, mode: () => etat.mode, selection: () => etat.selection};
 }

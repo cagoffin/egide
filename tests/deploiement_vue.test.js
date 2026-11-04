@@ -116,3 +116,37 @@ test("réseau automatique : chaque unité équipée vers les centres à portée 
   assert.ok(isoles.includes("radar:0") && isoles.includes("radar:1") && isoles.includes("avions:1"));
   assert.doesNotThrow(() => monde_de(modifier_scenario(brut, modifications)));
 });
+
+import {fiches} from "../src/vue/fiche.js";
+const ALGOS = JSON.parse(readFileSync(new URL("../algos/index.json", import.meta.url)));
+const CTX = {index: INDEX, algos: ALGOS, nom: (id) => id};
+
+test("fiche : modèle, algorithmes, moyens et effectifs se règlent par chemins, et le scénario reste valide", () => {
+  let {brut, monde} = deposer(REFERENCE, "sites/postes/batterie_moyenne_portee_notionnelle");
+  ({brut, monde} = deposer(brut, "capteurs/radars/radar_longue_portee_notionnel"));
+  ({brut, monde} = deposer(brut, "special/centre"));
+  const n = brut.bleu.radar.sites.length;
+  const liste = fiches(["batterie:0", `radar:${n - 1}`, "avion:0", "avion:1", "conduite", "centre:0"], monde, brut, CTX);
+  assert.deepEqual(liste.map((f) => f.titre.split(" ")[0]), ["Batterie", "Radar", "Groupe", "CDC", "CDC"].slice(0, 4), "au plus quatre fiches, un groupe une seule fois");
+  const regler = (fiche, libelle, valeur) => {
+    const controle = fiche.controles.find((c) => c.libelle === libelle);
+    brut = modifier_scenario(brut, controle.modifications(valeur));
+    monde = monde_de(brut);
+  };
+  regler(liste[0], "Algorithme de tir sol", "global/tir_sol/cadence_par_passage");
+  assert.deepEqual(brut.bleu.sol.batteries[0].surcharges.algos, {tir_sol: "global/tir_sol/cadence_par_passage"});
+  regler(fiches(["batterie:0"], monde, brut, CTX)[0], "Algorithme de tir sol", "");
+  assert.deepEqual(brut.bleu.sol.batteries[0].surcharges.algos, {}, "« hérité » ôte la surcharge");
+  regler(liste[0], "Moyens de communication", ["liaisons/satellite_notionnelle"]);
+  regler(fiches([`radar:${n - 1}`], monde, brut, CTX)[0], "Modèle", "");
+  assert.equal(brut.bleu.radar.sites[n - 1].unite, undefined);
+  regler(fiches(["avion:0"], monde, brut, CTX)[0], "Algorithme de tir", "global/tir/tire_et_oublie");
+  assert.equal(monde.scenario.avions[0].arme.algos.tir, "global/tir/tire_et_oublie");
+  regler(fiches(["avion:0"], monde, brut, CTX)[0], "Modèle", "vecteurs/drones_defensifs/drone_arme_notionnel");
+  assert.equal(monde.scenario.avions[0].type_vecteur, "drone_arme");
+  regler(fiches(["centre:0"], monde, brut, CTX)[0], "Algorithme d'allocation", "global/allocation/plus_proche");
+  assert.equal(monde.scenario.reseau.centres[0].allocation, "global/allocation/plus_proche");
+  regler(fiches(["centre:0"], monde, brut, CTX)[0], "Algorithme d'allocation", "");
+  assert.equal(brut.bleu.reseau.centres[0].allocation, undefined);
+  assert.ok(brut.bleu.reseau.equipements.some((e) => e.moyens.includes("liaisons/satellite_notionnelle")));
+});

@@ -120,7 +120,13 @@ Un scénario cite les unités par identifiant et peut en surcharger les valeurs 
 }
 ```
 
-- `surcharges` modifie l'unité citée (même syntaxe, mêmes suffixes) ; `surcharges_emport` modifie son arme.
+- `surcharges` modifie l'unité citée (même syntaxe, mêmes suffixes) ; `surcharges_emport` modifie son arme. Une
+  surcharge `algos` ne remplace que les rôles qu'elle cite : `"surcharges": {"algos": {"mouvement": "…"}}`.
+- Déploiement unité par unité (MODELE § 21), que l'éditeur écrit pour vous à la souris :
+  - `bleu.radar.sites[].unite` donne à un radar placé son propre modèle ;
+  - `bleu.sol.batteries[]` place des batteries une à une, chacune avec `unite`, `munitions` et `surcharges` ;
+  - `bleu.reseau.centres[].allocation` donne à un centre secondaire son propre algorithme d'allocation ;
+  - `bleu.reseau.equipements[]` (`{noeud, moyens}`) déclare les moyens de communication de chaque nœud.
 - Toute valeur du scénario a un **chemin pointé** : `bleu.avions.1.nombre`, `rouge.tactique`,
   `rouge.surcharges.vitesse_kmh`, `bleu.conduite.allocation`, `bleu.reseau.mode`… Ce même chemin sert partout :
   dans le panneau Scénario, dans le panneau Balayage, et en ligne de commande.

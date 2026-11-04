@@ -93,7 +93,7 @@ def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
     # Un site peut citer sa propre unite ou ses surcharges (deploiement, MODELE § 21.1).
     brutes = radar.get("sites") or []
     propres = [
-        unite_si(s.get("unite", radar["unite"]), fichiers, s.get("surcharges"))
+        unite_si(s.get("unite") or radar["unite"], fichiers, s.get("surcharges"))
         if s.get("unite") or s.get("surcharges")
         else None
         for s in brutes
@@ -124,7 +124,7 @@ def _resoudre_sol(sol: dict, fichiers: dict) -> dict:
             {
                 "geo": _vers_geo([b], 0)[0],
                 "munitions": b["munitions"],
-                "unite": unite_si(b.get("unite", sol["unite"]), fichiers, b.get("surcharges")),
+                "unite": unite_si(b.get("unite") or sol["unite"], fichiers, b.get("surcharges")),
             }
             for b in sol["batteries"]
         ]
