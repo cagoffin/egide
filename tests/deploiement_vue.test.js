@@ -6,7 +6,7 @@ import {geo_deg} from "../src/moteur/geodesie.js";
 import {creer_monde} from "../src/moteur/monde.js";
 import {modifier_scenario, resoudre_scenario} from "../src/moteur/scenario.js";
 import {elements_editables, modifications_deplacement, modifications_suppression} from "../src/vue/edition.js";
-import {MUNITIONS_BATTERIE, famille_de, modifications_depot, palette} from "../src/vue/deploiement.js";
+import {MUNITIONS_BATTERIE, choisir_moyen, famille_de, modifications_depot, modifications_reseau_auto, palette} from "../src/vue/deploiement.js";
 import {FICHIERS, REFERENCE, REGISTRE} from "./aide_scenario.js";
 
 const INDEX = JSON.parse(readFileSync(new URL("../unites/index.json", import.meta.url)));
@@ -83,4 +83,36 @@ test("déplacer et ôter : batteries, avions, radars avec leur modèle, équipem
   assert.deepEqual(ote.bleu.sol.batteries, []);
   assert.equal(ote.bleu.avions[0].nombre, 18);
   assert.doesNotThrow(() => monde_de(ote));
+});
+
+test("moyens : liaison sur un moyen commun, le choix de la barre s'il est commun, sinon le plus rapide ; aucun commun, aucune liaison", () => {
+  const brut = modifier_scenario(REFERENCE, {"bleu.reseau.equipements": [
+    {noeud: "conduite", moyens: ["liaisons/satellite_notionnelle", "liaisons/filaire_notionnelle", "liaisons/radio_vhf_uhf_notionnelle"]},
+    {noeud: "radar:0", moyens: ["liaisons/satellite_notionnelle", "liaisons/filaire_notionnelle"]},
+    {noeud: "radar:1", moyens: ["liaisons/optique_notionnelle"]},
+  ]});
+  const radio = "liaisons/radio_vhf_uhf_notionnelle";
+  assert.equal(choisir_moyen(brut, FICHIERS, "radar:0", "conduite", radio), "liaisons/filaire_notionnelle", "radio non commune : le filaire, plus rapide que le satellite");
+  assert.equal(choisir_moyen(brut, FICHIERS, "radar:0", "conduite", "liaisons/satellite_notionnelle"), "liaisons/satellite_notionnelle");
+  assert.equal(choisir_moyen(brut, FICHIERS, "radar:1", "conduite", radio), null);
+  assert.equal(choisir_moyen(brut, FICHIERS, "radar:2", "avions:0", radio), radio, "sans équipement déclaré, tout moyen est accepté");
+});
+
+test("réseau automatique : chaque unité équipée vers les centres à portée ; les autres hors réseau", () => {
+  const equipements = [
+    {noeud: "conduite", moyens: ["liaisons/radio_vhf_uhf_notionnelle", "liaisons/filaire_notionnelle"]},
+    {noeud: "centre:0", moyens: ["liaisons/satellite_notionnelle", "liaisons/filaire_notionnelle"]},
+    {noeud: "radar:0", moyens: ["liaisons/radio_vhf_uhf_notionnelle"]},
+    {noeud: "avions:0", moyens: ["liaisons/radio_vhf_uhf_notionnelle", "liaisons/satellite_notionnelle"]},
+  ];
+  const brut = modifier_scenario(REFERENCE, {"bleu.reseau.equipements": equipements, "bleu.reseau.centres": [{nom: "Lointain", lat_deg: 52, lon_deg: 2.5}]});
+  const monde = monde_de(brut);
+  const {modifications, isoles} = modifications_reseau_auto(monde, brut, FICHIERS);
+  const liaisons = modifications["bleu.reseau.liaisons"].map((l) => `${l.de}>${l.vers}>${l.moyen.split("/")[1]}`).sort();
+  assert.deepEqual(liaisons, [
+    "avions:0>centre:0>satellite_notionnelle", "avions:0>conduite>radio_vhf_uhf_notionnelle", "conduite>centre:0>filaire_notionnelle",
+  ]);
+  // La radio au sol ne porte qu'à l'horizon des mâts (une trentaine de km) : le radar, à 150 km, reste hors réseau.
+  assert.ok(isoles.includes("radar:0") && isoles.includes("radar:1") && isoles.includes("avions:1"));
+  assert.doesNotThrow(() => monde_de(modifier_scenario(brut, modifications)));
 });

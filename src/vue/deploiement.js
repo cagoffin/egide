@@ -1,8 +1,12 @@
 // Éditeur de déploiement (MODELE § 21) : palette du catalogue et dépôt d'une unité sur la carte, à la manière d'un jeu
 // de stratégie. Chaque dépôt devient des modifications par chemin du scénario : annulation, export et rejeu d'office.
 // Pur, sans DOM, testé.
-import {direct} from "../moteur/geodesie.js";
+import {unite_si} from "../moteur/catalogue.js";
+import {direct, inverse} from "../moteur/geodesie.js";
+import {positions_radars} from "../moteur/radars.js";
+import {portee_liaison} from "../moteur/reseau.js";
 import {en_degres, modifications_ajout_centre, modifications_ajout_cible, modifications_ajout_radar, noeud_element} from "./edition.js";
+import {position_noeud} from "./reseau_vue.js";
 
 // Munitions d'une batterie déposée ; modifiables ensuite dans sa fiche.
 export const MUNITIONS_BATTERIE = 40;
@@ -84,4 +88,66 @@ function armer(monde, brut, sous, arme) {
   if (sous?.type !== "avion") return {};
   const g = monde.scenario.avions.indexOf(monde.avions[sous.indice].groupe);
   return {[`bleu.avions.${g}.surcharges`]: {...brut.bleu.avions[g].surcharges, emport: arme}, [`bleu.avions.${g}.surcharges_emport`]: {}};
+}
+
+/** Rendre les moyens dont le nœud est équipé, ou null s'il n'en déclare aucun (il accepte alors tout moyen). */
+export const equipement = (brut, noeud) => (brut.bleu.reseau.equipements ?? []).find((e) => e.noeud === noeud)?.moyens ?? null;
+
+/**
+ * Rendre le moyen d'une liaison tirée de `de` à `vers` (MODELE § 21.4) : `prefere` (choix de la barre) s'il est commun
+ * aux deux équipements, sinon le plus rapide des moyens communs ; null s'ils n'en partagent aucun. Un nœud sans
+ * équipement déclaré accepte tout moyen.
+ */
+export function choisir_moyen(brut, fichiers, de, vers, prefere) {
+  const [a, b] = [equipement(brut, de), equipement(brut, vers)];
+  if (!a && !b) return prefere;
+  const communs = !a ? b : !b ? a : a.filter((m) => b.includes(m));
+  if (communs.includes(prefere)) return prefere;
+  return [...communs].sort((x, y) => unite_si(x, fichiers).latence - unite_si(y, fichiers).latence)[0] ?? null;
+}
+
+/** Rendre les nœuds du réseau qui existent : centres, radars, postes de chaque cible défendue, groupes de vecteurs non vides. */
+export function noeuds_reseau(monde) {
+  const defendues = monde.cibles.map((_, i) => i).filter((i) => monde.postes.some((p) => p.cible === i));
+  return [
+    "conduite", ...monde.scenario.reseau.centres.map((_, k) => `centre:${k}`),
+    ...positions_radars(monde.scenario).map((_, i) => `radar:${i}`),
+    ...defendues.map((i) => `sol:${i}`),
+    ...monde.scenario.avions.map((g, i) => (g.nombre > 0 ? `avions:${i}` : null)).filter(Boolean),
+  ];
+}
+
+/** Rendre la hauteur d'une extrémité pour la portée d'un moyen : altitude du groupe pour des vecteurs, mât du moyen au sol. */
+const hauteur_noeud = (monde, noeud, moyen) => (noeud.startsWith("avions:") ? monde.scenario.avions[Number(noeud.slice(7))].altitude : moyen.hauteur_antenne);
+
+/** Rendre le moyen le plus rapide que partagent deux nœuds équipés et que leur distance permet, ou null. */
+function meilleur_moyen(monde, brut, fichiers, de, vers) {
+  const [a, b] = [equipement(brut, de), equipement(brut, vers)];
+  const [pa, pb] = [position_noeud(monde, de), position_noeud(monde, vers)];
+  if (!a || !b || !pa || !pb) return null;
+  const distance = inverse(pa, pb).distance;
+  return a.filter((m) => b.includes(m)).map((id) => unite_si(id, fichiers))
+    .filter((m) => distance <= portee_liaison(m, hauteur_noeud(monde, de, m), hauteur_noeud(monde, vers, m)))
+    .sort((x, y) => x.latence - y.latence)[0]?.id ?? null;
+}
+
+/**
+ * Rendre {modifications, liaisons, isoles} du réseau automatique (MODELE § 21.4) : chaque unité équipée est reliée à
+ * chaque centre (CDC principal et autres) avec qui elle partage un moyen à portée, le plus rapide ; les centres entre
+ * eux de même. Les unités sans équipement déclaré restent hors réseau. Le relief est vérifié à la simulation.
+ */
+export function modifications_reseau_auto(monde, brut, fichiers) {
+  const noeuds = noeuds_reseau(monde).filter((n) => equipement(brut, n));
+  const centres = noeuds.filter((n) => n === "conduite" || n.startsWith("centre:"));
+  const liaisons = [];
+  noeuds.forEach((de, i) => {
+    for (const vers of centres) {
+      if (vers === de || (centres.includes(de) && centres.indexOf(vers) < i)) continue;
+      const moyen = meilleur_moyen(monde, brut, fichiers, de, vers);
+      if (moyen) liaisons.push({de, vers, moyen});
+    }
+  });
+  const relies = new Set(liaisons.flatMap((l) => [l.de, l.vers]));
+  const isoles = noeuds_reseau(monde).filter((n) => !relies.has(n));
+  return {modifications: {"bleu.reseau.mode": "liaisons", "bleu.reseau.liaisons": liaisons}, liaisons: liaisons.length, isoles};
 }

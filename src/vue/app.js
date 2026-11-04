@@ -10,8 +10,8 @@ import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./cart
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
 import {creer_editeur} from "./editeur.js";
-import {palette} from "./deploiement.js";
-import {MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
+import {choisir_moyen, modifications_reseau_auto, palette} from "./deploiement.js";
+import {libelle_noeud, MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {resume_situation} from "./situation.js";
 import {FAMILLES, lignes_journal} from "./journal.js";
 import {brancher_autoconfig} from "./autoconfig_panneau.js";
@@ -456,6 +456,13 @@ function brancher_editeur() {
     quantite: () => Number($("[name='quantite_depot']").value) || 1,
     nom: (id) => etat.noms_unites?.[id] ?? id,
     signaler: (texte) => ($("[data-champ='message']").textContent = texte),
+    choisir_moyen: (de, vers) => choisir_moyen(brut_courant(), etat.fichiers, de, vers, $("[name='moyen_liaison']").value),
+    reseau_auto: async () => {
+      const {modifications, liaisons, isoles} = modifications_reseau_auto(etat.lecteur.monde, brut_courant(), etat.fichiers);
+      if (!liaisons) return void ($("[data-champ='message']").textContent = "Aucune liaison possible : équipez les unités et au moins un centre C2 d'un même moyen (palette, Communications).");
+      await appliquer_edition(modifications);
+      $("[data-champ='message']").textContent = `${liaisons} liaison${liaisons > 1 ? "s" : ""} créée${liaisons > 1 ? "s" : ""}${isoles.length ? ` ; hors réseau : ${isoles.map((n) => libelle_noeud(etat.lecteur.monde, n)).join(", ")}` : ""}.`;
+    },
     sur_depot: (id) => $("[data-zone='palette']").querySelectorAll("[data-unite]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.unite === id))),
     panoramique: (dx, dy) => {
       if (etat.camera.type === "carte") etat.carte.panBy([-dx, -dy], {duration: 0});

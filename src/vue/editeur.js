@@ -18,7 +18,7 @@ const SEUIL_GLISSER = 4;
 /**
  * Rendre l'éditeur branché sur `env` : {vue, toile, barre, camera(), monde(), brut(), calques(), moyen(), appliquer(modifs),
  * annuler(), panoramique(dx, dy), zoom(facteur, point), sur_activation(actif), quantite(), nom(id), signaler(texte),
- * sur_depot(id)}. Un calque masqué ne s'édite pas.
+ * sur_depot(id), choisir_moyen(de, vers), reseau_auto()}. Un calque masqué ne s'édite pas.
  */
 export function creer_editeur(env) {
   // mode « edition » : on prépare le scénario à t = 0 ; mode « ordres » : en pause au cours du raid, on envoie des avions.
@@ -76,7 +76,10 @@ export function creer_editeur(env) {
     const noeud = touche && noeud_element(env.monde(), touche);
     if (!noeud) return void (etat.liaison = null);
     if (!etat.liaison) return void (etat.liaison = {noeud, geo: touche.geo});
-    env.appliquer(modifications_ajout_liaison(env.monde(), env.brut(), etat.liaison.noeud, noeud, env.moyen()));
+    // Le moyen est celui que les deux unités partagent (MODELE § 21.4) ; le choix de la barre l'emporte s'il est commun.
+    const moyen = env.choisir_moyen(etat.liaison.noeud, noeud);
+    if (moyen) env.appliquer(modifications_ajout_liaison(env.monde(), env.brut(), etat.liaison.noeud, noeud, moyen));
+    else env.signaler("Ces deux unités ne partagent aucun moyen de communication : équipez-les depuis la palette (Communications).");
     etat.liaison = null;
   }
 
@@ -210,6 +213,7 @@ export function creer_editeur(env) {
     if (bouton?.dataset.action === "annuler_edition") env.annuler();
     if (bouton?.dataset.action === "terminer_edition") activer(false);
     if (bouton?.dataset.action === "reseau_complet") env.appliquer(modifications_reseau_complet());
+    if (bouton?.dataset.action === "reseau_auto") env.reseau_auto();
     if (bouton?.dataset.action === "mettre_hors_service") {
       env.appliquer(modifications_panne(env.brut(), env.monde(), etat.selection));
       etat.selection = [];
