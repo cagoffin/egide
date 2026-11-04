@@ -1,0 +1,11 @@
+{
+  "herite_de": "effecteurs/drones/_charge_drone",
+  "nom": "Munition de drone (notionnelle)",
+  "sources": [
+    "Ordre de grandeur notionnel : petite munition tiree a courte distance par un drone"
+  ],
+  "portee_km": 1,
+  "pk": 0.4,
+  "cadence_s": 5,
+  "vitesse_ms": 150
+}

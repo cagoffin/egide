@@ -307,7 +307,8 @@ test("réseau dans l'éditeur : une liaison depuis le réseau complet le matéri
   const radars = positions_radars(MONDE.scenario).length;
   const defaut = liaisons_par_defaut(MONDE);
   const defendues = new Set(MONDE.postes.map((p) => p.cible)).size;
-  assert.equal(defaut.length, radars + MONDE.scenario.avions.length + defendues, "radars, avions et postes sol reliés au CDC");
+  const groupes = MONDE.scenario.avions.filter((g) => g.nombre > 0).length;
+  assert.equal(defaut.length, radars + groupes + defendues, "radars, groupes non vides et postes sol reliés au CDC");
   const avion = elements_editables(MONDE, REFERENCE).find((e) => e.type === "avion");
   assert.match(noeud_element(MONDE, avion), /^avions:\d$/);
   const ajout = modifications_ajout_liaison(MONDE, REFERENCE, "radar:0", "avions:1", "liaisons/satellite_notionnelle");

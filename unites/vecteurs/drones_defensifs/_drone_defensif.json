@@ -1,0 +1,10 @@
+{
+  "_aide": {
+    "_": "Base des drones defensifs : memes regles de mise a poste, d'affectation par un centre et d'engagement que les avions, a vitesse et emport de drone (MODELE § 19)."
+  },
+  "herite_de": "vecteurs/avions/_avion",
+  "type_vecteur": "drone_arme",
+  "vitesse_mise_a_poste_kmh": 180,
+  "vitesse_engagement_kmh": 150,
+  "facteur_charge_max_g": 3
+}

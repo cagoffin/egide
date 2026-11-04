@@ -14,6 +14,34 @@
     "base": false
   },
   {
+    "id": "effecteurs/brouillage/brouillage_notionnel",
+    "nom": "Brouillage (notionnel)",
+    "famille": "effecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "effecteurs/drones/_charge_drone",
+    "nom": "Unite",
+    "famille": "effecteurs",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "effecteurs/drones/charge_impact_notionnelle",
+    "nom": "Interception par impact (notionnelle)",
+    "famille": "effecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "effecteurs/drones/munition_drone_notionnelle",
+    "nom": "Munition de drone (notionnelle)",
+    "famille": "effecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
     "id": "effecteurs/roquettes/_roquette_guidee",
     "nom": "Unite",
     "famille": "effecteurs",
@@ -121,6 +149,34 @@
   {
     "id": "vecteurs/drones/drone_reaction_notionnel",
     "nom": "Drone d'attaque a reaction (notionnel)",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "vecteurs/drones_defensifs/_drone_defensif",
+    "nom": "Unite",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "vecteurs/drones_defensifs/brouilleur_notionnel",
+    "nom": "Drone brouilleur (notionnel)",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "vecteurs/drones_defensifs/drone_arme_notionnel",
+    "nom": "Drone defensif arme (notionnel)",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel",
+    "nom": "Drone intercepteur a usage unique (notionnel)",
     "famille": "vecteurs",
     "fidelite": "notionnel",
     "base": false

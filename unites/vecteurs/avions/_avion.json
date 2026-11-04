@@ -5,9 +5,13 @@
     "vitesse_engagement_kmh": "Vitesse une fois a poste, pendant le tir : fixe la fenetre de tir (MODELE § 4.1).",
     "facteur_charge_max_g": "Facteur de charge maximal en virage.",
     "emport": "Identifiant de l'arme emportee (catalogue des effecteurs).",
-    "emport_nombre": "Nombre d'armes emportees, sans rechargement pendant le raid."
+    "emport_nombre": "Nombre d'armes emportees, sans rechargement pendant le raid.",
+    "type_vecteur": "Famille du vecteur : 'avion', 'drone_arme', 'kamikaze' ou 'brouilleur' ; fixe le symbole et, pour un kamikaze ou un brouilleur, le comportement (MODELE § 19).",
+    "consomme_au_tir": "Vrai : le vecteur est son arme (intercepteur kamikaze) et se perd a son premier tir."
   },
   "herite_de": "_unite",
+  "type_vecteur": "avion",
+  "consomme_au_tir": false,
   "vitesse_mise_a_poste_kmh": 500,
   "vitesse_engagement_kmh": 350,
   "facteur_charge_max_g": 5,

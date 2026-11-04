@@ -65,6 +65,7 @@ export function algo(registre, id, role) {
 
 /** Rendre les identifiants des algorithmes qu'un scénario résolu fait tourner. */
 export function ids_algos(scenario) {
+  // Un brouilleur n'a pas d'algorithme de tir : on écarte les rôles vides.
   return [...new Set([
     scenario.rouge.comportement,
     scenario.rouge.algos.mouvement,
@@ -73,5 +74,5 @@ export function ids_algos(scenario) {
     scenario.radar.algos.detection,
     scenario.conduite.pistage,
     scenario.conduite.allocation,
-  ])];
+  ].filter(Boolean))];
 }

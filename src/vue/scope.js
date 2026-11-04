@@ -85,7 +85,7 @@ function plus_proche_ecran(camera, elements, position, ecran, rayonPx) {
  */
 export function trouver_sous_curseur(camera, monde, ecran, calques = calques_par_defaut(), percue = false) {
   const visible = (type) => (objet) => element_visible(calques, {type, objet});
-  const avion = plus_proche_ecran(camera, monde.avions.filter(visible("avion")), (a) => a.geo, ecran, 10);
+  const avion = plus_proche_ecran(camera, monde.avions.filter((a) => !a.perdu && visible("avion")(a)), (a) => a.geo, ecran, 10);
   if (avion) return {type: "avion", objet: avion};
   const radars = calques.radars ? positions_radars(monde.scenario).map((geo, indice) => ({geo, indice})) : [];
   const radar = plus_proche_ecran(camera, radars, (r) => r.geo, ecran, 10);

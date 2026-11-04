@@ -1,0 +1,10 @@
+{
+  "_aide": {
+    "_": "Base des charges emportees par les drones defensifs ; memes cles que les roquettes guidees, valeurs de drone."
+  },
+  "herite_de": "effecteurs/roquettes/_roquette_guidee",
+  "guidage": "ir",
+  "algos": {
+    "tir": "global/tir/tire_et_oublie"
+  }
+}

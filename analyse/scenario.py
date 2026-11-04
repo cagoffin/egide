@@ -259,6 +259,8 @@ def aplatir(resolu: dict) -> Scenario:
         ScenarioInvalideError: les groupes d'avions different en vitesse, emport, portee ou Pk.
     """
     avions, rouge, sol, radar, conduite = (resolu[c] for c in ("avions", "rouge", "sol", "radar", "conduite"))
+    # Les formules fermees ne portent que sur les avions : les drones defensifs (MODELE § 19) sont ecartes.
+    avions = [g for g in avions if g.get("type_vecteur", "avion") == "avion"]
     return Scenario(
         zone_rayon=resolu["theatre"]["zone_rayon"],
         cibles_nombre=resolu["theatre"]["cibles_nombre"],

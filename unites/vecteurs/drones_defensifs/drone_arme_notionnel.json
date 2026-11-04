@@ -1,0 +1,10 @@
+{
+  "herite_de": "vecteurs/drones_defensifs/_drone_defensif",
+  "nom": "Drone defensif arme (notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel : drone d'interception reutilisable a faible emport, classe 150 a 200 km/h"
+  ],
+  "type_vecteur": "drone_arme",
+  "emport": "effecteurs/drones/munition_drone_notionnelle",
+  "emport_nombre": 2
+}

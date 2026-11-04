@@ -167,6 +167,8 @@ export function resoudre_scenario(brutDonne, fichiers) {
   }
 }
 
+const DRONES_DEFENSIFS = ["vecteurs/drones_defensifs/drone_arme_notionnel", "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel", "vecteurs/drones_defensifs/brouilleur_notionnel"];
+
 const UNITES_V1 = {
   drone: "vecteurs/drones/drone_reaction_notionnel",
   avion_ir: "vecteurs/avions/turbopropulseur_ir_notionnel",
@@ -203,6 +205,8 @@ export function migrer_v1(v1) {
   const avions = [
     groupe_v1(v1, UNITES_V1.avion_ir, v1.avions_ir_nombre),
     groupe_v1(v1, UNITES_V1.avion_laser, v1.avions_nombre - v1.avions_ir_nombre),
+    // La v1 n'avait pas de drones défensifs : leurs groupes sont vides, comme dans le scénario de référence.
+    ...DRONES_DEFENSIFS.map((unite) => ({unite, nombre: 0, altitude_m: 300, surcharges: {}, surcharges_emport: {}})),
   ];
   return {
     _aide: AIDE.racine,

@@ -472,3 +472,25 @@ Outil CDC (K) : ajouter un centre ; il se déplace, se supprime, se met hors ser
 radar. L'outil Liaison relie aussi un centre, ou les postes d'une cible (clic sur la cible). Le réseau par défaut
 relie chaque radar au CDC au fil, le CDC à chaque groupe d'avions par radio, aux postes de chaque cible et à chaque
 autre centre au fil.
+
+## 19 · Drones défensifs (jalon 10)
+### 19.1 Principe
+Les drones défensifs sont des vecteurs du catalogue (`unites/vecteurs/drones_defensifs/`), rangés comme les avions
+dans `bleu.avions` : ils attendent sur une position, sont affectés par le centre qui les joint (§ 18.2), rallient
+leur point, accrochent avec leur propre capteur le drone ennemi qui se rapproche (§ 17.1) et l'engagent. Seuls
+changent leur vitesse, leur emport et leur famille (`type_vecteur`). Modèles notionnels par classe : ordres de
+grandeur publics, pas de performances de systèmes réels, ni de loi de guidage.
+
+### 19.2 Drones armés et intercepteurs à usage unique
+- **Drone armé** : deux charges de courte portée (1 km, Pk 0,4), tir « tire et oublie » (§ 4.2), réutilisable.
+- **Intercepteur à usage unique** : il est son arme ; il percute sa cible à 300 m près (Pk 0,6) et se perd à son
+  premier tir, qu'il la détruise ou non (`consomme_au_tir`). Le bilan compte les intercepteurs perdus.
+
+### 19.3 Brouilleurs
+Un brouilleur ne tire pas. Effet de zone notionnel, sans modèle de signal ni de contre-mesure : chaque drone ennemi
+actif à moins du rayon r du brouilleur (3 km) est neutralisé, à chaque pas Δt, avec la probabilité
+p = 1 − exp(−Δt / τ), τ étant la constante de temps du brouillage (60 s) ; un drone maintenu t secondes dans le
+rayon y échappe avec la probabilité exp(−t / τ). Le bilan compte les drones neutralisés par brouillage.
+
+Le scénario de référence porte un groupe vide de chaque famille : ses bilans sont inchangés, et les curseurs
+« Drones défensifs » du panneau Scénario les remplissent.

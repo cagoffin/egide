@@ -5,6 +5,7 @@
 export const CALQUES = [
   {id: "avions_ir", groupe: "Défense", libelle: "Avions IR"},
   {id: "avions_laser", groupe: "Défense", libelle: "Avions laser"},
+  {id: "drones_defensifs", groupe: "Défense", libelle: "Drones défensifs"},
   {id: "missions", groupe: "Défense", libelle: "Mises à poste et ordres"},
   {id: "radars", groupe: "Défense", libelle: "Radars"},
   {id: "reseau", groupe: "Défense", libelle: "Réseau et centre de conduite"},
@@ -48,8 +49,11 @@ export function memoriser_calques(calques, stockage = globalThis.localStorage) {
 
 /** Rendre vrai si l'élément éditable ou survolé `element` ({type, guidage?, objet?}) est sur un calque visible. */
 export function element_visible(calques, element) {
-  const avion = element.type === "avion" ? (element.guidage ?? element.objet?.guidage) : null;
-  if (avion) return calques[avion === "ir" ? "avions_ir" : "avions_laser"];
+  if (element.type === "avion") {
+    // Les drones défensifs ont leur propre calque ; les avions, un calque par guidage.
+    if ((element.vecteur ?? element.objet?.type ?? "avion") !== "avion") return calques.drones_defensifs;
+    return calques[(element.guidage ?? element.objet?.guidage) === "ir" ? "avions_ir" : "avions_laser"];
+  }
   if (element.type === "drone") return calques[element.objet.detection === null ? "drones_inconnus" : "drones_detectes"];
   const calque = {cible: "cibles", radar: "radars", passage: "plan", zone: "zones", conduite: "reseau", centre: "reseau", liaison: "reseau"}[element.type];
   return calque ? calques[calque] : true;

@@ -1,0 +1,11 @@
+{
+  "herite_de": "effecteurs/drones/_charge_drone",
+  "nom": "Interception par impact (notionnelle)",
+  "sources": [
+    "Ordre de grandeur notionnel : le drone intercepteur percute sa cible"
+  ],
+  "portee_km": 0.3,
+  "pk": 0.6,
+  "cadence_s": 1,
+  "vitesse_ms": 80
+}

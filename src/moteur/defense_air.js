@@ -26,7 +26,7 @@ export function creer_avions(scenario, hasard) {
       const orbite = i < placees.length ? {...placees[i]} : orbite_aleatoire(scenario, groupe, hasard);
       avions.push({
         id: avions.length, groupe, orbite, geo: {...orbite}, ecef: vers_ecef(orbite), etat: "orbite", point: null,
-        prochain_tir: 0, guidage: groupe.arme.guidage, munitions: groupe.emport_nombre,
+        prochain_tir: 0, guidage: groupe.arme.guidage, munitions: groupe.emport_nombre, type: groupe.type_vecteur ?? "avion", perdu: false,
       });
     }
   }
@@ -123,6 +123,7 @@ function deplacer(monde, avion, but, pas) {
 /** Déplacer les avions de `dt` s : vers le drone en approche à la vitesse d'engagement, sinon vers leur point. */
 export function avancer_avions(monde, dt) {
   for (const avion of monde.avions) {
+    if (avion.perdu) continue;
     const {vitesse_mise_a_poste: vitesse, vitesse_engagement: vitesseEngagement} = avion.groupe;
     const menace = avion.munitions > 0 ? drone_approchant(monde, avion) : null;
     if (menace) {
@@ -149,7 +150,8 @@ export function avancer_avions(monde, dt) {
 export function tirer_air(monde) {
   for (const avion of monde.avions) {
     const {arme} = avion.groupe;
-    if (avion.munitions === 0 || monde.t < avion.prochain_tir) continue;
+    // Un brouilleur ne tire pas : son effet de zone est résolu par brouiller() (MODELE § 19.3).
+    if (avion.munitions === 0 || avion.perdu || arme.type === "brouillage" || monde.t < avion.prochain_tir) continue;
     const drone = plus_proche(monde, avion.ecef, arme.portee, true);
     if (!drone) continue;
     const tir = algo(monde.registre, arme.algos.tir, "tir");
@@ -159,6 +161,31 @@ export function tirer_air(monde) {
     drone.vise = true;
     monde.compteurs.tirs_air++;
     monde.tirs_en_vol.push({drone, impact: monde.t + vol, pk: arme.pk, origine: {...avion.geo}, tireur: avion.id});
+    // Un intercepteur à usage unique est son arme : il se perd en frappant (MODELE § 19.2).
+    if (avion.groupe.consomme_au_tir) {
+      avion.perdu = true;
+      monde.compteurs.intercepteurs_perdus++;
+    }
+  }
+}
+
+/**
+ * Brouiller (MODELE § 19.3) : chaque drone ennemi actif dans le rayon d'un brouilleur est neutralisé avec la
+ * probabilité 1 − exp(−Δt / τ) à chaque pas, τ étant la constante de temps du brouillage. Effet de zone notionnel,
+ * sans modèle de signal ni de contre-mesure.
+ */
+export function brouiller(monde, dt) {
+  for (const avion of monde.avions) {
+    const {arme} = avion.groupe;
+    if (arme.type !== "brouillage" || avion.perdu) continue;
+    const probabilite = 1 - Math.exp(-dt / arme.constante_temps);
+    parcourir_voisins(monde.index, avion.ecef, arme.portee, (drone) => {
+      if (!est_actif(drone, monde.t) || distance_oblique(drone.ecef, avion.ecef) > arme.portee) return;
+      if (!monde.hasard.succes(probabilite)) return;
+      drone.vivant = false;
+      monde.compteurs.neutralises_brouillage++;
+      journaliser(monde, {type: "brouillage", tireur: avion.id, drone: drone.id, de: {...avion.geo}, vers: {...drone.geo}});
+    });
   }
 }
 

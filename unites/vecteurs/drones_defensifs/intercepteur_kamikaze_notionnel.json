@@ -1,0 +1,13 @@
+{
+  "herite_de": "vecteurs/drones_defensifs/_drone_defensif",
+  "nom": "Drone intercepteur a usage unique (notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel : intercepteur consommable qui percute sa cible, classe 250 a 300 km/h"
+  ],
+  "type_vecteur": "kamikaze",
+  "consomme_au_tir": true,
+  "vitesse_mise_a_poste_kmh": 300,
+  "vitesse_engagement_kmh": 300,
+  "emport": "effecteurs/drones/charge_impact_notionnelle",
+  "emport_nombre": 1
+}

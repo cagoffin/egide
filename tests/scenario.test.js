@@ -41,7 +41,8 @@ test("chemins : lecture et modification sans toucher l'original", () => {
 test("résolution : surcharges appliquées, unités SI, flotte hétérogène", () => {
   const s = scenario({"rouge.surcharges.vitesse_kmh": 720});
   assert.ok(Math.abs(s.rouge.vitesse - 200) < 1e-9);
-  assert.deepEqual(s.avions.map((g) => [g.arme.guidage, g.nombre]), [["ir", 20], ["laser", 30]]);
+  assert.deepEqual(s.avions.slice(0, 2).map((g) => [g.arme.guidage, g.nombre]), [["ir", 20], ["laser", 30]]);
+  assert.deepEqual(s.avions.slice(2).map((g) => [g.type_vecteur, g.nombre]), [["drone_arme", 0], ["kamikaze", 0], ["brouilleur", 0]]);
   assert.equal(s.avions[0].altitude, 1000);
 });
 test("résolution : tactique inconnue refusée", () => {

@@ -42,4 +42,10 @@ export function mettre_a_jour_tableau(racine, monde) {
   for (const [etat] of ETATS) remplir(racine, `avions_${etat}`, format_entier(monde.avions.filter((a) => a.etat === etat && a.munitions > 0).length));
   remplir(racine, "avions_vides", format_entier(monde.avions.filter((a) => a.munitions === 0).length));
   frappes_par_cible(racine, monde);
+  // Drones défensifs : leurs compteurs n'existent que s'il y en a (MODELE § 19).
+  const {neutralises_brouillage: brouilles, intercepteurs_perdus: perdus} = monde.compteurs;
+  const zone = racine.querySelector("[data-zone='defensifs']");
+  const texte = [brouilles !== undefined ? `${format_entier(brouilles)} neutralisés par brouillage` : null,
+    perdus !== undefined ? `${format_entier(perdus)} intercepteurs perdus` : null].filter(Boolean).join(" · ");
+  if (zone && zone.textContent !== texte) [zone.textContent, zone.hidden] = [texte, !texte];
 }

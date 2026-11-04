@@ -1,0 +1,16 @@
+{
+  "_aide": {
+    "_": "Effet de brouillage represente sans modele de signal : chaque drone ennemi dans le rayon est neutralise avec un taux constant (MODELE § 19.3).",
+    "type": "'brouillage' : pas de tir ; effet de zone autour du porteur.",
+    "portee_km": "Rayon de l'effet autour du porteur ; fixe aussi la distance a laquelle il cherche a s'approcher.",
+    "constante_temps_s": "Temps moyen de neutralisation d'un drone ennemi maintenu dans le rayon : p = 1 - exp(-dt / tau) a chaque pas."
+  },
+  "herite_de": "_unite",
+  "nom": "Brouillage (notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel : effet de zone, sans parametre de signal"
+  ],
+  "type": "brouillage",
+  "portee_km": 3,
+  "constante_temps_s": 60
+}

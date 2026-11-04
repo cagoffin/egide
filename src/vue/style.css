@@ -102,6 +102,7 @@ i.inconnu { background: var(--inconnu); clip-path: polygon(50% 0, 100% 100%, 0 1
 i.sol { border: 1px solid var(--sol); border-radius: 50%; background: rgba(184, 134, 11, 0.25); }
 i.cible { border: 1.5px solid var(--texte); }
 i.radar { border: 1.5px solid var(--ami); border-radius: 2px; }
+i.drone-def { background: var(--ami); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
 i.message { background: radial-gradient(circle, var(--ami) 35%, transparent 40%); }
 i.reseau { border: 2px solid var(--ami); border-inline-start-width: 4px; }
 i.trait-ami { border-block-start: 2px dashed var(--ami); block-size: 0 !important; }
@@ -134,6 +135,7 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .chiffres .frappes dd { color: var(--hostile); }
 .details-bilan { border: 0; padding-block: 6px 0; font-size: 13px; }
 .details-bilan summary { font-weight: 500; color: var(--texte-secondaire); font-size: 12px; }
+.ligne-defensifs { margin: 6px 0; font-size: 12px; color: #b48ee8; }
 .details-bilan h3 { font-size: 12px; color: var(--texte-secondaire); font-weight: 500; margin-block: 12px 6px; }
 .jauge { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; margin: 6px 0; font-size: 12px; }
 .jauge span:first-child { color: var(--texte-secondaire); }

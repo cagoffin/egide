@@ -268,3 +268,20 @@ test("CDC : des postes sol désignés par un centre tirent aussitôt ; seuls, il
   assert.ok(tirs(seuls).length > 0 && tirs(seuls).every((e) => !e.designe), "seuls : aucun tir désigné");
   assert.ok(bilan(relies).detruits_sol > bilan(seuls).detruits_sol, "le délai d'acquisition coûte des tirs");
 });
+
+test("drones défensifs : sans eux, le bilan garde sa forme ; armés, intercepteurs à usage unique, brouilleurs agissent", () => {
+  assert.ok(!("neutralises_brouillage" in bilan(simuler(scenario(PETIT), {registre: REGISTRE, journal: false}))));
+  const sans = {"bleu.avions.0.nombre": 0, "bleu.avions.1.nombre": 0, "bleu.sol.nombre": 0, "rouge.tactique": "disperse"};
+  const armes = simuler(scenario({...PETIT, ...sans, "bleu.avions.2.nombre": 40}), {registre: REGISTRE, journal: false});
+  assert.ok(bilan(armes).detruits_air > 0);
+  assert.ok(armes.avions.every((a) => a.munitions >= 0 && a.munitions <= 2));
+  const kamikazes = simuler(scenario({...PETIT, ...sans, "bleu.avions.3.nombre": 40}), {registre: REGISTRE});
+  const b = bilan(kamikazes);
+  assert.ok(b.intercepteurs_perdus > 0 && b.intercepteurs_perdus === b.tirs_air, "chaque intercepteur se perd à son unique tir");
+  assert.ok(kamikazes.avions.filter((a) => a.perdu).every((a) => a.munitions === 0));
+  const brouilles = simuler(scenario({...PETIT, ...sans, "bleu.avions.4.nombre": 40}), {registre: REGISTRE});
+  const bb = bilan(brouilles);
+  assert.ok(bb.neutralises_brouillage > 0 && bb.tirs_air === 0, "un brouilleur neutralise sans tirer");
+  assert.equal(brouilles.evenements.filter((e) => e.type === "brouillage").length, bb.neutralises_brouillage);
+  assert.ok(brouilles.evenements.filter((e) => e.type === "brouillage").every((e) => inverse(e.de, e.vers).distance <= 3_100));
+});

@@ -437,7 +437,7 @@ function brancher_editeur() {
 
 // Pastille de légende de chaque calque (classes définies dans style.css).
 const PASTILLES = {avions_ir: "ami-plein", avions_laser: "ami-creux", missions: "trait-ami", radars: "radar", reseau: "reseau", couverture: "trait-ami",
-  balayage: "faisceau", postes: "sol", drones_detectes: "hostile", drones_inconnus: "inconnu", plots: "plots", plan: "trait-hostile",
+  drones_defensifs: "drone-def", balayage: "faisceau", postes: "sol", drones_detectes: "hostile", drones_inconnus: "inconnu", plots: "plots", plan: "trait-hostile",
   tirs: "eclat", messages: "message", cibles: "cible", zones: "zone", anneaux: "trait"};
 
 function brancher_calques() {

@@ -1,5 +1,5 @@
 // La simulation : état du monde, boucle à pas fixe, bilan (MODELE § 8 et § 9). Pur : ni DOM, ni réseau, ni horloge.
-import {avancer_avions, creer_avions, livrer_consignes, planifier_avions, resoudre_tirs_en_vol, tirer_air} from "./defense_air.js";
+import {avancer_avions, brouiller, creer_avions, livrer_consignes, planifier_avions, resoudre_tirs_en_vol, tirer_air} from "./defense_air.js";
 import {creer_postes, tirer_sol} from "./defense_sol.js";
 import {algo} from "./algos.js";
 import {direct, inverse, vers_ecef} from "./geodesie.js";
@@ -37,6 +37,15 @@ export function placer_cibles(scenario, hasard) {
   return cibles;
 }
 
+/** Rendre les compteurs propres aux drones défensifs présents (MODELE § 19). */
+function compteurs_defensifs(scenario) {
+  const presents = scenario.avions.filter((g) => g.nombre > 0);
+  return {
+    ...(presents.some((g) => g.arme.type === "brouillage") ? {neutralises_brouillage: 0} : {}),
+    ...(presents.some((g) => g.consomme_au_tir) ? {intercepteurs_perdus: 0} : {}),
+  };
+}
+
 /**
  * Rendre un monde neuf pour un scénario résolu et le registre de ses algorithmes (voir ids_algos).
  * `journal` : tenir la liste des évènements (rejeu), inutile en campagne.
@@ -56,7 +65,9 @@ export function creer_monde(scenario, {registre, journal = true}) {
     postes: creer_postes(scenario, cibles),
     tirs_en_vol: [],
     fuites: cibles.map(() => 0),
-    compteurs: {tirs_air: 0, tirs_sol: 0, detruits_air: 0, detruits_sol: 0},
+    // Les compteurs des drones défensifs n'apparaissent que s'il y en a : un bilan sans eux garde sa forme d'avant.
+    compteurs: {tirs_air: 0, tirs_sol: 0, detruits_air: 0, detruits_sol: 0, ...compteurs_defensifs(scenario)},
+    brouilleurs: scenario.avions.some((g) => g.nombre > 0 && g.arme.type === "brouillage"),
     evenements: journal ? [] : null,
     prochaine_decision: 0,
     index: new Map(),
@@ -130,6 +141,7 @@ export function avancer_monde(monde) {
   resoudre_tirs_en_vol(monde);
   tirer_sol(monde);
   tirer_air(monde);
+  if (monde.brouilleurs) brouiller(monde, simulation.pas);
 }
 
 /** Rendre vrai quand plus aucun drone ne vole et qu'aucun tir n'est en vol. */

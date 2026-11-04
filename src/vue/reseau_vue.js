@@ -76,7 +76,8 @@ export function liaisons_par_defaut(monde) {
   const ciblesDefendues = monde.cibles.map((_, i) => i).filter((i) => monde.postes.some((p) => p.cible === i));
   return [
     ...positions_radars(monde.scenario).map((_, i) => ({de: `radar:${i}`, vers: "conduite", moyen: MOYENS_PAR_DEFAUT.radars})),
-    ...monde.scenario.avions.map((_, g) => ({de: "conduite", vers: `avions:${g}`, moyen: MOYENS_PAR_DEFAUT.avions})),
+    // Seuls les groupes qui ont des vecteurs sont reliés : un groupe vide n'a pas de position.
+    ...monde.scenario.avions.map((groupe, g) => (groupe.nombre > 0 ? {de: "conduite", vers: `avions:${g}`, moyen: MOYENS_PAR_DEFAUT.avions} : null)).filter(Boolean),
     ...ciblesDefendues.map((i) => ({de: "conduite", vers: `sol:${i}`, moyen: MOYENS_PAR_DEFAUT.radars})),
     ...monde.scenario.reseau.centres.map((_, k) => ({de: `centre:${k}`, vers: "conduite", moyen: MOYENS_PAR_DEFAUT.radars})),
   ];

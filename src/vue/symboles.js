@@ -90,10 +90,50 @@ export function dessiner_drones(ctx, camera, monde, traces, calques, montre = ()
   }
 }
 
-/** Tracer les avions : dôme ami, ligne pointillée vers le point de mise à poste, estompés une fois vides. */
+/** Calque d'un vecteur défensif : avions par guidage, drones défensifs ensemble. */
+export const calque_vecteur = (avion) => (avion.type && avion.type !== "avion" ? "drones_defensifs" : avion.guidage === "ir" ? "avions_ir" : "avions_laser");
+
+/**
+ * Tracer un drone défensif (MODELE § 19), en bleu ami : losange plein pour un drone armé, triangle creux pour un
+ * intercepteur à usage unique, cercle barré d'un zigzag pour un brouilleur, avec son rayon d'effet en pointillés.
+ */
+function dessiner_drone_defensif(ctx, camera, avion, ecran) {
+  ctx.strokeStyle = COULEURS.ami;
+  ctx.fillStyle = COULEURS.ami;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  if (avion.type === "drone_arme") {
+    ctx.moveTo(ecran.x, ecran.y - 5);
+    ctx.lineTo(ecran.x + 5, ecran.y);
+    ctx.lineTo(ecran.x, ecran.y + 5);
+    ctx.lineTo(ecran.x - 5, ecran.y);
+    ctx.closePath();
+    ctx.fill();
+  } else if (avion.type === "kamikaze") {
+    ctx.moveTo(ecran.x, ecran.y - 5);
+    ctx.lineTo(ecran.x + 4.5, ecran.y + 4);
+    ctx.lineTo(ecran.x - 4.5, ecran.y + 4);
+    ctx.closePath();
+    ctx.stroke();
+  } else {
+    ctx.arc(ecran.x, ecran.y, 5, 0, 2 * Math.PI);
+    ctx.moveTo(ecran.x - 4, ecran.y);
+    ctx.lineTo(ecran.x - 1.5, ecran.y - 2.5);
+    ctx.lineTo(ecran.x + 1.5, ecran.y + 2.5);
+    ctx.lineTo(ecran.x + 4, ecran.y);
+    ctx.stroke();
+    ctx.setLineDash([2, 4]);
+    ctx.globalAlpha *= 0.5;
+    chemin_cercle(ctx, camera, avion.geo, avion.groupe.arme.portee, 24);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+/** Tracer les avions et les drones défensifs : symbole ami, ligne pointillée vers le point de mise à poste, estompés une fois vides. */
 export function dessiner_avions(ctx, camera, monde, calques) {
   for (const avion of monde.avions) {
-    if (!calques[avion.guidage === "ir" ? "avions_ir" : "avions_laser"]) continue;
+    if (avion.perdu || !calques[calque_vecteur(avion)]) continue;
     const ecran = projeter_ecran(camera, avion.geo);
     ctx.globalAlpha = avion.munitions === 0 ? 0.35 : 1;
     if (calques.missions && avion.etat === "ralliement" && avion.point) {
@@ -106,6 +146,11 @@ export function dessiner_avions(ctx, camera, monde, calques) {
       ctx.lineTo(but.x, but.y);
       ctx.stroke();
       ctx.setLineDash([]);
+    }
+    if (avion.type && avion.type !== "avion") {
+      dessiner_drone_defensif(ctx, camera, avion, ecran);
+      ctx.globalAlpha = 1;
+      continue;
     }
     ctx.beginPath();
     ctx.arc(ecran.x, ecran.y + 3, TAILLE + 1, Math.PI, 2 * Math.PI);
@@ -123,7 +168,7 @@ export function dessiner_avions(ctx, camera, monde, calques) {
 export function dessiner_tirs(ctx, camera, effets, maintenant) {
   for (const effet of effets.liste) {
     const progres = avancement(effet, maintenant);
-    const couleur = effet.couche === "air" ? "74, 152, 232" : "184, 134, 11";
+    const couleur = effet.couche === "air" ? "74, 152, 232" : effet.couche === "brouillage" ? "180, 142, 232" : "184, 134, 11";
     if (effet.type === "trait") {
       const de = projeter_ecran(camera, effet.de);
       const vers = projeter_ecran(camera, effet.vers);

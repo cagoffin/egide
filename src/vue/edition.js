@@ -35,7 +35,7 @@ export function elements_editables(monde, brut, mode = "edition") {
   if (mode === "ordres") {
     // En cours de raid : des avions à envoyer, et des éléments du réseau à mettre hors service.
     return [
-      ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.geo, guidage: avion.guidage})),
+      ...monde.avions.filter((avion) => !avion.perdu).map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.geo, guidage: avion.guidage, vecteur: avion.type})),
       ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
       {cle: "conduite", type: "conduite", indice: 0, geo: monde.scenario.reseau.centre},
       ...centres_secondaires(monde),
@@ -45,7 +45,7 @@ export function elements_editables(monde, brut, mode = "edition") {
   return [
     // Le centre de conduite visé par l'essaim est une cible du monde, mais il se déplace comme centre de conduite.
     ...monde.cibles.filter((cible) => !cible.conduite).map((cible, indice) => ({cle: `cible:${indice}`, type: "cible", indice, geo: cible.geo})),
-    ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite, guidage: avion.guidage})),
+    ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite, guidage: avion.guidage, vecteur: avion.type})),
     ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
     {cle: "conduite", type: "conduite", indice: 0, geo: monde.scenario.reseau.centre},
     ...centres_secondaires(monde),

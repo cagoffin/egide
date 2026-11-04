@@ -33,8 +33,13 @@ function lignes_detections(evenements) {
   });
 }
 
+const ARTICLES = {avion: "l'avion", drone_arme: "le drone armé", kamikaze: "l'intercepteur", brouilleur: "le brouilleur"};
+
+/** Rendre « l'avion 4 », « l'intercepteur 57 »… selon la famille du vecteur `id`. */
+const nom_vecteur = (monde, id) => `${ARTICLES[monde.avions[id]?.type ?? "avion"]} ${id + 1}`;
+
 function ligne(monde, e) {
-  const avion = `l'avion ${e.avion + 1}`;
+  const avion = nom_vecteur(monde, e.avion);
   switch (e.type) {
     case "mission": {
       const piste = e.effectif ? `une piste de ${e.effectif} drone${e.effectif > 1 ? "s" : ""}` : "une piste";
@@ -44,10 +49,13 @@ function ligne(monde, e) {
     }
     case "reception": return {famille: "mission", texte: `${avion[0].toUpperCase()}${avion.slice(1)} reçoit ${e.ordre ? "l'ordre" : "sa mission"} et part.`, cible: {type: "avion", id: e.avion}};
     case "contact": return {famille: "contact", texte: `${avion[0].toUpperCase()}${avion.slice(1)} accroche le drone ${e.drone + 1} avec son propre capteur et le poursuit.`, cible: {type: "avion", id: e.avion}};
+    case "brouillage": return {famille: "tir", texte: `Le brouilleur ${e.tireur + 1} neutralise le drone ${e.drone + 1}.`, cible: {type: "drone", id: e.drone}};
     case "tir": {
       const poste = `${nom_poste(monde, e.tireur)[0].toUpperCase()}${nom_poste(monde, e.tireur).slice(1)}${e.designe === false ? ", seul après acquisition," : e.designe ? ", désigné par un centre," : ""}`;
-      const qui = e.couche === "air" ? `L'avion ${e.tireur + 1}` : poste;
-      return {famille: "tir", texte: `${qui} tire sur le drone ${e.drone + 1} (Pk ${format_decimal(e.pk)}) : ${e.detruit ? "détruit" : "manqué"}.`, cible: {type: "drone", id: e.drone}};
+      const tireur = nom_vecteur(monde, e.tireur);
+      const qui = e.couche === "air" ? `${tireur[0].toUpperCase()}${tireur.slice(1)}` : poste;
+      const verbe = e.couche === "air" && monde.avions[e.tireur]?.type === "kamikaze" ? "percute" : "tire sur";
+      return {famille: "tir", texte: `${qui} ${verbe} le drone ${e.drone + 1} (Pk ${format_decimal(e.pk)}) : ${e.detruit ? "détruit" : "manqué"}.`, cible: {type: "drone", id: e.drone}};
     }
     case "impact": return {famille: "tir", texte: `Un drone frappe ${monde.cibles[e.cible]?.conduite ? "le CDC" : `C${e.cible + 1}`}.`, cible: {type: "cible", id: e.cible}};
     case "ordre": return {famille: "autre", texte: `Ordre de l'éditeur, parti du CDC : avion${e.avions.length > 1 ? "s" : ""} ${e.avions.map((a) => a + 1).join(", ") || "aucun joignable"}.`, cible: e.avions.length ? {type: "avion", id: e.avions[0]} : null};

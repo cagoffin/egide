@@ -45,6 +45,9 @@ export function absorber(effets, monde, maintenant) {
     if (evenement.type === "tir") {
       effets.liste.push({type: "trait", couche: evenement.couche, de: evenement.de, vers: evenement.vers, debut: maintenant});
       if (evenement.detruit) effets.liste.push({type: "eclat", couche: evenement.couche, position: evenement.vers, debut: maintenant});
+    } else if (evenement.type === "brouillage") {
+      effets.liste.push({type: "trait", couche: "brouillage", de: evenement.de, vers: evenement.vers, debut: maintenant});
+      effets.liste.push({type: "eclat", couche: "brouillage", position: evenement.vers, debut: maintenant});
     } else if (evenement.type === "impact") {
       effets.liste.push({type: "impact", cible: evenement.cible, debut: maintenant});
     }

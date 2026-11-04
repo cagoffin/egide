@@ -39,7 +39,7 @@ export const AIDE = {
     surcharges: "Valeurs qui remplacent celles de l'unite pour ce scenario (cles et unites du fichier d'unite).",
   },
   bleu: {
-    avions: "Groupes d'avions en orbite ; chaque groupe a son type et son effectif.",
+    avions: "Groupes de vecteurs defensifs en attente : avions et drones defensifs (armes, intercepteurs a usage unique, brouilleurs) ; chaque groupe a son type et son effectif.",
     "avions[].unite": "Identifiant de l'avion dans le catalogue.",
     "avions[].nombre": "Nombre d'avions du groupe.",
     "avions[].altitude_m": "Altitude de vol du groupe, en orbite comme en mise a poste.",

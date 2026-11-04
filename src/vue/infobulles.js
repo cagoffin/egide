@@ -4,8 +4,17 @@ import {format_duree} from "./format.js";
 const ETATS = {orbite: "en orbite", ralliement: "en route vers son point de mise à poste", engagement: "au contact",
   poste: "à poste, en attente", retour: "retour vers son orbite"};
 
+/** Nom affiché de chaque famille de vecteur défensif. */
+export const NOMS_VECTEURS = {avion: "Avion", drone_arme: "Drone armé", kamikaze: "Intercepteur", brouilleur: "Brouilleur"};
+
 /** Rendre le texte décrivant l'entité survolée (`survol` rendu par trouver_sous_curseur). */
 export function decrire(survol, monde) {
+  if (survol.type === "avion" && survol.objet.type && survol.objet.type !== "avion") {
+    const avion = survol.objet;
+    const etat = avion.munitions === 0 ? "à court de munitions" : ETATS[avion.etat];
+    const charge = avion.type === "brouilleur" ? `brouille dans un rayon de ${Math.round(avion.groupe.arme.portee / 100) / 10} km` : `${avion.munitions} charge${avion.munitions > 1 ? "s" : ""} restante${avion.munitions > 1 ? "s" : ""}`;
+    return `${NOMS_VECTEURS[avion.type]} ${avion.id + 1}\n${etat}\n${charge}`;
+  }
   if (survol.type === "avion") {
     const avion = survol.objet;
     const guidage = avion.guidage === "ir" ? "guidage IR" : "guidage laser";

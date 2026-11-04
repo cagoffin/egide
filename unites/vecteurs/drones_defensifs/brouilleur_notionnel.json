@@ -1,0 +1,10 @@
+{
+  "herite_de": "vecteurs/drones_defensifs/_drone_defensif",
+  "nom": "Drone brouilleur (notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel : effet de brouillage represente par une probabilite de neutralisation, sans modele de signal"
+  ],
+  "type_vecteur": "brouilleur",
+  "emport": "effecteurs/brouillage/brouillage_notionnel",
+  "emport_nombre": 1
+}
