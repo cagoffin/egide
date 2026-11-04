@@ -374,3 +374,29 @@ test("vue du PC : seuls les drones connus de la conduite, regroupés en pistes",
   assert.equal(pistes_connues(vivant).reduce((n, p) => n + p.effectif, 0), s.connus);
   assert.ok(vivant.drones.filter((d) => connu_du_pc(vivant, d)).every((d) => d.connu <= vivant.t));
 });
+
+import {chaine_drone, lignes_journal} from "../src/vue/journal.js";
+
+test("journal de l'information : détections, transmissions, missions, réceptions, contacts et tirs, en phrases", () => {
+  const liaisons = [
+    ...Array.from({length: 10}, (_, i) => ({de: `radar:${i}`, vers: "conduite", moyen: i === 0 ? "liaisons/optique_notionnelle" : "liaisons/satellite_notionnelle"})),
+    {de: "conduite", vers: "avions:0", moyen: "liaisons/satellite_notionnelle"}, {de: "conduite", vers: "avions:1", moyen: "liaisons/satellite_notionnelle"},
+  ];
+  const monde = simuler_raid(scenario({"rouge.nombre": 200, "rouge.concentration_max": 20, "rouge.tactique": "disperse", "bleu.reseau.mode": "liaisons", "bleu.reseau.liaisons": liaisons}), {registre: REGISTRE});
+  const lignes = lignes_journal(monde);
+  const textes = lignes.map((l) => l.texte).join("\n");
+  assert.match(textes, /R\d+ voit .* le PC le saura 3 s plus tard/);
+  assert.match(textes, /R1 voit .*non relié au PC/, "la liaison optique de R1 est hors de portée");
+  assert.match(textes, /Le PC envoie l'avion \d+ intercepter une piste de \d+ drones?, par le PC ; il la recevra à/);
+  assert.match(textes, /L'avion \d+ reçoit sa mission et part\./);
+  assert.match(textes, /accroche le drone \d+ avec son propre capteur/);
+  assert.match(textes, /tire sur le drone \d+ \(Pk 0,7\) : (détruit|manqué)/);
+  assert.ok(lignes.every((l, i) => i === 0 || lignes[i - 1].t <= l.t), "dans l'ordre du temps");
+  const abattu = monde.drones.find((d) => !d.vivant && d.connu !== null);
+  const chaine = chaine_drone(monde, abattu.id).map((e) => e.texte).join("\n");
+  assert.match(chaine, /Vu par R\d+\./);
+  assert.match(chaine, /Connu du PC, 3 s après\./);
+  assert.match(chaine, /: détruit\./);
+  const perdu = monde.drones.find((d) => d.detection !== null && d.connu === null);
+  if (perdu) assert.match(chaine_drone(monde, perdu.id).map((e) => e.texte).join(" "), /Jamais connu du PC/);
+});

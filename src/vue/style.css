@@ -102,6 +102,7 @@ i.inconnu { background: var(--inconnu); clip-path: polygon(50% 0, 100% 100%, 0 1
 i.sol { border: 1px solid var(--sol); border-radius: 50%; background: rgba(184, 134, 11, 0.25); }
 i.cible { border: 1.5px solid var(--texte); }
 i.radar { border: 1.5px solid var(--ami); border-radius: 2px; }
+i.message { background: radial-gradient(circle, var(--ami) 35%, transparent 40%); }
 i.reseau { border: 2px solid var(--ami); border-inline-start-width: 4px; }
 i.trait-ami { border-block-start: 2px dashed var(--ami); block-size: 0 !important; }
 i.trait-hostile { border-block-start: 2px dashed var(--hostile); block-size: 0 !important; }
@@ -170,6 +171,19 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .vue[data-mode="edition"] .seulement-ordres, .vue:not([data-mode]) .seulement-ordres { display: none; }
 .aide-edition { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: var(--texte-secondaire); text-align: center; }
 
+/* Journal de l'information. */
+.filtres-journal { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; margin-block-end: 8px; }
+.filtres-journal label { display: flex; gap: 5px; align-items: center; cursor: pointer; }
+.journal { list-style: none; margin: 0; padding: 0; font-size: 12.5px; display: grid; gap: 1px; }
+.journal li { display: grid; grid-template-columns: 3.6em 1fr; gap: 8px; padding: 3px 6px; border-radius: 4px; cursor: pointer; border-inline-start: 3px solid transparent; }
+.journal li:hover { background: var(--trait); }
+.journal time { color: var(--texte-secondaire); }
+.journal .detection { border-color: var(--ami); }
+.journal .mission { border-color: var(--texte); }
+.journal .contact { border-color: #e8d36a; }
+.journal .tir { border-color: var(--sol); }
+.journal .autre { border-color: var(--hostile); }
+
 /* Balayage (dans son panneau). */
 #balayage label { display: grid; gap: 4px; font-size: 12px; color: var(--texte-secondaire); }
 #balayage label.large { flex: 1 1 200px; }
@@ -196,7 +210,8 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .inspecteur th { text-align: start; color: var(--texte-secondaire); font-weight: 400; padding: 2px 8px 2px 0; vertical-align: top; }
 .inspecteur td { padding: 2px 0; }
 .inspecteur p, .inspecteur ul { margin-block: 4px; }
-.inspecteur ul { padding-inline-start: 18px; }
+.inspecteur ul, .inspecteur ol { padding-inline-start: 18px; }
+.inspecteur .chaine li { margin-block: 2px; }
 .inspecteur a { color: var(--ami); }
 
 /* Écrans étroits : barre et bilan en haut sur toute la largeur, rail d'icônes au-dessus de la lecture,

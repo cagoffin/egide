@@ -122,6 +122,17 @@ export function acces_avion(reseau, avion, indiceGroupe) {
   return retenu;
 }
 
+/** Rendre l'indice du radar en état le plus proche de `drone` (-1 s'il n'y en a pas). */
+export function radar_le_plus_proche(reseau, drone) {
+  let [indice, meilleure] = [-1, Infinity];
+  reseau.ecefRadars.forEach((ecef, i) => {
+    if (reseau.radars_hs[i]) return;
+    const d = distance_oblique(ecef, drone.ecef);
+    if (d < meilleure) [indice, meilleure] = [i, d];
+  });
+  return indice;
+}
+
 /**
  * Rendre les indices des radars en état qui voient `drone` : ceux que l'algorithme désigne, sinon le plus proche des
  * radars en état s'il est vu (couverture frontière : la frontière est jalonnée par les radars, MODELE § 15.1).
@@ -130,12 +141,7 @@ export function radars_voyants(detection, couverture, reseau, drone, outils) {
   if (reseau.grille) return radars_voyants_relief(detection, couverture, reseau, drone, outils);
   if (detection.detecte_par) return detection.detecte_par(couverture, drone, outils).filter((i) => !reseau.radars_hs[i]);
   if (!detection.detecte(couverture, drone, outils)) return [];
-  let [indice, meilleure] = [-1, Infinity];
-  reseau.ecefRadars.forEach((ecef, i) => {
-    if (reseau.radars_hs[i]) return;
-    const d = distance_oblique(ecef, drone.ecef);
-    if (d < meilleure) [indice, meilleure] = [i, d];
-  });
+  const indice = radar_le_plus_proche(reseau, drone);
   return indice < 0 ? [] : [indice];
 }
 

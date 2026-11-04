@@ -6,7 +6,7 @@ import {direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from 
 import {parcourir_voisins} from "./grille.js";
 import {OUTILS} from "./outils.js";
 import {acces_avion} from "./reseau.js";
-import {est_actif, plus_proche, resoudre_tir} from "./tir.js";
+import {est_actif, journaliser, plus_proche, resoudre_tir} from "./tir.js";
 // Un drone qui se rapproche à moins de 3 portées d'arme fait passer l'avion de la mise à poste à l'engagement.
 const PORTEES_ENGAGEMENT = 3;
 
@@ -65,6 +65,10 @@ export function planifier_avions(monde) {
   const libres = monde.avions.filter((avion) => avion.acces && avion.munitions > 0 && !avion.ordre && !avion.consigne?.ordre && !drone_approchant(monde, avion));
   for (const {avion, point, explication} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
     // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
+    // Nouvelle mission (l'avion n'était pas déjà en route) : journalisée pour le suivi de l'information (MODELE § 17).
+    if (point && avion.etat !== "ralliement" && !avion.consigne) {
+      journaliser(monde, {type: "mission", avion: avion.id, point, effectif: explication?.retenue?.effectif ?? null, arrivee: monde.t + avion.acces.latence, depuis: avion.acces.sol});
+    }
     avion.decision = {t: monde.t, point, explication, arrivee: monde.t + avion.acces.latence};
     // La consigne met la latence de la liaison à arriver (MODELE § 15.2) ; sans latence, elle s'applique aussitôt.
     if (avion.acces.latence > 0) avion.consigne = {t: monde.t + avion.acces.latence, point, ordre: false};
@@ -90,6 +94,7 @@ export function livrer_consignes(monde) {
     if (!consigne || consigne.t > monde.t) continue;
     avion.consigne = null;
     if (avion.munitions === 0) continue;
+    if (consigne.point) journaliser(monde, {type: "reception", avion: avion.id, ordre: consigne.ordre});
     if (consigne.ordre) Object.assign(avion, {etat: "ralliement", point: {...consigne.point, alt: avion.geo.alt}, ordre: true});
     else executer_consigne(avion, consigne.point);
   }
@@ -110,6 +115,9 @@ export function avancer_avions(monde, dt) {
     const {vitesse_mise_a_poste: vitesse, vitesse_engagement: vitesseEngagement} = avion.groupe;
     const menace = avion.munitions > 0 ? drone_approchant(monde, avion) : null;
     if (menace) {
+      // L'avion accroche un drone avec son propre capteur : il le poursuit sans attendre la conduite.
+      if (avion.etat !== "engagement" || avion.contact !== menace.id) journaliser(monde, {type: "contact", avion: avion.id, drone: menace.id});
+      avion.contact = menace.id;
       avion.etat = "engagement";
       deplacer(monde, avion, menace.geo, vitesseEngagement * dt);
       continue;

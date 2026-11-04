@@ -12,6 +12,7 @@ import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./ca
 import {creer_editeur} from "./editeur.js";
 import {MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {resume_situation} from "./situation.js";
+import {FAMILLES, lignes_journal} from "./journal.js";
 import {dessiner_inspection, inspection} from "./inspecteur.js";
 import {dessiner_profil} from "./profil.js";
 import {altitudes_relief, echantillonner_chemin} from "./relief.js";
@@ -35,7 +36,7 @@ const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 const etat = {base: null, modifications: {}, fichiers: {}, registre: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
   camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null,
   carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: [], inspection: null, derniereInspection: 0,
-  calques: lire_calques(), panneaux: null, vue_pc: false};
+  calques: lire_calques(), panneaux: null, vue_pc: false, familles: new Set(Object.keys(FAMILLES)), dernierJournal: 0, journal: []};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 
@@ -158,9 +159,35 @@ function inspecter(cible) {
   if (cible) rafraichir_inspection(performance.now(), true);
 }
 
+/** Remplir le panneau Journal (au plus trois fois par seconde, et seulement s'il est ouvert). */
+function rafraichir_journal(maintenant, forcer = false) {
+  if (etat.panneaux?.ouvert() !== "journal" || (!forcer && maintenant - etat.dernierJournal < 330)) return;
+  etat.dernierJournal = maintenant;
+  const lignes = lignes_journal(etat.lecteur.monde).filter((l) => etat.familles.has(l.famille)).slice(-200).reverse();
+  etat.journal = lignes;
+  $("[data-zone='journal']").innerHTML = lignes.length
+    ? lignes.map((l, i) => `<li class="${l.famille}" data-ligne="${i}"><time>${format_duree(l.t)}</time><span>${l.texte}</span></li>`).join("")
+    : `<li class="vide"><time></time><span>Rien encore : lancez la lecture.</span></li>`;
+}
+
+function brancher_journal() {
+  const filtres = $("[data-zone='filtres_journal']");
+  filtres.innerHTML = Object.entries(FAMILLES).map(([id, libelle]) => `<label><input type="checkbox" value="${id}" checked>${libelle}</label>`).join("");
+  filtres.addEventListener("change", (e) => {
+    if (e.target.checked) etat.familles.add(e.target.value);
+    else etat.familles.delete(e.target.value);
+    rafraichir_journal(performance.now(), true);
+  });
+  $("[data-zone='journal']").addEventListener("click", (e) => {
+    const ligne = etat.journal[Number(e.target.closest("[data-ligne]")?.dataset.ligne)];
+    if (ligne?.cible) inspecter(ligne.cible);
+  });
+}
+
 function rafraichir_commandes(maintenant) {
   const {lecteur} = etat;
   etat.dernierTableau = maintenant;
+  rafraichir_journal(maintenant);
   rafraichir_inspection(maintenant);
   mettre_a_jour_tableau($("#tableau"), lecteur.monde);
   $("[name='temps']").value = lecteur.monde.t;
@@ -208,7 +235,7 @@ function brancher_transport() {
   addEventListener("keydown", (e) => {
     if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
     const edition = etat.editeur?.est_actif();
-    const panneau = /^Digit([1-5])$/.exec(e.code)?.[1];
+    const panneau = /^Digit([1-6])$/.exec(e.code)?.[1];
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
     if (e.key.toLowerCase() === "v" && !edition) basculer_vue_pc();
@@ -411,7 +438,7 @@ function brancher_editeur() {
 // Pastille de légende de chaque calque (classes définies dans style.css).
 const PASTILLES = {avions_ir: "ami-plein", avions_laser: "ami-creux", missions: "trait-ami", radars: "radar", reseau: "reseau", couverture: "trait-ami",
   balayage: "faisceau", postes: "sol", drones_detectes: "hostile", drones_inconnus: "inconnu", plots: "plots", plan: "trait-hostile",
-  tirs: "eclat", cibles: "cible", zones: "zone", anneaux: "trait"};
+  tirs: "eclat", messages: "message", cibles: "cible", zones: "zone", anneaux: "trait"};
 
 function brancher_calques() {
   const zone = $("[data-zone='calques']");
@@ -453,7 +480,11 @@ async function demarrer() {
   brancher_editeur();
   brancher_calques();
   await remplir_moyens();
-  etat.panneaux = brancher_panneaux($("#vue"), $(".rail"), (id) => id === "profil" && rafraichir_profil());
+  brancher_journal();
+  etat.panneaux = brancher_panneaux($("#vue"), $(".rail"), (id) => {
+    if (id === "profil") rafraichir_profil();
+    if (id === "journal" && etat.lecteur) rafraichir_journal(performance.now(), true);
+  });
   brancher_prereglages();
   brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));
   await charger();

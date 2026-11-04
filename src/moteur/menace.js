@@ -4,7 +4,7 @@ import {algo} from "./algos.js";
 import {vers_ecef} from "./geodesie.js";
 import {melanger} from "./hasard.js";
 import {OUTILS} from "./outils.js";
-import {radars_voyants} from "./reseau.js";
+import {radar_le_plus_proche, radars_voyants} from "./reseau.js";
 import {est_actif, journaliser} from "./tir.js";
 
 /**
@@ -64,6 +64,15 @@ export function avancer_drones(monde, dt) {
 }
 
 /**
+ * Journaliser une détection (MODELE § 17) : le drone, le radar qui le voit, et l'instant où l'information atteint
+ * le PC (null : elle n'y arrivera pas). Le drone garde son radar d'origine pour l'inspecteur.
+ */
+function noter_detection(monde, drone, radar, connu) {
+  drone.radar ??= radar;
+  journaliser(monde, {type: "detection", drone: drone.id, radar, connu: connu === null || !Number.isFinite(connu) ? null : connu});
+}
+
+/**
  * Marquer l'instant où chaque drone est détecté (`detection`) et celui où la conduite l'apprend (`connu`). En réseau
  * complet, c'est le même instant ; en liaisons, l'information part de chaque radar qui le voit et arrive après la
  * latence de son chemin jusqu'à la conduite, jamais si ce radar n'y est pas relié (MODELE § 15.2).
@@ -75,17 +84,25 @@ export function detecter_drones(monde) {
     if (!est_actif(drone, monde.t)) continue;
     if (reseau.simple) {
       // Après une panne, un drone déjà vu peut rester inconnu : c'est `connu` qui décide de regarder encore.
-      if (drone.connu === null && detection.detecte(monde.couverture, drone, OUTILS)) [drone.detection, drone.connu] = [drone.detection ?? monde.t, monde.t];
+      if (drone.connu === null && detection.detecte(monde.couverture, drone, OUTILS)) {
+        const premiere = drone.detection === null;
+        [drone.detection, drone.connu] = [drone.detection ?? monde.t, monde.t];
+        // Le radar d'origine ne sert qu'au journal (rejeu) : on ne le cherche pas en campagne.
+        if (premiere && monde.evenements) noter_detection(monde, drone, radar_le_plus_proche(reseau, drone), monde.t);
+      }
       continue;
     }
     if (drone.connu !== null && drone.connu <= monde.t) continue;
     const voyants = radars_voyants(detection, monde.couverture, reseau, drone, OUTILS);
     if (!voyants.length) continue;
     // Vu physiquement, même si l'information ne va nulle part.
+    const premiere = drone.detection === null;
     drone.detection ??= monde.t;
+    const avant = drone.connu;
     for (const i of voyants) {
       const arrivee = monde.t + reseau.latences_radars[i];
-      if (arrivee < (drone.connu ?? Infinity)) drone.connu = arrivee;
+      if (arrivee < (drone.connu ?? Infinity)) [drone.connu, drone.radar] = [arrivee, i];
     }
+    if (premiere || drone.connu !== avant) noter_detection(monde, drone, drone.connu !== avant ? drone.radar : voyants[0], drone.connu);
   }
 }

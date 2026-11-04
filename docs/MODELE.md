@@ -416,3 +416,29 @@ Une liaison à vue directe (radio, optique) entre deux antennes d'altitudes z₁
 chaque point à s du premier, z_sol(s) < z₁ + (z₂ − z₁) s / D − s (D − s) / (2 k R_T) (rayon droit, Terre de rayon
 effectif). Le test s'applique aux liaisons entre nœuds au sol et à l'accès de chaque avion (altitude de vol au-dessus
 de l'ellipsoïde).
+
+## 17 · Circulation de l'information (jalon 8)
+### 17.1 La chaîne, pas à pas
+1. **Un radar voit.** Un drone entre dans sa portée (ou sort de derrière le relief, § 16.2).
+2. **L'information remonte au PC** après la latence du chemin le plus court par liaisons actives (§ 15.2), ou n'y
+   arrive jamais si le radar n'est pas relié ; en réseau complet, aussitôt.
+3. **Le PC attend son délai de réaction** (`bleu.conduite.delai_reaction_s`), puis, à chaque pas de décision, regroupe
+   les drones qu'il connaît en pistes (pistage) et affecte à chaque avion libre et joignable sa meilleure piste
+   (allocation, § 8.3).
+4. **La mission descend à l'avion** après la latence de son accès (§ 15.4) ; l'avion part vers le point
+   d'interception à sa vitesse de mise à poste.
+5. **L'avion accroche un drone avec son propre capteur** dès qu'un drone qui se rapproche passe à moins de trois
+   portées de son arme : il le poursuit sans attendre la conduite, puis tire à portée (§ 4.2).
+6. **Les postes sol tirent sur ce qui entre dans leur bulle** ; ils ne sont pas encore prévenus par le réseau
+   (jalon 9 : désignation par le centre de détection et de contrôle).
+
+### 17.2 Journal et affichage
+Le moteur journalise, en lecture seulement (pas en campagne), chaque maillon : `detection` (drone, radar, instant
+d'arrivée au PC ou null), `mission` (avion, effectif de la piste, nœud d'accès, instant de réception), `reception`,
+`contact` (avion, drone), `tir`, `impact`, `ordre`, `panne`, `reseau`. Le journal ne change rien au déroulement :
+les bilans de référence restent exacts (`tests/portage_j0.test.js`).
+
+À l'écran (calque « Circulation de l'information ») : impulsion bleue d'un radar vers le PC avec le nombre de drones
+signalés (rouge et arrêtée si l'information ne va nulle part), impulsion blanche du PC vers l'avion missionné,
+cercle blanc quand l'avion la reçoit, tirets jaunes quand il accroche un drone. Le panneau Journal raconte la même
+histoire en phrases (détections regroupées par radar sur 10 s), filtrable par famille ; l'inspecteur d'un drone en donne la chaîne complète.

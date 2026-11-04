@@ -15,6 +15,7 @@
   <symbol id="i-calques" viewBox="0 0 24 24"><path d="M12 3 2 8l10 5 10-5-10-5zM2 13l10 5 10-5M2 18l10 5 10-5"/></symbol>
   <symbol id="i-balayage" viewBox="0 0 24 24"><path d="M3 20h18M5 16l4-6 4 3 6-8"/><circle cx="9" cy="10" r="1"/><circle cx="13" cy="13" r="1"/></symbol>
   <symbol id="i-profil" viewBox="0 0 24 24"><path d="M2 19l6-9 4 5 3-4 7 8H2zM2 7h20"/></symbol>
+  <symbol id="i-journal" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></symbol>
   <symbol id="i-aide" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17v.5"/></symbol>
 </svg>
 
@@ -41,7 +42,8 @@
     <button data-panneau="calques" aria-expanded="false" title="Calques et fond de carte (2)"><svg><use href="#i-calques"/></svg><span>Calques</span></button>
     <button data-panneau="balayage" aria-expanded="false" title="Balayage d'un réglage sur plusieurs raids (3)"><svg><use href="#i-balayage"/></svg><span>Balayage</span></button>
     <button data-panneau="profil" aria-expanded="false" title="Profil du plan de vol au-dessus du relief (4)"><svg><use href="#i-profil"/></svg><span>Profil</span></button>
-    <button data-panneau="aide" aria-expanded="false" title="Commandes et symboles (5)"><svg><use href="#i-aide"/></svg><span>Aide</span></button>
+    <button data-panneau="journal" aria-expanded="false" title="Qui a vu quoi, qui a informé qui, quand (5)"><svg><use href="#i-journal"/></svg><span>Journal</span></button>
+    <button data-panneau="aide" aria-expanded="false" title="Commandes et symboles (6)"><svg><use href="#i-aide"/></svg><span>Aide</span></button>
   </nav>
 
   <section class="tiroir" data-tiroir="scenario" aria-label="Réglages du scénario" hidden>
@@ -96,6 +98,14 @@
     <div data-zone="profil"><p class="note-profil">Dessinez un plan de vol dans l'éditeur (outil Plan de vol) pour voir son profil.</p></div>
   </section>
 
+  <section class="tiroir large" data-tiroir="journal" aria-label="Journal de l'information" hidden>
+    <header><h2>Journal de l'information</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
+    <p class="note">Ce que le moteur a fait jusqu'à cet instant, le plus récent en haut : un radar voit, l'information remonte au PC, le PC
+      envoie un avion, l'avion reçoit sa mission, accroche un drone avec son capteur, tire. Un clic sur une ligne inspecte l'unité.</p>
+    <div class="filtres-journal" data-zone="filtres_journal"></div>
+    <ol class="journal" data-zone="journal"></ol>
+  </section>
+
   <section class="tiroir" data-tiroir="aide" aria-label="Commandes et symboles" hidden>
     <header><h2>Aide</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
     <h3>Symboles</h3>
@@ -103,6 +113,7 @@
       <li><i class="ami-plein"></i>Avion à roquettes IR</li>
       <li><i class="ami-creux"></i>Avion à roquettes laser</li>
       <li><i class="radar"></i>Radar (R1, R2…)</li>
+      <li><i class="message"></i>Impulsion bleue : un radar signale des drones au PC ; blanche : le PC envoie un avion ; tirets jaunes : un avion accroche un drone avec son capteur</li>
       <li><i class="reseau"></i>Centre de conduite (PC) et liaisons ; croix rouge : liaison coupée ou avion injoignable</li>
       <li><i class="hostile"></i>Drone détecté</li>
       <li><i class="inconnu"></i>Drone non détecté</li>
@@ -116,7 +127,7 @@
       <dt>E</dt><dd>Éditer le scénario</dd>
       <dt>V</dt><dd>Vue du PC : ce que sait la conduite</dd>
       <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
-      <dt>1 à 5</dt><dd>Ouvrir un panneau (hors édition)</dd>
+      <dt>1 à 6</dt><dd>Ouvrir un panneau (hors édition)</dd>
       <dt>Molette</dt><dd>Zoom</dd>
       <dt>Clic droit glissé</dt><dd>Incliner et tourner la carte</dd>
       <dt>Double-clic</dt><dd>Recadrer</dd>

@@ -167,3 +167,51 @@ export function dessiner_radars(ctx, camera, positions) {
     ctx.fillText(`R${i + 1}`, p.x + 11, p.y + 4);
   });
 }
+
+/**
+ * Tracer la circulation de l'information (MODELE § 17) : impulsion bleue d'un radar vers le PC (nombre de drones
+ * signalés ; rouge barrée si l'information ne va nulle part), impulsion blanche du PC vers l'avion missionné, éclair
+ * jaune quand un avion accroche un drone avec son propre capteur, cercle blanc quand il reçoit sa mission.
+ */
+export function dessiner_messages(ctx, camera, effets, maintenant) {
+  ctx.font = "bold 11px system-ui, sans-serif";
+  for (const effet of effets.liste) {
+    const f = avancement(effet, maintenant);
+    if (effet.type === "message") {
+      const [p, q] = [projeter_ecran(camera, effet.de), projeter_ecran(camera, effet.vers)];
+      const couleur = effet.perdu ? COULEURS.hostile : effet.sens === "montee" ? COULEURS.ami : COULEURS.selection;
+      ctx.strokeStyle = couleur;
+      ctx.globalAlpha = 0.5 * (1 - f);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(q.x, q.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      const g = effet.perdu ? Math.min(f, 0.25) : f;
+      const m = {x: p.x + (q.x - p.x) * g, y: p.y + (q.y - p.y) * g};
+      ctx.fillStyle = couleur;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, 4.5, 0, 2 * Math.PI);
+      ctx.fill();
+      if (effet.n) ctx.fillText(String(effet.n), m.x + 7, m.y - 6);
+    } else if (effet.type === "contact") {
+      const [p, q] = [projeter_ecran(camera, effet.de), projeter_ecran(camera, effet.vers)];
+      ctx.strokeStyle = `rgba(232, 211, 106, ${1 - f})`;
+      ctx.setLineDash([3, 3]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(q.x, q.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    } else if (effet.type === "reception") {
+      const p = projeter_ecran(camera, effet.position);
+      ctx.strokeStyle = `rgba(242, 242, 242, ${1 - f})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 8 + 14 * f, 0, 2 * Math.PI);
+      ctx.stroke();
+    }
+  }
+}

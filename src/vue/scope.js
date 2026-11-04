@@ -6,7 +6,7 @@ import {positions_radars} from "../moteur/radars.js";
 import {pistes_connues, connu_du_pc} from "./situation.js";
 import {calques_par_defaut, element_visible} from "./calques.js";
 import {dessiner_pannes, dessiner_reseau} from "./reseau_vue.js";
-import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_radars, dessiner_tirs} from "./symboles.js";
+import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_messages, dessiner_radars, dessiner_tirs} from "./symboles.js";
 
 /**
  * Dessiner une image du scope.
@@ -36,6 +36,7 @@ export function dessiner_scope(ctx, camera, etat) {
   }
   if (calques.tirs) dessiner_tirs(ctx, camera, effets, maintenant);
   dessiner_avions(ctx, camera, monde, calques);
+  if (calques.messages) dessiner_messages(ctx, camera, effets, maintenant);
   if (etat.survol) dessiner_survol(ctx, camera, etat.survol);
   dessiner_echelle(ctx, camera);
 }

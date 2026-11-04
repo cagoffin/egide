@@ -16,6 +16,7 @@ export const CALQUES = [
   {id: "plots", groupe: "Menace", libelle: "Plots radar"},
   {id: "plan", groupe: "Menace", libelle: "Plan de vol"},
   {id: "tirs", groupe: "Engagements", libelle: "Tirs et destructions"},
+  {id: "messages", groupe: "Engagements", libelle: "Circulation de l'information"},
   {id: "cibles", groupe: "Théâtre", libelle: "Cibles"},
   {id: "zones", groupe: "Théâtre", libelle: "Zones"},
   {id: "anneaux", groupe: "Théâtre", libelle: "Anneaux de distance"},

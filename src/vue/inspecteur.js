@@ -9,6 +9,7 @@ import {ms_vers_kmh} from "../moteur/unites.js";
 import {positions_radars} from "../moteur/radars.js";
 import {couverture_reelle} from "../moteur/terrain.js";
 import {libelle_noeud} from "./reseau_vue.js";
+import {chaine_drone} from "./journal.js";
 
 const ETATS = {orbite: "en orbite", ralliement: "en route vers son point", engagement: "au contact d'un drone",
   poste: "à poste, en attente", retour: "retour vers son orbite"};
@@ -81,6 +82,7 @@ function inspection_drone(drone, monde) {
       ligne("Reste à parcourir", restant ? `${format_decimal(restant / 1000)} km, ${format_duree(restant / rouge.vitesse)}` : "—"),
       ligne("Altitude", `${format_entier(drone.geo.alt)} m`),
     ].join("")}</table>
+    <h4>Chaîne de l'information</h4><ol class="chaine">${chaine_drone(monde, drone.id).map((e) => `<li>${e.instant ? `<b>${e.instant}</b> ` : ""}${e.texte}</li>`).join("")}</ol>
     <h4>Tirs subis</h4>${tirs.length ? `<ul>${detail}</ul>
       <p>Probabilité de survivre à ces ${tirs.length} tirs : Π(1 − Pk) = <b>${pourcent(survie)}</b>.</p>` : "<p>Aucun pour l'instant.</p>"}
     <h4>Modèles</h4><ul>
