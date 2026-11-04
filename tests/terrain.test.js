@@ -101,3 +101,15 @@ test("outils terrain : PNG relu (cinq filtres), pixel de tuile, encodage, géom�
   assert.equal(g.lignes, 21);
   assert.ok(Math.abs(g.lat_sud + 10 * g.pas_lat - 47) < 1e-12);
 });
+
+import {anneaux, pays_depuis_geojson} from "../outils/frontieres.js";
+
+test("frontières : contours extérieurs arrondis, doublons ôtés, nom français et code ISO", () => {
+  const carre = [[[2.00011, 46], [3, 46], [3, 47], [2.0001, 46.0004], [2.00011, 46]], [[2.5, 46.5], [2.6, 46.5], [2.6, 46.6], [2.5, 46.5]]];
+  assert.deepEqual(anneaux({type: "Polygon", coordinates: carre}), [[[2, 46], [3, 46], [3, 47], [2, 46]]]);
+  const c = pays_depuis_geojson({features: [
+    {properties: {NAME_FR: "France", ISO_A3: "-99", ADM0_A3: "FRA"}, geometry: {type: "MultiPolygon", coordinates: [carre]}},
+    {properties: {NAME: "Belgium", ISO_A3: "BEL"}, geometry: {type: "Point", coordinates: [4, 50]}},
+  ]});
+  assert.deepEqual(c.pays.map((p) => [p.nom, p.iso]), [["France", "FRA"]]);
+});
