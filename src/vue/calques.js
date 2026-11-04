@@ -51,6 +51,6 @@ export function element_visible(calques, element) {
   const avion = element.type === "avion" ? (element.guidage ?? element.objet?.guidage) : null;
   if (avion) return calques[avion === "ir" ? "avions_ir" : "avions_laser"];
   if (element.type === "drone") return calques[element.objet.detection === null ? "drones_inconnus" : "drones_detectes"];
-  const calque = {cible: "cibles", radar: "radars", passage: "plan", zone: "zones", conduite: "reseau", liaison: "reseau"}[element.type];
+  const calque = {cible: "cibles", radar: "radars", passage: "plan", zone: "zones", conduite: "reseau", centre: "reseau", liaison: "reseau"}[element.type];
   return calque ? calques[calque] : true;
 }

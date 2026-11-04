@@ -24,7 +24,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
       ctx.stroke();
     }
     if (!calques.cibles) return;
-    // Le centre de conduite visé est tracé par le synoptique du réseau (PC) ; ici, seulement ses frappes.
+    // Le centre de conduite visé est tracé par le synoptique du réseau (CDC) ; ici, seulement ses frappes.
     if (cible.conduite) {
       if (monde.fuites[indice]) {
         ctx.fillStyle = COULEURS.hostile;
@@ -65,7 +65,7 @@ function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
 
 /**
  * Tracer les drones en vol : plots d'historique estompés, puis le symbole hostile (gris tant que non détecté).
- * `montre(drone)` : filtre facultatif (vue du PC : seulement les drones que la conduite connaît).
+ * `montre(drone)` : filtre facultatif (vue du CDC : seulement les drones que la conduite connaît).
  */
 export function dessiner_drones(ctx, camera, monde, traces, calques, montre = () => true) {
   for (const [id, plots] of calques.plots ? traces.plots : []) {
@@ -169,8 +169,8 @@ export function dessiner_radars(ctx, camera, positions) {
 }
 
 /**
- * Tracer la circulation de l'information (MODELE § 17) : impulsion bleue d'un radar vers le PC (nombre de drones
- * signalés ; rouge barrée si l'information ne va nulle part), impulsion blanche du PC vers l'avion missionné, éclair
+ * Tracer la circulation de l'information (MODELE § 17) : impulsion bleue d'un radar vers le CDC (nombre de drones
+ * signalés ; rouge barrée si l'information ne va nulle part), impulsion blanche du CDC vers l'avion missionné, éclair
  * jaune quand un avion accroche un drone avec son propre capteur, cercle blanc quand il reçoit sa mission.
  */
 export function dessiner_messages(ctx, camera, effets, maintenant) {

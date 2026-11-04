@@ -11,7 +11,7 @@ import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_messages, de
 /**
  * Dessiner une image du scope.
  * `etat` : {monde, traces, effets, maintenant (ms), angle (rad, balayage), balayage (bool), survol (entité ou null),
- * calques (voir calques.js ; tous visibles par défaut), percue (vue du PC : ce que sait la conduite)}.
+ * calques (voir calques.js ; tous visibles par défaut), percue (vue du CDC : ce que sait la conduite)}.
  */
 export function dessiner_scope(ctx, camera, etat) {
   const {monde, traces, effets, maintenant} = etat;
@@ -90,8 +90,9 @@ export function trouver_sous_curseur(camera, monde, ecran, calques = calques_par
   const radars = calques.radars ? positions_radars(monde.scenario).map((geo, indice) => ({geo, indice})) : [];
   const radar = plus_proche_ecran(camera, radars, (r) => r.geo, ecran, 10);
   if (radar) return {type: "radar", objet: radar, indice: radar.indice};
-  const conduite = calques.reseau ? plus_proche_ecran(camera, [{geo: monde.scenario.reseau.centre}], (c) => c.geo, ecran, 12) : null;
-  if (conduite) return {type: "conduite", objet: conduite};
+  const centres = calques.reseau ? monde.reseau.centres.map((c, indice) => ({geo: c.geo, indice})) : [];
+  const centre = plus_proche_ecran(camera, centres, (c) => c.geo, ecran, 14);
+  if (centre) return centre.indice === 0 ? {type: "conduite", objet: centre} : {type: "centre", objet: centre, indice: centre.indice - 1};
   const indice = !calques.cibles ? -1 : monde.cibles.findIndex((cible) => {
     const point = projeter_ecran(camera, cible.geo);
     return Math.abs(point.x - ecran.x) <= 8 && Math.abs(point.y - ecran.y) <= 8;

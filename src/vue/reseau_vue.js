@@ -6,11 +6,11 @@ import {format_decimal} from "./format.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {positions_radars} from "../moteur/radars.js";
 
-/** Tracer une croix rouge sur chaque élément hors service : radars en panne, PC en panne ou détruit. */
+/** Tracer une croix rouge sur chaque élément hors service : radars en panne, CDC en panne ou détruit. */
 export function dessiner_pannes(ctx, camera, monde) {
   const {reseau} = monde;
   const points = reseau.radars.filter((_, i) => reseau.radars_hs[i]);
-  if (reseau.conduite_hs) points.push(reseau.centre);
+  for (const centre of reseau.centres) if (centre.hs) points.push(centre.geo);
   ctx.strokeStyle = COULEURS.hostile;
   ctx.lineWidth = 2.5;
   ctx.setLineDash([]);
@@ -44,26 +44,41 @@ function ancrage_groupe(monde, g) {
   return {lat: somme.lat / avions.length, lon: somme.lon / avions.length, alt: 0};
 }
 
-/** Rendre la position d'un nœud du réseau (« conduite », « radar:<i> », « avions:<g> »), ou null. */
+/**
+ * Rendre la position d'un nœud du réseau (« conduite », « centre:<k> », « radar:<i> », « avions:<g> »,
+ * « sol:<i> »), ou null.
+ */
 export function position_noeud(monde, noeud) {
   if (noeud === "conduite") return monde.scenario.reseau.centre;
-  if (noeud.startsWith("radar:")) return positions_radars(monde.scenario)[Number(noeud.slice(6))] ?? null;
-  return ancrage_groupe(monde, Number(noeud.slice(7)));
+  const [famille, n] = noeud.split(":");
+  if (famille === "centre") return monde.scenario.reseau.centres[Number(n)]?.geo ?? null;
+  if (famille === "radar") return positions_radars(monde.scenario)[Number(n)] ?? null;
+  if (famille === "sol") return monde.cibles[Number(n)]?.geo ?? null;
+  return ancrage_groupe(monde, Number(n));
 }
 
-/** Rendre le nom lisible d'un nœud : « conduite », « R3 », « avions IR »… */
+/** Rendre le nom lisible d'un nœud : « CDC », « CDC Sud », « R3 », « postes de C4 », « avions IR »… */
 export function libelle_noeud(monde, noeud) {
-  if (noeud === "conduite") return "PC";
-  if (noeud.startsWith("radar:")) return `R${Number(noeud.slice(6)) + 1}`;
-  const groupe = monde.scenario.avions[Number(noeud.slice(7))];
+  if (noeud === "conduite") return "CDC";
+  const [famille, n] = noeud.split(":");
+  if (famille === "centre") return monde.scenario.reseau.centres[Number(n)]?.nom ?? noeud;
+  if (famille === "radar") return `R${Number(n) + 1}`;
+  if (famille === "sol") return monde.cibles[Number(n)]?.conduite ? "postes du CDC" : `postes de C${Number(n) + 1}`;
+  const groupe = monde.scenario.avions[Number(n)];
   return groupe ? `avions ${groupe.nom}` : noeud;
 }
 
-/** Rendre les liaisons qui matérialisent le réseau complet : chaque radar à la conduite, la conduite à chaque groupe. */
+/**
+ * Rendre les liaisons qui matérialisent le réseau complet : chaque radar au CDC au fil, le CDC à chaque groupe par
+ * radio et aux postes sol de chaque cible au fil, chaque autre centre au CDC au fil (MODELE § 18).
+ */
 export function liaisons_par_defaut(monde) {
+  const ciblesDefendues = monde.cibles.map((_, i) => i).filter((i) => monde.postes.some((p) => p.cible === i));
   return [
     ...positions_radars(monde.scenario).map((_, i) => ({de: `radar:${i}`, vers: "conduite", moyen: MOYENS_PAR_DEFAUT.radars})),
     ...monde.scenario.avions.map((_, g) => ({de: "conduite", vers: `avions:${g}`, moyen: MOYENS_PAR_DEFAUT.avions})),
+    ...ciblesDefendues.map((i) => ({de: "conduite", vers: `sol:${i}`, moyen: MOYENS_PAR_DEFAUT.radars})),
+    ...monde.scenario.reseau.centres.map((_, k) => ({de: `centre:${k}`, vers: "conduite", moyen: MOYENS_PAR_DEFAUT.radars})),
   ];
 }
 
@@ -74,24 +89,33 @@ function trait(ctx, type, actif) {
   ctx.lineWidth = actif ? 1.6 : 1.2;
 }
 
-/** Tracer le centre de conduite (PC) : cadre ami et hampe, à la manière d'un poste de commandement APP-6. */
-function dessiner_conduite(ctx, camera, monde) {
-  const p = ecran(camera, monde.scenario.reseau.centre);
-  ctx.setLineDash([]);
-  ctx.fillStyle = COULEURS.fond;
-  ctx.strokeStyle = COULEURS.ami;
-  ctx.lineWidth = 2;
-  ctx.fillRect(p.x - 10, p.y - 7, 20, 14);
-  ctx.strokeRect(p.x - 10, p.y - 7, 20, 14);
-  ctx.beginPath();
-  ctx.moveTo(p.x - 10, p.y + 7);
-  ctx.lineTo(p.x - 10, p.y + 16);
-  ctx.stroke();
-  ctx.fillStyle = COULEURS.ami;
-  ctx.font = "bold 10px system-ui, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("PC", p.x, p.y + 4);
-  ctx.textAlign = "start";
+/**
+ * Tracer les centres de détection et de contrôle : cadre ami et hampe, à la manière d'un poste de commandement
+ * (APP-6) ; « CDC » pour le centre principal, le nom des autres en dessous.
+ */
+function dessiner_centres(ctx, camera, monde) {
+  monde.reseau.centres.forEach((centre, c) => {
+    const p = ecran(camera, centre.geo);
+    ctx.setLineDash([]);
+    ctx.fillStyle = COULEURS.fond;
+    ctx.strokeStyle = COULEURS.ami;
+    ctx.lineWidth = 2;
+    ctx.fillRect(p.x - 13, p.y - 7, 26, 14);
+    ctx.strokeRect(p.x - 13, p.y - 7, 26, 14);
+    ctx.beginPath();
+    ctx.moveTo(p.x - 13, p.y + 7);
+    ctx.lineTo(p.x - 13, p.y + 16);
+    ctx.stroke();
+    ctx.fillStyle = COULEURS.ami;
+    ctx.font = "bold 10px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(c === 0 ? "CDC" : `CDC${c + 1}`, p.x, p.y + 4);
+    if (c > 0) {
+      ctx.font = "11px system-ui, sans-serif";
+      ctx.fillText(centre.nom, p.x, p.y + 20);
+    }
+    ctx.textAlign = "start";
+  });
 }
 
 function dessiner_liaison(ctx, camera, a, b, type, actif, texte) {
@@ -129,6 +153,7 @@ export function dessiner_reseau(ctx, camera, monde) {
   if (reseau.mode === "complet") {
     ctx.globalAlpha = 0.35;
     for (const radar of reseau.radars) dessiner_liaison(ctx, camera, radar, reseau.centre, "filaire", true, "");
+    for (const centre of reseau.centres.slice(1)) dessiner_liaison(ctx, camera, centre.geo, reseau.centre, "filaire", true, "");
     ctx.globalAlpha = 1;
   } else {
     for (const l of reseau.fixes) {
@@ -137,14 +162,17 @@ export function dessiner_reseau(ctx, camera, monde) {
     }
     dessiner_acces(ctx, camera, monde);
   }
-  dessiner_conduite(ctx, camera, monde);
+  dessiner_centres(ctx, camera, monde);
 }
 
 function dessiner_acces(ctx, camera, monde) {
   monde.reseau.acces.forEach((liste, g) => {
     const groupe = monde.scenario.avions[g];
     const ancre = position_noeud(monde, `avions:${g}`);
-    for (const acces of liste) {
+    // Une même liaison sert plusieurs centres : on la trace une fois, avec sa latence la plus courte.
+    const uniques = new Map();
+    for (const a of liste) if (!uniques.has(`${a.sol}|${a.moyen.id}`) || a.latence < uniques.get(`${a.sol}|${a.moyen.id}`).latence) uniques.set(`${a.sol}|${a.moyen.id}`, a);
+    for (const acces of uniques.values()) {
       if (ancre) dessiner_liaison(ctx, camera, acces.position, ancre, acces.moyen.type, true, `${format_decimal(acces.latence)} s`);
       const portee = portee_liaison(acces.moyen, acces.moyen.hauteur_antenne, groupe.altitude);
       if (portee > 2_000_000) continue;

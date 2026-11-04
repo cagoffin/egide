@@ -5,7 +5,7 @@ import {algo} from "./algos.js";
 import {direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
 import {OUTILS} from "./outils.js";
-import {acces_avion} from "./reseau.js";
+import {acces_avion, connu_du_centre} from "./reseau.js";
 import {est_actif, journaliser, plus_proche, resoudre_tir} from "./tir.js";
 // Un drone qui se rapproche à moins de 3 portées d'arme fait passer l'avion de la mise à poste à l'engagement.
 const PORTEES_ENGAGEMENT = 3;
@@ -51,27 +51,37 @@ export function drone_approchant(monde, avion) {
 
 /**
  * Réaffecter les avions libres (armés, sans drone en approche, joignables par le réseau) par les algorithmes de
- * pistage et d'allocation, sur les seuls drones que la conduite connaît depuis au moins le délai de réaction.
+ * pistage et d'allocation. Chaque centre affecte les avions qu'il joint le plus vite, sur sa propre situation : les
+ * drones qu'il connaît depuis au moins le délai de réaction (MODELE § 18.2).
  */
 export function planifier_avions(monde) {
-  const {conduite} = monde.scenario;
-  const connus = monde.drones.filter(
-    (drone) => est_actif(drone, monde.t) && drone.connu !== null && monde.t - drone.connu >= conduite.delai_reaction,
-  );
   for (const avion of monde.avions) avion.acces = acces_avion(monde.reseau, avion, monde.scenario.avions.indexOf(avion.groupe));
-  // Un ordre de l'éditeur en route vers l'avion a priorité sur la conduite.
-  const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
-  // Un avion sous ordre n'est pas réaffecté par la conduite avant d'avoir rallié son point.
+  // Un avion sous ordre (ou dont l'ordre est en route) n'est pas réaffecté avant d'avoir rallié son point.
   const libres = monde.avions.filter((avion) => avion.acces && avion.munitions > 0 && !avion.ordre && !avion.consigne?.ordre && !drone_approchant(monde, avion));
-  for (const {avion, point, explication} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
+  monde.reseau.centres.forEach((_, c) => {
+    const siens = libres.filter((avion) => avion.acces.centre === c);
+    if (siens.length) affecter(monde, c, siens);
+  });
+}
+
+/** Affecter les avions libres `siens` du centre `c` aux pistes des drones qu'il connaît. */
+function affecter(monde, c, siens) {
+  const {conduite} = monde.scenario;
+  const connus = monde.drones.filter((drone) => {
+    const connu = connu_du_centre(drone, c);
+    return est_actif(drone, monde.t) && connu !== null && monde.t - connu >= conduite.delai_reaction;
+  });
+  const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
+  for (const {avion, point, explication} of algo(monde.registre, conduite.allocation, "allocation").allouer(siens, pistes, OUTILS)) {
     // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
     // Nouvelle mission (l'avion n'était pas déjà en route) : journalisée pour le suivi de l'information (MODELE § 17).
-    if (point && avion.etat !== "ralliement" && !avion.consigne) {
-      journaliser(monde, {type: "mission", avion: avion.id, point, effectif: explication?.retenue?.effectif ?? null, arrivee: monde.t + avion.acces.latence, depuis: avion.acces.sol});
+    const nouvelle = Boolean(point && avion.etat !== "ralliement" && !avion.consigne);
+    if (nouvelle) {
+      journaliser(monde, {type: "mission", avion: avion.id, point, effectif: explication?.retenue?.effectif ?? null, arrivee: monde.t + avion.acces.latence, depuis: avion.acces.sol, centre: c});
     }
     avion.decision = {t: monde.t, point, explication, arrivee: monde.t + avion.acces.latence};
     // La consigne met la latence de la liaison à arriver (MODELE § 15.2) ; sans latence, elle s'applique aussitôt.
-    if (avion.acces.latence > 0) avion.consigne = {t: monde.t + avion.acces.latence, point, ordre: false};
+    if (avion.acces.latence > 0) avion.consigne = {t: monde.t + avion.acces.latence, point, ordre: false, nouvelle};
     else executer_consigne(avion, point);
   }
 }
@@ -94,7 +104,8 @@ export function livrer_consignes(monde) {
     if (!consigne || consigne.t > monde.t) continue;
     avion.consigne = null;
     if (avion.munitions === 0) continue;
-    if (consigne.point) journaliser(monde, {type: "reception", avion: avion.id, ordre: consigne.ordre});
+    // Seule la réception d'une nouvelle mission ou d'un ordre se journalise : pas chaque mise à jour du point.
+    if (consigne.point && (consigne.nouvelle || consigne.ordre)) journaliser(monde, {type: "reception", avion: avion.id, ordre: consigne.ordre});
     if (consigne.ordre) Object.assign(avion, {etat: "ralliement", point: {...consigne.point, alt: avion.geo.alt}, ordre: true});
     else executer_consigne(avion, consigne.point);
   }

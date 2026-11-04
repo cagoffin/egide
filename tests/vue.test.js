@@ -306,7 +306,8 @@ import {inspection as inspecter_entite} from "../src/vue/inspecteur.js";
 test("réseau dans l'éditeur : une liaison depuis le réseau complet le matérialise, puis s'y ajoute", () => {
   const radars = positions_radars(MONDE.scenario).length;
   const defaut = liaisons_par_defaut(MONDE);
-  assert.equal(defaut.length, radars + MONDE.scenario.avions.length);
+  const defendues = new Set(MONDE.postes.map((p) => p.cible)).size;
+  assert.equal(defaut.length, radars + MONDE.scenario.avions.length + defendues, "radars, avions et postes sol reliés au CDC");
   const avion = elements_editables(MONDE, REFERENCE).find((e) => e.type === "avion");
   assert.match(noeud_element(MONDE, avion), /^avions:\d$/);
   const ajout = modifications_ajout_liaison(MONDE, REFERENCE, "radar:0", "avions:1", "liaisons/satellite_notionnelle");
@@ -351,7 +352,7 @@ import {modifications_panne} from "../src/vue/edition.js";
 import {connu_du_pc, pistes_connues, resume_situation} from "../src/vue/situation.js";
 import {avancer_monde, simuler as simuler_raid} from "../src/moteur/monde.js";
 
-test("en cours de raid : mettre hors service radars, PC et liaisons ; les avions ne se mettent pas en panne", () => {
+test("en cours de raid : mettre hors service radars, CDC et liaisons ; les avions ne se mettent pas en panne", () => {
   const monde = creer_monde(scenario(), {registre: REGISTRE});
   for (let i = 0; i < 600; i++) avancer_monde(monde);
   assert.ok(elements_editables(monde, REFERENCE, "ordres").some((e) => e.type === "radar"));
@@ -362,11 +363,11 @@ test("en cours de raid : mettre hors service radars, PC et liaisons ; les avions
   assert.ok(rejoue.reseau.conduite_hs && rejoue.reseau.radars_hs[3]);
 });
 
-test("vue du PC : seuls les drones connus de la conduite, regroupés en pistes", () => {
+test("vue du CDC : seuls les drones connus de la conduite, regroupés en pistes", () => {
   const monde = creer_monde(scenario({"bleu.reseau.pannes": [{t_s: 0, element: "conduite", duree_s: null}]}), {registre: REGISTRE});
   for (let i = 0; i < 1200; i++) avancer_monde(monde);
   assert.ok(monde.drones.some((d) => d.detection !== null), "les radars voient");
-  assert.equal(resume_situation(monde).connus, 0, "mais le PC détruit ne sait rien");
+  assert.equal(resume_situation(monde).connus, 0, "mais le CDC détruit ne sait rien");
   const vivant = creer_monde(scenario(), {registre: REGISTRE});
   for (let i = 0; i < 1200; i++) avancer_monde(vivant);
   const s = resume_situation(vivant);
@@ -385,9 +386,9 @@ test("journal de l'information : détections, transmissions, missions, réceptio
   const monde = simuler_raid(scenario({"rouge.nombre": 200, "rouge.concentration_max": 20, "rouge.tactique": "disperse", "bleu.reseau.mode": "liaisons", "bleu.reseau.liaisons": liaisons}), {registre: REGISTRE});
   const lignes = lignes_journal(monde);
   const textes = lignes.map((l) => l.texte).join("\n");
-  assert.match(textes, /R\d+ voit .* le PC le saura 3 s plus tard/);
-  assert.match(textes, /R1 voit .*non relié au PC/, "la liaison optique de R1 est hors de portée");
-  assert.match(textes, /Le PC envoie l'avion \d+ intercepter une piste de \d+ drones?, par le PC ; il la recevra à/);
+  assert.match(textes, /R\d+ voit .* le CDC le saura 3 s plus tard/);
+  assert.match(textes, /R1 voit .*non relié au CDC/, "la liaison optique de R1 est hors de portée");
+  assert.match(textes, /Le CDC envoie l'avion \d+ intercepter une piste de \d+ drones?, par le CDC ; il la recevra à/);
   assert.match(textes, /L'avion \d+ reçoit sa mission et part\./);
   assert.match(textes, /accroche le drone \d+ avec son propre capteur/);
   assert.match(textes, /tire sur le drone \d+ \(Pk 0,7\) : (détruit|manqué)/);
@@ -395,8 +396,33 @@ test("journal de l'information : détections, transmissions, missions, réceptio
   const abattu = monde.drones.find((d) => !d.vivant && d.connu !== null);
   const chaine = chaine_drone(monde, abattu.id).map((e) => e.texte).join("\n");
   assert.match(chaine, /Vu par R\d+\./);
-  assert.match(chaine, /Connu du PC, 3 s après\./);
+  assert.match(chaine, /Connu du CDC, 3 s après\./);
   assert.match(chaine, /: détruit\./);
   const perdu = monde.drones.find((d) => d.detection !== null && d.connu === null);
-  if (perdu) assert.match(chaine_drone(monde, perdu.id).map((e) => e.texte).join(" "), /Jamais connu du PC/);
+  if (perdu) assert.match(chaine_drone(monde, perdu.id).map((e) => e.texte).join(" "), /Jamais connu du CDC/);
+});
+
+import {modifications_ajout_centre} from "../src/vue/edition.js";
+
+test("CDC dans l'éditeur : ajouter, déplacer, relier aux postes d'une cible, supprimer en renumérotant", () => {
+  const ajout = modifications_ajout_centre(REFERENCE, geo_deg(46.4, 2.5));
+  assert.deepEqual(ajout["bleu.reseau.centres"], [{nom: "CDC 2", lat_deg: 46.4, lon_deg: 2.5}]);
+  const brut1 = modifier_scenario(REFERENCE, ajout);
+  const monde1 = creer_monde(scenario(ajout), {registre: REGISTRE});
+  const centre = elements_editables(monde1, brut1).find((e) => e.type === "centre");
+  assert.equal(noeud_element(monde1, centre), "centre:0");
+  const cible = elements_editables(monde1, brut1).find((e) => e.type === "cible");
+  assert.equal(noeud_element(monde1, cible), "sol:0");
+  const relie = {...ajout, ...modifications_ajout_liaison(monde1, brut1, "centre:0", "sol:0", "liaisons/filaire_notionnelle")};
+  assert.ok(relie["bleu.reseau.liaisons"].some((l) => l.de === "centre:0" && l.vers === "conduite"), "le réseau par défaut relie le nouveau centre au CDC");
+  const brut2 = modifier_scenario(REFERENCE, relie);
+  const monde2 = creer_monde(scenario(relie), {registre: REGISTRE});
+  assert.ok(Number.isFinite(monde2.reseau.latences_sol[1][0]), "le CDC 2 joint les postes de C1");
+  const vers = direct(centre.geo, 0, 10_000);
+  const deplace = modifications_deplacement(monde2, brut2, ["centre:0"], centre.geo, vers);
+  assert.ok(inverse(geo_deg(deplace["bleu.reseau.centres"][0].lat_deg, deplace["bleu.reseau.centres"][0].lon_deg), vers).distance < 1);
+  const ote = modifications_suppression(monde2, brut2, ["centre:0"]);
+  assert.deepEqual(ote["bleu.reseau.centres"], []);
+  assert.ok(ote["bleu.reseau.liaisons"].every((l) => !l.de.startsWith("centre:") && !l.vers.startsWith("centre:")));
+  assert.match(inspecter_entite({type: "centre", id: 0}, monde2), /Postes désignés/);
 });

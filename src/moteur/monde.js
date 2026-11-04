@@ -49,7 +49,7 @@ export function creer_monde(scenario, {registre, journal = true}) {
   const couverture = algo(registre, scenario.radar.algos.detection, "detection").preparer(scenario, scenario.radar, OUTILS);
   const rayonDetection = couverture.rayon_couverture;
   return {
-    scenario, registre, hasard, t: 0, cibles, couverture, rayonDetection, reseau: preparer_reseau(scenario),
+    scenario, registre, hasard, t: 0, cibles, couverture, rayonDetection, reseau: preparer_reseau(scenario, new Set(), cibles.map((c) => c.geo)),
     cible_conduite: cibleConduite, conduite_detruite: null, hs_cle: "",
     drones: creer_drones(scenario, registre, cibles.map((cible) => cible.geo), hasard, rayonDetection + MARGE_APPARITION),
     avions: creer_avions(scenario, hasard),
@@ -107,7 +107,7 @@ function appliquer_pannes(monde) {
   const cle = [...hs].sort().join(",");
   if (cle === monde.hs_cle) return;
   monde.hs_cle = cle;
-  monde.reseau = preparer_reseau(monde.scenario, hs);
+  monde.reseau = preparer_reseau(monde.scenario, hs, monde.cibles.map((c) => c.geo));
   journaliser(monde, {type: "reseau", hs: [...hs]});
 }
 

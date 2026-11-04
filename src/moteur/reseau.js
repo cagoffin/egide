@@ -37,15 +37,26 @@ export const portee_liaison = (moyen, ha, hb) => (moyen.visibilite_directe ? Mat
 
 const est_avion = (noeud) => noeud.startsWith("avions:");
 
-/** Rendre la position d'un nœud fixe (« conduite » ou « radar:<i> »), ou undefined s'il n'existe pas. */
-function position_fixe(noeud, centre, radars) {
-  return noeud === "conduite" ? centre : radars[Number(noeud.slice(6))];
+/** Rendre les identifiants des centres : « conduite » (CDC principal) puis « centre:<k> ». */
+export const ids_centres = (reseau) => ["conduite", ...(reseau.centres ?? []).map((_, k) => `centre:${k}`)];
+
+/**
+ * Rendre la position d'un nœud au sol (« conduite », « centre:<k> », « radar:<i> », « sol:<i> »), ou undefined
+ * s'il n'existe pas. `lieux` : {centre, centres, radars, cibles}.
+ */
+function position_fixe(noeud, lieux) {
+  if (noeud === "conduite") return lieux.centre;
+  const [famille, n] = noeud.split(":");
+  if (famille === "centre") return lieux.centres[Number(n)]?.geo;
+  if (famille === "radar") return lieux.radars[Number(n)];
+  if (famille === "sol") return lieux.cibles[Number(n)];
+  return undefined;
 }
 
 /** Rendre les liaisons fixes (entre nœuds au sol) avec leur distance, leur portée et leur état ; `hs` : éléments en panne. */
-function liaisons_fixes(reseau, radars, hs, grille) {
+function liaisons_fixes(reseau, lieux, hs, grille) {
   return reseau.liaisons.map((liaison, k) => ({...liaison, k})).filter((l) => !est_avion(l.de) && !est_avion(l.vers)).map((liaison) => {
-    const [a, b] = [position_fixe(liaison.de, reseau.centre, radars), position_fixe(liaison.vers, reseau.centre, radars)];
+    const [a, b] = [position_fixe(liaison.de, lieux), position_fixe(liaison.vers, lieux)];
     if (!a || !b) return {...liaison, distance: null, portee: 0, active: false};
     if (hs.has(`liaison:${liaison.k}`) || hs.has(liaison.de) || hs.has(liaison.vers)) return {...liaison, distance: inverse(a, b).distance, portee: 0, active: false, en_panne: true};
     const distance = inverse(a, b).distance;
@@ -56,9 +67,9 @@ function liaisons_fixes(reseau, radars, hs, grille) {
   });
 }
 
-/** Rendre {nœud: latence depuis la conduite} par le plus court chemin (Bellman-Ford : le graphe est petit). */
-function latences_depuis_conduite(fixes) {
-  const latences = new Map([["conduite", 0]]);
+/** Rendre {nœud: latence depuis `origine`} par le plus court chemin (Bellman-Ford : le graphe est petit). */
+function latences_depuis(origine, fixes) {
+  const latences = new Map([[origine, 0]]);
   for (let tour = 0; tour <= fixes.length; tour++) {
     let change = false;
     for (const {de, vers, moyen, active} of fixes.filter((l) => l.active)) {
@@ -72,43 +83,63 @@ function latences_depuis_conduite(fixes) {
   return latences;
 }
 
+/** Rendre l'accès de chaque groupe d'avions : par centre, les nœuds au sol reliés au groupe, avec moyen et latence. */
+function acces_groupes(scenario, lieux, hs, latencesCentres) {
+  const {reseau} = scenario;
+  return scenario.avions.map((_, g) => reseau.liaisons
+    .filter((l, k) => !hs.has(`liaison:${k}`) && (l.de === `avions:${g}` || l.vers === `avions:${g}`))
+    .flatMap((l) => {
+      const sol = l.de === `avions:${g}` ? l.vers : l.de;
+      const position = position_fixe(sol, lieux);
+      return latencesCentres.map((latences, centre) => ({centre, sol, position, moyen: l.moyen, latence: (latences.get(sol) ?? Infinity) + l.moyen.latence}));
+    })
+    .filter((a) => a.position && Number.isFinite(a.latence)));
+}
+
 /**
- * Préparer le réseau du scénario résolu, les éléments `hs` (« conduite », « radar:<i> », « liaison:<k> ») étant en
- * panne : latence de chaque radar jusqu'à la conduite (Infinity s'il n'y est pas relié ou s'il est en panne), accès
- * de chaque groupe d'avions (point d'accès au sol, moyen, latence), état des liaisons fixes. `simple` : réseau
- * complet sans panne, le moteur prend alors le chemin d'avant le réseau (bilans identiques).
+ * Préparer le réseau du scénario résolu (MODELE § 15.2 et § 18), les éléments `hs` (« conduite », « centre:<k> »,
+ * « radar:<i> », « liaison:<k> ») étant en panne, `cibles` donnant la position des postes sol (nœuds « sol:<i> »).
+ * Pour chaque centre : latence depuis chaque radar (Infinity sans chemin), vers chaque cible défendue, et accès de
+ * chaque groupe d'avions. `simple` : réseau complet sans panne ni relief, le moteur prend le chemin d'avant le réseau.
  */
-export function preparer_reseau(scenario, hs = new Set()) {
+export function preparer_reseau(scenario, hs = new Set(), cibles = []) {
   const {reseau} = scenario;
   const radars = positions_radars(scenario);
   const ecefRadars = radars.map((geo) => vers_ecef(geo));
-  const conduite_hs = hs.has("conduite");
+  const centres = ids_centres(reseau).map((id, c) => ({id, geo: c === 0 ? reseau.centre : reseau.centres[c - 1].geo, nom: c === 0 ? "CDC" : reseau.centres[c - 1].nom, hs: hs.has(id)}));
   const grille = grille_scenario(scenario);
+  const radars_hs = radars.map((_, i) => hs.has(`radar:${i}`));
   // Avec un terrain, chaque radar voit selon son masque : le moteur prend le chemin radar par radar.
-  const commun = {centre: reseau.centre, radars, ecefRadars, hs, conduite_hs, grille, masques: masques_radars(scenario),
-    hauteur_drones: scenario.rouge.altitude, portee_radars: portee_radar(scenario),
+  const commun = {centre: reseau.centre, centres, radars, ecefRadars, hs, conduite_hs: hs.has("conduite"), aucun_centre: centres.every((c) => c.hs),
+    grille, masques: masques_radars(scenario), hauteur_drones: scenario.rouge.altitude, portee_radars: portee_radar(scenario), radars_hs,
     simple: reseau.mode === "complet" && hs.size === 0 && !grille};
+  const resumer = (latencesRadars, latencesSol) => ({
+    latences_centres: latencesRadars, latences_sol: latencesSol,
+    latences_radars: radars.map((_, i) => Math.min(...latencesRadars.map((l) => l[i]))),
+  });
   if (reseau.mode === "complet") {
-    const latences_radars = radars.map((_, i) => (conduite_hs || hs.has(`radar:${i}`) ? Infinity : 0));
-    return {...commun, mode: "complet", latences_radars, radars_hs: radars.map((_, i) => hs.has(`radar:${i}`)), fixes: [], acces: []};
+    const radarsC = centres.map((c) => radars.map((_, i) => (c.hs || radars_hs[i] ? Infinity : 0)));
+    const solC = centres.map((c) => cibles.map(() => (c.hs ? Infinity : 0)));
+    return {...commun, mode: "complet", ...resumer(radarsC, solC), fixes: [], acces: []};
   }
-  const fixes = liaisons_fixes(reseau, radars, hs, grille);
-  const latences = conduite_hs ? new Map() : latences_depuis_conduite(fixes);
-  const acces = scenario.avions.map((_, g) => reseau.liaisons
-    .filter((l, k) => !hs.has(`liaison:${k}`) && (l.de === `avions:${g}` || l.vers === `avions:${g}`))
-    .map((l) => {
-      const sol = l.de === `avions:${g}` ? l.vers : l.de;
-      return {sol, position: position_fixe(sol, reseau.centre, radars), moyen: l.moyen, latence: (latences.get(sol) ?? Infinity) + l.moyen.latence};
-    })
-    .filter((a) => a.position && Number.isFinite(a.latence)));
-  return {...commun, mode: "liaisons", latences_radars: radars.map((_, i) => latences.get(`radar:${i}`) ?? Infinity),
-    radars_hs: radars.map((_, i) => hs.has(`radar:${i}`)), fixes, acces};
+  const lieux = {centre: reseau.centre, centres: reseau.centres ?? [], radars, cibles};
+  const fixes = liaisons_fixes(reseau, lieux, hs, grille);
+  const latences = centres.map((c) => (c.hs ? new Map() : latences_depuis(c.id, fixes)));
+  const radarsC = latences.map((l) => radars.map((_, i) => (radars_hs[i] ? Infinity : l.get(`radar:${i}`) ?? Infinity)));
+  const solC = latences.map((l) => cibles.map((_, i) => l.get(`sol:${i}`) ?? Infinity));
+  return {...commun, mode: "liaisons", ...resumer(radarsC, solC), fixes, acces: acces_groupes(scenario, lieux, hs, latences)};
 }
 
-/** Rendre l'accès par lequel la conduite joint `avion` (le plus rapide à portée), ou null s'il est hors liaison. */
+/**
+ * Rendre l'accès par lequel un centre joint `avion` (le plus rapide à portée) : {centre, sol, latence…}, ou null s'il
+ * est hors liaison. En réseau complet, le premier centre en état, sans délai.
+ */
 export function acces_avion(reseau, avion, indiceGroupe) {
-  if (reseau.conduite_hs) return null;
-  if (reseau.mode === "complet") return {sol: "conduite", latence: 0};
+  if (reseau.aucun_centre) return null;
+  if (reseau.mode === "complet") {
+    const centre = reseau.centres.findIndex((c) => !c.hs);
+    return {centre, sol: reseau.centres[centre].id, latence: 0};
+  }
   let retenu = null;
   for (const acces of reseau.acces[indiceGroupe] ?? []) {
     const {hauteur_antenne: h, visibilite_directe: vue} = acces.moyen;
@@ -121,6 +152,9 @@ export function acces_avion(reseau, avion, indiceGroupe) {
   }
   return retenu;
 }
+
+/** Rendre l'instant où le centre `c` connaît `drone` (null : jamais pour l'instant). */
+export const connu_du_centre = (drone, c) => (drone.connus ? drone.connus[c] : drone.connu);
 
 /** Rendre l'indice du radar en état le plus proche de `drone` (-1 s'il n'y en a pas). */
 export function radar_le_plus_proche(reseau, drone) {

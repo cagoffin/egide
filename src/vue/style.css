@@ -36,7 +36,7 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .vue:not(.avec-carte) #carte { display: none; }
 /* En édition, le canevas reprend la souris, même sur la carte : c'est lui qui sélectionne et déplace. */
 .vue.edition #scope { pointer-events: auto; cursor: default; }
-.vue.edition:is([data-outil="cible"], [data-outil="radar"], [data-outil="plan"], [data-outil="zone"]) #scope { cursor: crosshair; }
+.vue.edition:is([data-outil="cible"], [data-outil="radar"], [data-outil="centre"], [data-outil="plan"], [data-outil="zone"]) #scope { cursor: crosshair; }
 .vue.edition[data-outil="liaison"] #scope { cursor: cell; }
 .maplibregl-ctrl-attrib, .maplibregl-ctrl-group { filter: invert(0.9) hue-rotate(180deg); }
 .maplibregl-ctrl-bottom-right { inset-block-end: 64px; }

@@ -17,11 +17,12 @@ export function decrire(survol, monde) {
     const munitions = postes.reduce((somme, p) => somme + p.munitions, 0);
     return `Cible C${survol.indice + 1}\n${postes.length} postes sol, ${munitions} munitions\n${monde.fuites[survol.indice]} drones arrivés`;
   }
-  if (survol.type === "conduite") {
+  if (survol.type === "conduite" || survol.type === "centre") {
     const {reseau} = monde;
-    const etat = reseau.mode === "complet" ? "réseau complet : tout le monde est relié, sans délai"
-      : `${reseau.fixes.filter((l) => l.active).length} liaisons au sol actives sur ${reseau.fixes.length}`;
-    return `Centre de conduite (PC)\n${etat}`;
+    const c = survol.type === "conduite" ? 0 : survol.indice + 1;
+    const etat = reseau.centres[c].hs ? "hors service" : reseau.mode === "complet" ? "réseau complet : tout le monde est relié, sans délai"
+      : `${reseau.latences_centres[c].filter(Number.isFinite).length} radars le renseignent`;
+    return `${c === 0 ? "Centre de détection et de contrôle (CDC)" : reseau.centres[c].nom}\n${etat}`;
   }
   if (survol.type === "radar") {
     const {radar} = monde.scenario;

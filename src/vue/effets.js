@@ -1,5 +1,5 @@
 // Effets visuels tirés du journal du monde : traits de tir, éclats de destruction, impacts sur les cibles, et
-// circulation de l'information (MODELE § 17) : détections qui remontent au PC, missions qui descendent aux avions,
+// circulation de l'information (MODELE § 17) : détections qui remontent au CDC, missions qui descendent aux avions,
 // contacts pris par les capteurs des avions. Leur durée est en temps réel (ms) : lisible même en lecture ×16.
 
 const DUREES = {trait: 350, eclat: 700, impact: 1600, message: 1100, contact: 900, reception: 700};
@@ -9,7 +9,7 @@ const position_noeud = (monde, noeud) => (noeud === "conduite" ? monde.reseau.ce
 
 /**
  * Transformer les évènements d'information d'un même lot en effets : les détections sont regroupées par radar (une
- * impulsion « n drones » vers le PC, ou une croix si l'information n'ira nulle part).
+ * impulsion « n drones » vers le CDC, ou une croix si l'information n'ira nulle part).
  */
 function effets_information(lot, monde, maintenant) {
   const effets = [];

@@ -7,8 +7,8 @@ export const FAMILLES = {detection: "Détections", mission: "Missions", contact:
 
 const instant = (t) => `${format_duree(t)}${Number.isInteger(t) ? "" : ",5"}`;
 const radar = (i) => (i >= 0 ? `R${i + 1}` : "un radar");
-const nom_poste = (monde, id) => `un poste de ${monde.cibles[monde.postes[id]?.cible]?.conduite ? "PC" : `C${(monde.postes[id]?.cible ?? 0) + 1}`}`;
-const noeud = (n) => (n === "conduite" ? "le PC" : n?.startsWith("radar:") ? `R${Number(n.slice(6)) + 1}` : n);
+const nom_poste = (monde, id) => `un poste de ${monde.cibles[monde.postes[id]?.cible]?.conduite ? "CDC" : `C${(monde.postes[id]?.cible ?? 0) + 1}`}`;
+const noeud = (n) => (n === "conduite" ? "le CDC" : n?.startsWith("radar:") ? `R${Number(n.slice(6)) + 1}` : n);
 
 // Les détections sont regroupées par radar sur 10 s : un essaim se lit en quelques lignes, pas en mille.
 const FENETRE_DETECTIONS = 10;
@@ -27,8 +27,8 @@ function lignes_detections(evenements) {
   return [...groupes.values()].map((g) => {
     const n = g.drones.length;
     const quoi = n === 1 ? `le drone ${g.drones[0] + 1}` : `${n} drones${g.fin > g.t ? ` (de ${instant(g.t)} à ${instant(g.fin)})` : ""}`;
-    const suite = g.latence === null ? " ; non relié au PC, l'information s'arrête là"
-      : g.latence === 0 ? " ; le PC le sait aussitôt" : ` ; le PC le saura ${format_decimal(g.latence)} s plus tard${n === 1 ? `, à ${instant(g.t + g.latence)}` : ""}`;
+    const suite = g.latence === null ? " ; non relié au CDC, l'information s'arrête là"
+      : g.latence === 0 ? " ; le CDC le sait aussitôt" : ` ; le CDC le saura ${format_decimal(g.latence)} s plus tard${n === 1 ? `, à ${instant(g.t + g.latence)}` : ""}`;
     return {t: g.t, famille: "detection", texte: `${radar(g.radar)} voit ${quoi}${suite}.`, cible: {type: g.radar >= 0 ? "radar" : "drone", id: g.radar >= 0 ? g.radar : g.drones[0]}};
   });
 }
@@ -39,17 +39,19 @@ function ligne(monde, e) {
     case "mission": {
       const piste = e.effectif ? `une piste de ${e.effectif} drone${e.effectif > 1 ? "s" : ""}` : "une piste";
       const recu = e.arrivee > e.t ? `, par ${noeud(e.depuis)} ; il la recevra à ${instant(e.arrivee)}` : "";
-      return {famille: "mission", texte: `Le PC envoie ${avion} intercepter ${piste}${recu}.`, cible: {type: "avion", id: e.avion}};
+      const centre = !e.centre ? "Le CDC" : `${monde.reseau.centres[e.centre]?.nom ?? "Un autre centre"}`;
+      return {famille: "mission", texte: `${centre} envoie ${avion} intercepter ${piste}${recu}.`, cible: {type: "avion", id: e.avion}};
     }
     case "reception": return {famille: "mission", texte: `${avion[0].toUpperCase()}${avion.slice(1)} reçoit ${e.ordre ? "l'ordre" : "sa mission"} et part.`, cible: {type: "avion", id: e.avion}};
     case "contact": return {famille: "contact", texte: `${avion[0].toUpperCase()}${avion.slice(1)} accroche le drone ${e.drone + 1} avec son propre capteur et le poursuit.`, cible: {type: "avion", id: e.avion}};
     case "tir": {
-      const qui = e.couche === "air" ? `L'avion ${e.tireur + 1}` : `${nom_poste(monde, e.tireur)[0].toUpperCase()}${nom_poste(monde, e.tireur).slice(1)}`;
+      const poste = `${nom_poste(monde, e.tireur)[0].toUpperCase()}${nom_poste(monde, e.tireur).slice(1)}${e.designe === false ? ", seul après acquisition," : e.designe ? ", désigné par un centre," : ""}`;
+      const qui = e.couche === "air" ? `L'avion ${e.tireur + 1}` : poste;
       return {famille: "tir", texte: `${qui} tire sur le drone ${e.drone + 1} (Pk ${format_decimal(e.pk)}) : ${e.detruit ? "détruit" : "manqué"}.`, cible: {type: "drone", id: e.drone}};
     }
-    case "impact": return {famille: "tir", texte: `Un drone frappe ${monde.cibles[e.cible]?.conduite ? "le PC" : `C${e.cible + 1}`}.`, cible: {type: "cible", id: e.cible}};
-    case "ordre": return {famille: "autre", texte: `Ordre de l'éditeur, parti du PC : avion${e.avions.length > 1 ? "s" : ""} ${e.avions.map((a) => a + 1).join(", ") || "aucun joignable"}.`, cible: e.avions.length ? {type: "avion", id: e.avions[0]} : null};
-    case "panne": return {famille: "autre", texte: "Le PC est détruit par l'essaim : plus rien n'est connu, plus personne n'est affecté.", cible: {type: "conduite", id: 0}};
+    case "impact": return {famille: "tir", texte: `Un drone frappe ${monde.cibles[e.cible]?.conduite ? "le CDC" : `C${e.cible + 1}`}.`, cible: {type: "cible", id: e.cible}};
+    case "ordre": return {famille: "autre", texte: `Ordre de l'éditeur, parti du CDC : avion${e.avions.length > 1 ? "s" : ""} ${e.avions.map((a) => a + 1).join(", ") || "aucun joignable"}.`, cible: e.avions.length ? {type: "avion", id: e.avions[0]} : null};
+    case "panne": return {famille: "autre", texte: "Le CDC est détruit par l'essaim : plus rien n'est connu, plus personne n'est affecté.", cible: {type: "conduite", id: 0}};
     case "reseau": return {famille: "autre", texte: e.hs.length ? `Hors service : ${e.hs.map((h) => (h.startsWith("liaison:") ? `liaison ${Number(h.slice(8)) + 1}` : noeud(h))).join(", ")}.` : "Tout le réseau est de nouveau en service.", cible: null};
     default: return null;
   }
@@ -65,18 +67,18 @@ export function lignes_journal(monde) {
   return [...lignes_detections(evenements), ...autres].sort((a, b) => a.t - b.t);
 }
 
-/** Rendre la chaîne de l'information d'un drone : vu, connu du PC, accroché, tiré, avec les instants. */
+/** Rendre la chaîne de l'information d'un drone : vu, connu du CDC, accroché, tiré, avec les instants. */
 export function chaine_drone(monde, id) {
   const drone = monde.drones[id];
   const etapes = [];
   if (drone.detection === null) return [{texte: "Pas encore vu par un radar."}];
   etapes.push({t: drone.detection, texte: `Vu par ${radar(drone.radar ?? -1)}.`});
-  if (drone.connu === null) etapes.push({texte: "Jamais connu du PC : le radar qui le voit n'y est pas relié, ou le PC est hors service."});
-  else if (drone.connu > monde.t) etapes.push({t: drone.connu, texte: "L'information est en route vers le PC."});
-  else etapes.push({t: drone.connu, texte: drone.connu === drone.detection ? "Connu du PC aussitôt." : `Connu du PC, ${format_decimal(drone.connu - drone.detection)} s après.`});
+  if (drone.connu === null) etapes.push({texte: "Jamais connu du CDC : le radar qui le voit n'y est pas relié, ou le CDC est hors service."});
+  else if (drone.connu > monde.t) etapes.push({t: drone.connu, texte: "L'information est en route vers le CDC."});
+  else etapes.push({t: drone.connu, texte: drone.connu === drone.detection ? "Connu du CDC aussitôt." : `Connu du CDC, ${format_decimal(drone.connu - drone.detection)} s après.`});
   if (drone.connu !== null && drone.connu <= monde.t) {
     const delai = monde.scenario.conduite.delai_reaction;
-    etapes.push({t: drone.connu + delai, texte: `Le PC peut agir dessus après son délai de réaction (${format_decimal(delai)} s).`});
+    etapes.push({t: drone.connu + delai, texte: `Le CDC peut agir dessus après son délai de réaction (${format_decimal(delai)} s).`});
   }
   for (const e of (monde.evenements ?? []).filter((x) => x.drone === id && (x.type === "contact" || x.type === "tir"))) {
     etapes.push(e.type === "contact"

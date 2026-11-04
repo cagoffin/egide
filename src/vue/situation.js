@@ -12,7 +12,7 @@ export function pistes_connues(monde) {
   return algo(monde.registre, monde.scenario.conduite.pistage, "pistage").pister(connus, OUTILS);
 }
 
-/** Rendre le résumé de la situation perçue : drones en vol, drones connus du PC, pistes. */
+/** Rendre le résumé de la situation perçue : drones en vol, drones connus du CDC, pistes. */
 export function resume_situation(monde) {
   const enVol = monde.drones.filter((drone) => est_actif(drone, monde.t));
   return {en_vol: enVol.length, connus: enVol.filter((drone) => connu_du_pc(monde, drone)).length, pistes: pistes_connues(monde).length};

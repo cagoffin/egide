@@ -135,21 +135,26 @@
         "centre_lat_deg": "Latitude du centre de conduite ; null : au centre du theatre.",
         "centre_lon_deg": "Longitude du centre de conduite ; null : au centre du theatre.",
         "liaisons": "Liaisons du reseau en mode 'liaisons'.",
-        "liaisons[].de": "Extremite : 'conduite', 'radar:<i>' (R<i+1>) ou 'avions:<g>' (groupe g de bleu.avions).",
+        "liaisons[].de": "Extremite : 'conduite' (CDC principal), 'centre:<k>' (autre CDC), 'radar:<i>' (R<i+1>), 'avions:<g>' (groupe g de bleu.avions) ou 'sol:<i>' (postes sol de la cible C<i+1>).",
         "liaisons[].vers": "Autre extremite, memes noms ; une liaison porte l'information dans les deux sens.",
         "liaisons[].moyen": "Moyen de communication : identifiant d'une unite de unites/liaisons/.",
         "conduite_ciblee": "Vrai : le centre de conduite compte parmi les cibles de l'essaim ; frappe, il est detruit (MODELE § 15.4).",
         "pannes": "Pannes et destructions datees (editeur, mode ordres) : a l'instant t_s, l'element cesse de fonctionner.",
         "pannes[].t_s": "Instant de la panne depuis le debut du raid.",
-        "pannes[].element": "Element en panne : 'conduite', 'radar:<i>' ou 'liaison:<k>' (k-ieme liaison de la liste).",
-        "pannes[].duree_s": "Duree de la panne ; null : definitive."
+        "pannes[].element": "Element en panne : 'conduite', 'centre:<k>', 'radar:<i>' ou 'liaison:<k>' (k-ieme liaison de la liste).",
+        "pannes[].duree_s": "Duree de la panne ; null : definitive.",
+        "centres": "Centres de detection et de controle supplementaires (CDC 2, CDC 3...) : liste de {nom, lat_deg, lon_deg} ; noeuds 'centre:<k>' (MODELE § 18).",
+        "centres[].nom": "Nom affiche du centre.",
+        "centres[].lat_deg": "Latitude du centre.",
+        "centres[].lon_deg": "Longitude du centre."
       },
       "mode": "complet",
       "centre_lat_deg": null,
       "centre_lon_deg": null,
       "liaisons": [],
       "conduite_ciblee": false,
-      "pannes": []
+      "pannes": [],
+      "centres": []
     }
   },
   "simulation": {

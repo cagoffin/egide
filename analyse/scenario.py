@@ -97,11 +97,13 @@ def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
 MODES_RESEAU = ("complet", "liaisons")
 
 
-def _noeud_valide(noeud: str, groupes: int) -> bool:
-    """Rendre vrai si `noeud` nomme un noeud du reseau : conduite, radar:<i> ou avions:<g> (g existant)."""
-    if noeud == "conduite" or re.fullmatch(r"radar:\d+", noeud):
+def _noeud_valide(noeud: str, groupes: int, centres: int) -> bool:
+    """Rendre vrai si `noeud` nomme un noeud du reseau : conduite, centre:<k>, radar:<i>, avions:<g> ou sol:<i>."""
+    if noeud == "conduite" or re.fullmatch(r"(radar|sol):\d+", noeud):
         return True
-    return bool(re.fullmatch(r"avions:\d+", noeud)) and int(noeud[7:]) < groupes
+    if re.fullmatch(r"avions:\d+", noeud):
+        return int(noeud[7:]) < groupes
+    return bool(re.fullmatch(r"centre:\d+", noeud)) and int(noeud[7:]) < centres
 
 
 def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers: dict) -> dict:
@@ -113,13 +115,13 @@ def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers:
     liaisons = reseau.get("liaisons", [])
     for liaison in liaisons:
         for noeud in (liaison["de"], liaison["vers"]):
-            if not _noeud_valide(noeud, groupes):
+            if not _noeud_valide(noeud, groupes, len(reseau.get("centres", []))):
                 raise ScenarioInvalideError(f"liaison : noeud inconnu « {noeud} »")
         if liaison["de"] == liaison["vers"]:
             raise ScenarioInvalideError(f"liaison de « {liaison['de']} » vers lui-meme")
     pannes = reseau.get("pannes", [])
     for panne in pannes:
-        if not (panne["element"] == "conduite" or re.fullmatch(r"(radar|liaison):\d+", panne["element"])):
+        if not (panne["element"] == "conduite" or re.fullmatch(r"(radar|liaison|centre):\d+", panne["element"])):
             raise ScenarioInvalideError(f"panne : element inconnu « {panne['element']} »")
     lat, lon = reseau.get("centre_lat_deg"), reseau.get("centre_lon_deg")
     if lat is None or lon is None:
@@ -127,6 +129,7 @@ def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers:
     return {
         "mode": mode,
         "conduite_ciblee": reseau.get("conduite_ciblee", False),
+        "centres": [{"nom": c["nom"], "geo": _vers_geo([c], 0)[0]} for c in reseau.get("centres", [])],
         "pannes": sorted(
             (
                 {

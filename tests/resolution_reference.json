@@ -156,6 +156,7 @@
       "portee": 8000,
       "pk": 0.7,
       "engagements_par_passage": 8,
+      "acquisition": 10,
       "nombre": 200,
       "munitions": 1020
     },
@@ -193,6 +194,7 @@
         "alt": 0
       },
       "conduite_ciblee": false,
+      "centres": [],
       "liaisons": [],
       "pannes": []
     },
@@ -217,6 +219,11 @@
           "de": "conduite",
           "vers": "avions:1",
           "moyen": "liaisons/radio_vhf_uhf_notionnelle"
+        },
+        {
+          "de": "centre:0",
+          "vers": "sol:3",
+          "moyen": "liaisons/filaire_notionnelle"
         }
       ],
       "bleu.reseau.pannes": [
@@ -231,7 +238,14 @@
           "duree_s": null
         }
       ],
-      "bleu.reseau.conduite_ciblee": true
+      "bleu.reseau.conduite_ciblee": true,
+      "bleu.reseau.centres": [
+        {
+          "nom": "CDC Sud",
+          "lat_deg": 46.2,
+          "lon_deg": 2.6
+        }
+      ]
     },
     "resolu": {
       "nom": "Référence : 1 000 drones rapides contre une défense mixte",
@@ -385,6 +399,7 @@
         "portee": 8000,
         "pk": 0.7,
         "engagements_par_passage": 8,
+        "acquisition": 10,
         "nombre": 200,
         "munitions": 1020
       },
@@ -422,6 +437,16 @@
           "alt": 0
         },
         "conduite_ciblee": true,
+        "centres": [
+          {
+            "nom": "CDC Sud",
+            "geo": {
+              "lat": 0.8063421144213803,
+              "lon": 0.04537856055185257,
+              "alt": 0
+            }
+          }
+        ],
         "liaisons": [
           {
             "de": "radar:0",
@@ -467,6 +492,29 @@
               "portee": 400000,
               "visibilite_directe": true,
               "hauteur_antenne": 15
+            }
+          },
+          {
+            "de": "centre:0",
+            "vers": "sol:3",
+            "moyen": {
+              "id": "liaisons/filaire_notionnelle",
+              "nom": "Liaison filaire (notionnelle)",
+              "fidelite": "notionnel",
+              "sources": [
+                "Ordre de grandeur notionnel : reseau terrestre fibre ou cuivre, sans limite de portee a l'echelle du theatre"
+              ],
+              "lignee": [
+                "_unite",
+                "liaisons/_liaison",
+                "liaisons/filaire_notionnelle"
+              ],
+              "algos": {},
+              "type": "filaire",
+              "latence": 0.5,
+              "portee": 40000000,
+              "visibilite_directe": false,
+              "hauteur_antenne": 0
             }
           }
         ],

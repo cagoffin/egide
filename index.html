@@ -33,7 +33,7 @@
       <label title="L'essaim suit le plan de vol dessiné dans l'éditeur, puis rejoint ses cibles."><input type="radio" name="tactique" value="plan_de_vol">Plan de vol</label>
     </fieldset>
     <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, radars, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions. (E)">Éditer</button>
-    <button data-action="vue_pc" aria-pressed="false" title="Basculer entre la vérité terrain et ce que sait le centre de conduite : drones connus et pistes (V)">Vue du PC</button>
+    <button data-action="vue_pc" aria-pressed="false" title="Basculer entre la vérité terrain et ce que sait le centre de conduite : drones connus et pistes (V)">Vue du CDC</button>
     <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
   </header>
 
@@ -50,7 +50,7 @@
     <header><h2>Scénario</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
     <div id="reglages"></div>
     <label class="interrupteur" title="Relief du théâtre : il masque radars et liaisons radio (MODELE § 16). Fabriquer un terrain réel : node outils/terrain.js.">Terrain <select name="terrain"><option value="">Terre lisse</option></select></label>
-    <label class="interrupteur" title="Le centre de conduite devient une cible de l'essaim ; à la première frappe, il est détruit (MODELE § 15.4)."><input type="checkbox" name="conduite_ciblee">Le PC est une cible de l'essaim</label>
+    <label class="interrupteur" title="Le centre de conduite devient une cible de l'essaim ; à la première frappe, il est détruit (MODELE § 15.4)."><input type="checkbox" name="conduite_ciblee">Le CDC est une cible de l'essaim</label>
     <div class="prereglages">
       <select name="prereglage" aria-label="Charger un réglage enregistré"></select>
       <div class="ligne">
@@ -100,7 +100,7 @@
 
   <section class="tiroir large" data-tiroir="journal" aria-label="Journal de l'information" hidden>
     <header><h2>Journal de l'information</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
-    <p class="note">Ce que le moteur a fait jusqu'à cet instant, le plus récent en haut : un radar voit, l'information remonte au PC, le PC
+    <p class="note">Ce que le moteur a fait jusqu'à cet instant, le plus récent en haut : un radar voit, l'information remonte au CDC, le CDC
       envoie un avion, l'avion reçoit sa mission, accroche un drone avec son capteur, tire. Un clic sur une ligne inspecte l'unité.</p>
     <div class="filtres-journal" data-zone="filtres_journal"></div>
     <ol class="journal" data-zone="journal"></ol>
@@ -113,8 +113,8 @@
       <li><i class="ami-plein"></i>Avion à roquettes IR</li>
       <li><i class="ami-creux"></i>Avion à roquettes laser</li>
       <li><i class="radar"></i>Radar (R1, R2…)</li>
-      <li><i class="message"></i>Impulsion bleue : un radar signale des drones au PC ; blanche : le PC envoie un avion ; tirets jaunes : un avion accroche un drone avec son capteur</li>
-      <li><i class="reseau"></i>Centre de conduite (PC) et liaisons ; croix rouge : liaison coupée ou avion injoignable</li>
+      <li><i class="message"></i>Impulsion bleue : un radar signale des drones au CDC ; blanche : le CDC envoie un avion ; tirets jaunes : un avion accroche un drone avec son capteur</li>
+      <li><i class="reseau"></i>Centre de conduite (CDC) et liaisons ; croix rouge : liaison coupée ou avion injoignable</li>
       <li><i class="hostile"></i>Drone détecté</li>
       <li><i class="inconnu"></i>Drone non détecté</li>
       <li><i class="cible"></i>Cible (C1, C2…)</li>
@@ -125,7 +125,7 @@
       <dt>Espace</dt><dd>Lire ou suspendre</dd>
       <dt>← →</dt><dd>Reculer ou avancer de 30 s</dd>
       <dt>E</dt><dd>Éditer le scénario</dd>
-      <dt>V</dt><dd>Vue du PC : ce que sait la conduite</dd>
+      <dt>V</dt><dd>Vue du CDC : ce que sait la conduite</dd>
       <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
       <dt>1 à 6</dt><dd>Ouvrir un panneau (hors édition)</dd>
       <dt>Molette</dt><dd>Zoom</dd>
@@ -171,18 +171,19 @@
       <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
       <button data-outil="cible" aria-pressed="false" title="Ajouter une cible (C)">Cible</button>
       <button data-outil="radar" aria-pressed="false" title="Ajouter un radar (R)">Radar</button>
-      <button data-outil="liaison" aria-pressed="false" title="Relier deux unités : clic sur un radar, le centre de conduite ou un avion, puis sur l'autre (L)">Liaison</button>
+      <button data-outil="centre" aria-pressed="false" title="Ajouter un centre de détection et de contrôle (K)">CDC</button>
+      <button data-outil="liaison" aria-pressed="false" title="Relier deux unités : clic sur un radar, un CDC, une cible (ses postes sol) ou un avion, puis sur l'autre (L)">Liaison</button>
       <select name="moyen_liaison" aria-label="Moyen de la liaison" title="Moyen de communication des nouvelles liaisons"></select>
       <button data-action="reseau_complet" title="Revenir au réseau complet : tout le monde parle avec tout le monde, sans délai">Réseau complet</button>
       <button data-outil="plan" aria-pressed="false" title="Ajouter un point au plan de vol de l'essaim (P)">Plan de vol</button>
       <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
-      <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, les radars, le PC ou les liaisons sélectionnés (Suppr)">Mettre hors service</button>
+      <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, les radars, le CDC ou les liaisons sélectionnés (Suppr)">Mettre hors service</button>
       <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
       <button data-action="terminer_edition" class="principal">Terminer</button>
       <p class="aide-edition seulement-edition">Glisser pour déplacer, rectangle pour sélectionner, clic droit pour envoyer la sélection.
         Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue.</p>
       <p class="aide-edition seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b> : sélectionner des avions (clic, Maj+clic, rectangle),
-        puis clic droit pour les envoyer depuis le PC ; sélectionner un radar, le PC ou une liaison, puis Suppr pour le mettre hors service.
+        puis clic droit pour les envoyer depuis le CDC ; sélectionner un radar, le CDC ou une liaison, puis Suppr pour le mettre hors service.
         Tout est enregistré dans le scénario et rejoué à l'identique.</p>
     </div>
     <div class="transport">

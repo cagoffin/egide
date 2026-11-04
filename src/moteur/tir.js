@@ -31,12 +31,12 @@ export function journaliser(monde, evenement) {
 /**
  * Tirer le résultat d'un tir de probabilité `pk` sur `drone` par la couche `couche` ("air" ou "sol"), tiré de
  * `origine` (géo) par le tireur `tireur` (numéro d'avion ou de poste). Le journal garde le drone visé et le Pk,
- * que l'inspecteur relit pour expliquer la survie d'un drone.
+ * que l'inspecteur relit pour expliquer la survie d'un drone. `details` : champs de plus pour le journal.
  */
-export function resoudre_tir(monde, drone, pk, couche, origine, tireur) {
+export function resoudre_tir(monde, drone, pk, couche, origine, tireur, details = {}) {
   if (!est_actif(drone, monde.t)) return;
   const detruit = monde.hasard.succes(pk);
-  journaliser(monde, {type: "tir", couche, de: origine, vers: {...drone.geo}, detruit, drone: drone.id, pk, tireur});
+  journaliser(monde, {type: "tir", couche, de: origine, vers: {...drone.geo}, detruit, drone: drone.id, pk, tireur, ...details});
   if (!detruit) return;
   drone.vivant = false;
   monde.compteurs[`detruits_${couche}`]++;

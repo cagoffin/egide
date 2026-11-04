@@ -22,6 +22,9 @@ export function barycentre(points) {
   return {...depuis_ecef({x: somme.x / points.length, y: somme.y / points.length, z: somme.z / points.length}), alt: 0};
 }
 
+/** Rendre les centres de détection et de contrôle autres que le principal, comme éléments éditables. */
+const centres_secondaires = (monde) => monde.scenario.reseau.centres.map((c, indice) => ({cle: `centre:${indice}`, type: "centre", indice, geo: c.geo}));
+
 const points_geo = (points) => (points ?? []).map((p) => geo_deg(p.lat_deg, p.lon_deg, 0));
 
 /**
@@ -35,6 +38,7 @@ export function elements_editables(monde, brut, mode = "edition") {
       ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.geo, guidage: avion.guidage})),
       ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
       {cle: "conduite", type: "conduite", indice: 0, geo: monde.scenario.reseau.centre},
+      ...centres_secondaires(monde),
       ...milieux_liaisons(monde),
     ];
   }
@@ -44,6 +48,7 @@ export function elements_editables(monde, brut, mode = "edition") {
     ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite, guidage: avion.guidage})),
     ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
     {cle: "conduite", type: "conduite", indice: 0, geo: monde.scenario.reseau.centre},
+    ...centres_secondaires(monde),
     ...milieux_liaisons(monde),
     ...points_geo(brut.rouge.plan_de_vol).map((geo, indice) => ({cle: `passage:${indice}`, type: "passage", indice, geo})),
     ...(brut.theatre.zones ?? []).map((zone, indice) => ({cle: `zone:${indice}`, type: "zone", indice, geo: barycentre(points_geo(zone.points))})),
@@ -70,6 +75,12 @@ export function modifications_deplacement(monde, brut, cles, de, vers) {
     modifications[`bleu.avions.${g}.orbites_placees`] = avions.map((avion) => en_degres(bouge(`avion:${avion.id}`, avion.orbite) ?? avion.orbite));
   });
   if (cles.some((c) => c.startsWith("radar:"))) Object.assign(modifications, sites_radars(monde, (i, geo) => bouge(`radar:${i}`, geo)));
+  if (cles.some((c) => c.startsWith("centre:"))) {
+    modifications["bleu.reseau.centres"] = (brut.bleu.reseau.centres ?? []).map((c, k) => {
+      const geo = bouge(`centre:${k}`, geo_deg(c.lat_deg, c.lon_deg));
+      return geo ? {...c, ...en_degres(geo)} : c;
+    });
+  }
   if (choisis.has("conduite")) {
     const centre = en_degres(bouge("conduite", monde.scenario.reseau.centre));
     Object.assign(modifications, {"bleu.reseau.centre_lat_deg": centre.lat_deg, "bleu.reseau.centre_lon_deg": centre.lon_deg});
@@ -108,6 +119,8 @@ function milieux_liaisons(monde) {
 export function noeud_element(monde, element) {
   if (element.type === "radar") return `radar:${element.indice}`;
   if (element.type === "conduite") return "conduite";
+  if (element.type === "centre") return `centre:${element.indice}`;
+  if (element.type === "cible") return `sol:${element.indice}`;
   if (element.type === "avion") return `avions:${monde.scenario.avions.indexOf(monde.avions[element.indice].groupe)}`;
   return null;
 }
@@ -127,6 +140,12 @@ export function modifications_ajout_liaison(monde, brut, de, vers, moyen) {
 
 /** Rendre les modifications qui reviennent au réseau complet (tout le monde parle avec tout le monde). */
 export const modifications_reseau_complet = () => ({"bleu.reseau.mode": "complet", "bleu.reseau.liaisons": []});
+
+/** Rendre les modifications qui ajoutent un centre de détection et de contrôle en `geo` (MODELE § 18). */
+export function modifications_ajout_centre(brut, geo) {
+  const centres = brut.bleu.reseau.centres ?? [];
+  return {"bleu.reseau.centres": [...centres, {nom: `CDC ${centres.length + 2}`, ...en_degres(geo)}]};
+}
 
 /** Rendre les modifications qui ajoutent un radar en `geo` (les radars affichés deviennent des sites placés). */
 export const modifications_ajout_radar = (monde, geo) => sites_radars(monde, undefined, undefined, [geo]);
@@ -150,7 +169,7 @@ export function modifications_ordre(brut, monde, cles, geo) {
  * conduite et les liaisons `cles` (MODELE § 15.4). Les avions et les autres éléments sont ignorés.
  */
 export function modifications_panne(brut, monde, cles) {
-  const elements = cles.map((c) => (c === "conduite" ? c : /^(radar|liaison):\d+$/.test(c) ? c : null)).filter(Boolean);
+  const elements = cles.map((c) => (c === "conduite" ? c : /^(radar|liaison|centre):\d+$/.test(c) ? c : null)).filter(Boolean);
   if (!elements.length) return {};
   const pannes = elements.map((element) => ({t_s: monde.t, element, duree_s: null}));
   return {"bleu.reseau.pannes": [...(brut.bleu.reseau.pannes ?? []), ...pannes]};
@@ -180,8 +199,12 @@ export function modifications_suppression(monde, brut, cles) {
   // Comme pour les cibles, on garde au moins un radar.
   const radarsOtes = cles.some((c) => c.startsWith("radar:")) && radars.some((_, i) => !choisis.has(`radar:${i}`));
   if (radarsOtes) Object.assign(modifications, sites_radars(monde, undefined, (i) => !choisis.has(`radar:${i}`)));
-  if (monde.scenario.reseau.mode === "liaisons" && (radarsOtes || cles.some((c) => c.startsWith("liaison:")))) {
-    modifications["bleu.reseau.liaisons"] = liaisons_restantes(brut.bleu.reseau.liaisons, choisis, radarsOtes ? radars.length : 0);
+  const centresOtes = cles.some((c) => c.startsWith("centre:"));
+  if (centresOtes) modifications["bleu.reseau.centres"] = (brut.bleu.reseau.centres ?? []).filter((_, k) => !choisis.has(`centre:${k}`));
+  if (monde.scenario.reseau.mode === "liaisons" && (radarsOtes || centresOtes || cles.some((c) => c.startsWith("liaison:")))) {
+    let liaisons = liaisons_restantes(brut.bleu.reseau.liaisons, choisis, radarsOtes ? radars.length : 0);
+    if (centresOtes) liaisons = renumeroter(liaisons, "centre", (brut.bleu.reseau.centres ?? []).length, choisis);
+    modifications["bleu.reseau.liaisons"] = liaisons;
   }
   if (cles.some((c) => c.startsWith("passage:"))) {
     modifications["rouge.plan_de_vol"] = (brut.rouge.plan_de_vol ?? []).filter((_, i) => !choisis.has(`passage:${i}`));
@@ -201,6 +224,14 @@ function liaisons_restantes(liaisons, choisis, nombreRadars) {
     .filter((_, i) => !choisis.has(`liaison:${i}`))
     .map((l) => ({...l, de: renommer(l.de), vers: renommer(l.vers)}))
     .filter((l) => l.de && l.vers);
+}
+
+/** Rendre les liaisons sans les nœuds `famille:<k>` ôtés, les suivants renumérotés. */
+function renumeroter(liaisons, famille, nombre, choisis) {
+  const nouveau = new Map();
+  for (let i = 0, j = 0; i < nombre; i++) if (!choisis.has(`${famille}:${i}`)) nouveau.set(`${famille}:${i}`, `${famille}:${j++}`);
+  const renommer = (n) => (n.startsWith(`${famille}:`) ? nouveau.get(n) : n);
+  return liaisons.map((l) => ({...l, de: renommer(l.de), vers: renommer(l.vers)})).filter((l) => l.de && l.vers);
 }
 
 /** Rendre les clés des éléments dont la position écran tombe dans le rectangle {x0, y0, x1, y1}. */

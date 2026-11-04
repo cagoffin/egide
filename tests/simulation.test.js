@@ -234,12 +234,37 @@ test("réseau, pannes : radars hors service, rien n'est vu ; conduite en panne, 
 });
 
 test("réseau : le centre de conduite visé par l'essaim est détruit à la première frappe", () => {
-  // Dix drones au plus par cible : les onze cibles, PC compris, sont visées.
+  // Dix drones au plus par cible : les onze cibles, CDC compris, sont visées.
   const monde = simuler(scenario({...PETIT, ...SANS_DEFENSE, "rouge.concentration_max": 10, "bleu.reseau.conduite_ciblee": true}), {registre: REGISTRE});
   assert.equal(monde.cibles.length, scenario(PETIT).theatre.cibles_nombre + 1);
   assert.ok(monde.cibles.at(-1).conduite);
-  assert.ok(monde.fuites.at(-1) > 0, "l'essaim frappe aussi le PC");
+  assert.ok(monde.fuites.at(-1) > 0, "l'essaim frappe aussi le CDC");
   assert.notEqual(monde.conduite_detruite, null);
   assert.ok(monde.reseau.conduite_hs);
   assert.ok(monde.evenements.some((e) => e.type === "panne" && e.element === "conduite"));
+});
+
+test("CDC : si le centre principal tombe, un second centre relié aux radars et aux avions prend la main", () => {
+  const radars = Array.from({length: 10}, (_, i) => ({de: `radar:${i}`, vers: "centre:0", moyen: "liaisons/filaire_notionnelle"}));
+  const s = scenario({...PETIT, "bleu.reseau.mode": "liaisons", "bleu.reseau.centres": [{nom: "CDC Sud", lat_deg: 46.5, lon_deg: 2.5}],
+    "bleu.reseau.liaisons": [...radars, {de: "centre:0", vers: "avions:0", moyen: "liaisons/satellite_notionnelle"}, {de: "centre:0", vers: "avions:1", moyen: "liaisons/satellite_notionnelle"}],
+    "bleu.reseau.pannes": [{t_s: 0, element: "conduite", duree_s: null}]});
+  const monde = simuler(s, {registre: REGISTRE});
+  assert.equal(monde.reseau.centres.length, 2);
+  assert.ok(monde.reseau.conduite_hs && !monde.reseau.aucun_centre);
+  const missions = monde.evenements.filter((e) => e.type === "mission");
+  assert.ok(missions.length > 0 && missions.every((e) => e.centre === 1), "toutes les missions viennent du CDC Sud");
+  assert.ok(monde.drones.filter((d) => d.connus).every((d) => d.connus[0] === null), "le CDC principal en panne ne sait rien");
+});
+
+test("CDC : des postes sol désignés par un centre tirent aussitôt ; seuls, ils doivent d'abord acquérir", () => {
+  const radars = Array.from({length: 10}, (_, i) => ({de: `radar:${i}`, vers: "conduite", moyen: "liaisons/filaire_notionnelle"}));
+  const sol = Array.from({length: 10}, (_, i) => ({de: "conduite", vers: `sol:${i}`, moyen: "liaisons/filaire_notionnelle"}));
+  const base = {...PETIT, ...SANS_DEFENSE, "bleu.sol.nombre": 40, "bleu.reseau.mode": "liaisons"};
+  const relies = simuler(scenario({...base, "bleu.reseau.liaisons": [...radars, ...sol]}), {registre: REGISTRE});
+  const seuls = simuler(scenario({...base, "bleu.reseau.liaisons": radars}), {registre: REGISTRE});
+  const tirs = (m) => m.evenements.filter((e) => e.type === "tir" && e.couche === "sol");
+  assert.ok(tirs(relies).length > 0 && tirs(relies).every((e) => e.designe), "reliés : tous les tirs sont désignés");
+  assert.ok(tirs(seuls).length > 0 && tirs(seuls).every((e) => !e.designe), "seuls : aucun tir désigné");
+  assert.ok(bilan(relies).detruits_sol > bilan(seuls).detruits_sol, "le délai d'acquisition coûte des tirs");
 });

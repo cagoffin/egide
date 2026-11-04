@@ -120,7 +120,7 @@ function portees_relief(monde, indice) {
 function reseau_radar(monde, indice) {
   const latence = monde.reseau.latences_radars[indice];
   if (monde.reseau.radars_hs?.[indice]) return "<b>Hors service</b> : il ne voit plus rien.";
-  if (monde.reseau.conduite_hs) return "<b>Le PC est hors service</b> : ses détections ne servent à personne.";
+  if (monde.reseau.aucun_centre) return "<b>Aucun centre en service</b> : ses détections ne servent à personne.";
   if (monde.reseau.mode === "complet") return "Relié à toute la défense : chaque détection profite aussitôt à tous (réseau complet, docs/MODELE.md § 15.2).";
   if (!Number.isFinite(latence)) return "<b>Non relié à la conduite</b> : ce qu'il voit ne sert à personne.";
   return `Relié à la conduite : ses détections y arrivent en <b>${format_decimal(latence)} s</b>.`;
@@ -130,29 +130,38 @@ function acces_texte(monde, avion) {
   if (monde.reseau.mode === "complet") return "réseau complet";
   if (avion.acces === undefined) return "pas encore évaluée";
   if (!avion.acces) return "<b>hors liaison</b> : la conduite ne peut pas l'affecter";
-  return `${echapper(avion.acces.moyen.nom)} depuis ${libelle_noeud(monde, avion.acces.sol)}, ${format_decimal(avion.acces.latence)} s`;
+  const centre = avion.acces.centre === 0 ? "CDC" : echapper(monde.reseau.centres[avion.acces.centre].nom);
+  return `contrôlé par ${centre}, ${echapper(avion.acces.moyen.nom)} depuis ${libelle_noeud(monde, avion.acces.sol)}, ${format_decimal(avion.acces.latence)} s`;
 }
 
-function inspection_conduite(monde) {
+/**
+ * Inspection d'un centre de détection et de contrôle (MODELE § 18) : son rôle, son état, ce qu'il reçoit des radars,
+ * les avions qu'il contrôle, les postes sol qu'il désigne ; pour le centre principal, toutes les liaisons au sol.
+ */
+function inspection_centre(monde, c) {
   const {reseau} = monde;
-  const lignes = reseau.fixes.map((l) => `<li>${libelle_noeud(monde, l.de)} ↔ ${libelle_noeud(monde, l.vers)} : ${echapper(l.moyen.nom)},
-    ${l.active ? `${format_decimal(l.moyen.latence)} s` : `<b>hors portée</b> (${format_decimal(l.distance / 1000)} km pour ${format_decimal(l.portee / 1000)} km)`}</li>`).join("");
-  const nonRelies = reseau.latences_radars.map((l, i) => (Number.isFinite(l) ? null : `R${i + 1}`)).filter(Boolean);
-  const joignables = monde.avions.filter((a) => a.acces).length;
-  const groupes = reseau.acces.map((liste, g) => `<li>${libelle_noeud(monde, `avions:${g}`)} : ${liste.length
-    ? liste.map((a) => `${echapper(a.moyen.nom)} depuis ${libelle_noeud(monde, a.sol)}`).join(", ") : "<b>aucun accès</b>"}</li>`).join("");
-  return `<h3>Centre de conduite (PC)</h3>
+  const centre = reseau.centres[c];
+  const recus = reseau.latences_centres[c].map((l, i) => (Number.isFinite(l) ? `R${i + 1} (${format_decimal(l)} s)` : null)).filter(Boolean);
+  const nonRelies = reseau.latences_centres[c].map((l, i) => (Number.isFinite(l) ? null : `R${i + 1}`)).filter(Boolean);
+  const controles = monde.avions.filter((a) => a.acces && a.acces.centre === c).length;
+  const designes = monde.cibles.map((cible, i) => (Number.isFinite(reseau.latences_sol[c]?.[i]) && monde.postes.some((p) => p.cible === i) ? (cible.conduite ? "CDC" : `C${i + 1}`) : null)).filter(Boolean);
+  const detruit = c === 0 && monde.conduite_detruite !== null;
+  const lignes = c === 0 ? reseau.fixes.map((l) => `<li>${libelle_noeud(monde, l.de)} ↔ ${libelle_noeud(monde, l.vers)} : ${echapper(l.moyen.nom)},
+    ${l.active ? `${format_decimal(l.moyen.latence)} s` : `<b>hors portée</b>${l.distance ? ` (${format_decimal(l.distance / 1000)} km pour ${format_decimal(l.portee / 1000)} km)` : ""}`}</li>`).join("") : "";
+  return `<h3>${c === 0 ? "Centre de détection et de contrôle (CDC)" : echapper(centre.nom)}</h3>
+    <p>Il reçoit les détections des radars, en fait des pistes, envoie les avions qu'il contrôle sur les pistes d'intérêt et désigne les drones aux postes sol qu'il joint.</p>
     <table>${[
-      ligne("Position", position(reseau.centre)),
+      ligne("Position", position(centre.geo)),
       ligne("Réseau", reseau.mode === "complet" ? "complet : tout le monde parle avec tout le monde, sans délai" : "liaisons listées"),
-      ligne("État", monde.conduite_detruite !== null ? `<b>détruit</b> par l'essaim à ${format_duree(monde.conduite_detruite)}`
-        : reseau.conduite_hs ? "<b>hors service</b>" : monde.cible_conduite !== null ? "en service, visé par l'essaim" : "en service"),
+      ligne("État", detruit ? `<b>détruit</b> par l'essaim à ${format_duree(monde.conduite_detruite)}` : centre.hs ? "<b>hors service</b>"
+        : c === 0 && monde.cible_conduite !== null ? "en service, visé par l'essaim" : "en service"),
+      ligne("Radars reçus", recus.length ? (reseau.mode === "complet" ? "tous, aussitôt" : recus.join(", ")) : "<b>aucun</b>"),
+      ligne("Avions contrôlés", `${format_entier(controles)} à la dernière décision`),
+      ligne("Postes désignés", designes.length ? designes.join(", ") : "<b>aucun</b> : les postes doivent acquérir seuls"),
     ].join("")}</table>
-    ${reseau.mode === "complet" ? "<p>Chaque détection est connue aussitôt ; chaque avion est joignable. Pour décrire le réseau, outil Liaison de l'éditeur (docs/MODELE.md § 15.2).</p>" : `
-    <h4>Liaisons au sol</h4>${lignes ? `<ul>${lignes}</ul>` : "<p>Aucune.</p>"}
-    <p>${nonRelies.length ? `Radars non reliés : <b>${nonRelies.join(", ")}</b>.` : "Tous les radars sont reliés."}</p>
-    <h4>Accès aux avions</h4><ul>${groupes}</ul>
-    <p>${format_entier(joignables)} avions joignables sur ${format_entier(monde.avions.length)} à la dernière décision.</p>`}`;
+    ${reseau.mode === "complet" ? "<p>Pour décrire le réseau : outils Liaison et CDC de l'éditeur (docs/MODELE.md § 15.2 et § 18).</p>" : `
+    ${nonRelies.length ? `<p>Radars qui ne l'informent pas : <b>${nonRelies.join(", ")}</b>.</p>` : ""}
+    ${lignes ? `<h4>Liaisons au sol</h4><ul>${lignes}</ul>` : ""}`}`;
 }
 
 function inspection_radar(indice, monde) {
@@ -180,7 +189,8 @@ function inspection_radar(indice, monde) {
 
 export function inspection(cible, monde) {
   if (cible.type === "radar") return inspection_radar(cible.id, monde);
-  if (cible.type === "conduite") return inspection_conduite(monde);
+  if (cible.type === "conduite") return inspection_centre(monde, 0);
+  if (cible.type === "centre") return inspection_centre(monde, cible.id + 1);
   if (cible.type === "avion") return inspection_avion(monde.avions[cible.id], monde);
   if (cible.type === "drone") return inspection_drone(monde.drones[cible.id], monde);
   return inspection_cible(cible.id, monde);
@@ -192,6 +202,7 @@ export function position_inspectee(cible, monde) {
   if (cible.type === "cible") return monde.cibles[cible.id]?.geo ?? null;
   if (cible.type === "radar") return positions_radars(monde.scenario)[cible.id] ?? null;
   if (cible.type === "conduite") return monde.scenario.reseau.centre;
+  if (cible.type === "centre") return monde.scenario.reseau.centres[cible.id]?.geo ?? null;
   const drone = monde.drones[cible.id];
   return drone && drone.vivant && !drone.arrive ? drone.geo : null;
 }

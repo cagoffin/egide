@@ -2,7 +2,8 @@
   "_aide": {
     "portee_km": "Rayon de la bulle d'engagement du poste.",
     "pk": "Probabilite de destruction par tir.",
-    "engagements_par_passage": "Tirs utiles du poste pendant la traversee de sa bulle par un drone (MODELE § 5)."
+    "engagements_par_passage": "Tirs utiles du poste pendant la traversee de sa bulle par un drone (MODELE § 5).",
+    "acquisition_s": "Delai pour qu'un poste non designe par un centre acquiere seul un drone entre dans sa bulle ; designe, il tire aussitot (MODELE § 18.3)."
   },
   "herite_de": "_unite",
   "nom": "Poste sol-air de courte portee (notionnel)",
@@ -12,6 +13,7 @@
   "portee_km": 8,
   "pk": 0.7,
   "engagements_par_passage": 8,
+  "acquisition_s": 10,
   "algos": {
     "tir_sol": "global/tir_sol/cadence_par_passage"
   }

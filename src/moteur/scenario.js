@@ -89,22 +89,29 @@ function resoudre_radar(radar, fichiers) {
 /** Modes du réseau d'information (MODELE § 15.2). */
 export const MODES_RESEAU = ["complet", "liaisons"];
 
-/** Rendre vrai si `noeud` nomme un nœud du réseau : « conduite », « radar:<i> » ou « avions:<g> » (g existant). */
-const noeud_valide = (noeud, groupes) => noeud === "conduite" || /^radar:\d+$/.test(noeud) || (/^avions:\d+$/.test(noeud) && Number(noeud.slice(7)) < groupes);
+/**
+ * Rendre vrai si `noeud` nomme un nœud du réseau : « conduite » (CDC principal), « centre:<k> » (k existant),
+ * « radar:<i> », « avions:<g> » (g existant) ou « sol:<i> » (postes de la cible i).
+ */
+function noeud_valide(noeud, groupes, centres) {
+  if (noeud === "conduite" || /^(radar|sol):\d+$/.test(noeud)) return true;
+  if (/^avions:\d+$/.test(noeud)) return Number(noeud.slice(7)) < groupes;
+  return /^centre:\d+$/.test(noeud) && Number(noeud.slice(7)) < centres;
+}
 
 function resoudre_reseau(reseau, theatre, groupes, fichiers) {
-  const {mode = "complet", centre_lat_deg: lat = null, centre_lon_deg: lon = null, liaisons = [], pannes = [], conduite_ciblee = false} = reseau ?? {};
+  const {mode = "complet", centre_lat_deg: lat = null, centre_lon_deg: lon = null, liaisons = [], pannes = [], conduite_ciblee = false, centres = []} = reseau ?? {};
   if (!MODES_RESEAU.includes(mode)) throw new ScenarioInvalide(`mode de réseau inconnu « ${mode} » (${MODES_RESEAU.join(", ")})`);
   for (const {de, vers} of liaisons) {
-    for (const noeud of [de, vers]) if (!noeud_valide(noeud, groupes)) throw new ScenarioInvalide(`liaison : nœud inconnu « ${noeud} »`);
+    for (const noeud of [de, vers]) if (!noeud_valide(noeud, groupes, centres.length)) throw new ScenarioInvalide(`liaison : nœud inconnu « ${noeud} »`);
     if (de === vers) throw new ScenarioInvalide(`liaison de « ${de} » vers lui-même`);
   }
   for (const {element} of pannes) {
-    if (!(element === "conduite" || /^(radar|liaison):\d+$/.test(element))) throw new ScenarioInvalide(`panne : élément inconnu « ${element} »`);
+    if (!(element === "conduite" || /^(radar|liaison|centre):\d+$/.test(element))) throw new ScenarioInvalide(`panne : élément inconnu « ${element} »`);
   }
   const centre = lat === null || lon === null ? geo_deg(theatre.origine_lat_deg, theatre.origine_lon_deg, 0) : geo_deg(lat, lon, 0);
   return {
-    mode, centre, conduite_ciblee, liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)})),
+    mode, centre, conduite_ciblee, centres: centres.map((c) => ({nom: c.nom, geo: geo_deg(c.lat_deg, c.lon_deg, 0)})), liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)})),
     // Pannes triées par instant ; fin null : définitive.
     pannes: pannes.map((p) => ({t: p.t_s, element: p.element, fin: p.duree_s === null || p.duree_s === undefined ? null : p.t_s + p.duree_s})).sort((a, b) => a.t - b.t),
   };
@@ -218,7 +225,7 @@ export function migrer_v1(v1) {
         _aide: AIDE.conduite, delai_reaction_s: v1.delai_reaction_s, pas_decision_s: v1.avions_pas_decision_s,
         interception_profondeur_km: v1.interception_profondeur_km, pistage: "global/pistage/cellules", allocation: "global/allocation/densite_pistes",
       },
-      reseau: {_aide: AIDE.reseau, mode: "complet", centre_lat_deg: null, centre_lon_deg: null, liaisons: [], conduite_ciblee: false, pannes: []},
+      reseau: {_aide: AIDE.reseau, mode: "complet", centre_lat_deg: null, centre_lon_deg: null, liaisons: [], conduite_ciblee: false, pannes: [], centres: []},
     },
     simulation: {_aide: AIDE.simulation, pas_s: v1.simulation_pas_s, graine: v1.graine},
   };

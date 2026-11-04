@@ -83,7 +83,7 @@ async function charger() {
   etat.traces = creer_traces();
   etat.effets = creer_effets();
   const {monde} = etat.lecteur;
-  const nombres = {avion: monde.avions.length, drone: monde.drones.length, cible: monde.cibles.length, radar: positions_radars(monde.scenario).length, conduite: 1};
+  const nombres = {avion: monde.avions.length, drone: monde.drones.length, cible: monde.cibles.length, radar: positions_radars(monde.scenario).length, conduite: 1, centre: monde.scenario.reseau.centres.length};
   const existe = etat.inspection && etat.inspection.id < nombres[etat.inspection.type];
   if (etat.inspection && !existe) inspecter(null);
   $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
@@ -194,7 +194,7 @@ function rafraichir_commandes(maintenant) {
   $("[data-champ='horloge']").textContent = `${format_duree(lecteur.monde.t)} sur ${format_duree(lecteur.duree)}`;
   if (etat.vue_pc) {
     const s = resume_situation(lecteur.monde);
-    $("[data-champ='bandeau_pc']").textContent = `Vue du PC : ${s.connus} drone${s.connus > 1 ? "s" : ""} connu${s.connus > 1 ? "s" : ""} sur ${s.en_vol} en vol, ${s.pistes} piste${s.pistes > 1 ? "s" : ""}`;
+    $("[data-champ='bandeau_pc']").textContent = `Vue du CDC : ${s.connus} drone${s.connus > 1 ? "s" : ""} connu${s.connus > 1 ? "s" : ""} sur ${s.en_vol} en vol, ${s.pistes} piste${s.pistes > 1 ? "s" : ""}`;
   }
   $("[data-action='lire']").textContent = lecteur.enLecture ? "Pause" : lecteur.monde.t >= lecteur.duree ? "Rejouer" : "Lire";
 }
@@ -290,7 +290,7 @@ function brancher_scope() {
     if (appui && Math.hypot(e.clientX - appui.x, e.clientY - appui.y) > 4) return;
     const cadre = vue.getBoundingClientRect();
     const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques, etat.vue_pc);
-    if (touche) inspecter({type: touche.type, id: touche.type === "conduite" ? 0 : ["cible", "radar"].includes(touche.type) ? touche.indice : touche.objet.id});
+    if (touche) inspecter({type: touche.type, id: touche.type === "conduite" ? 0 : ["cible", "radar", "centre"].includes(touche.type) ? touche.indice : touche.objet.id});
   });
   $("[data-action='fermer_inspecteur']").addEventListener("click", () => inspecter(null));
   addEventListener("keydown", (e) => e.key === "Escape" && !etat.editeur?.est_actif() && inspecter(null));

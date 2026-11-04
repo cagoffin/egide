@@ -4,7 +4,7 @@ import {algo} from "./algos.js";
 import {vers_ecef} from "./geodesie.js";
 import {melanger} from "./hasard.js";
 import {OUTILS} from "./outils.js";
-import {radar_le_plus_proche, radars_voyants} from "./reseau.js";
+import {connu_du_centre, radar_le_plus_proche, radars_voyants} from "./reseau.js";
 import {est_actif, journaliser} from "./tir.js";
 
 /**
@@ -87,21 +87,28 @@ export function detecter_drones(monde) {
       if (drone.connu === null && detection.detecte(monde.couverture, drone, OUTILS)) {
         const premiere = drone.detection === null;
         [drone.detection, drone.connu] = [drone.detection ?? monde.t, monde.t];
+        // Réseau complet : tous les centres le savent en même temps (une situation par centre devient inutile).
+        drone.connus = undefined;
         // Le radar d'origine ne sert qu'au journal (rejeu) : on ne le cherche pas en campagne.
         if (premiere && monde.evenements) noter_detection(monde, drone, radar_le_plus_proche(reseau, drone), monde.t);
       }
       continue;
     }
-    if (drone.connu !== null && drone.connu <= monde.t) continue;
+    // On regarde encore tant qu'un centre en état ne connaît pas le drone (MODELE § 18.1).
+    if (drone.connu !== null && reseau.centres.every((c, k) => c.hs || (connu_du_centre(drone, k) ?? Infinity) <= monde.t)) continue;
     const voyants = radars_voyants(detection, monde.couverture, reseau, drone, OUTILS);
     if (!voyants.length) continue;
     // Vu physiquement, même si l'information ne va nulle part.
     const premiere = drone.detection === null;
     drone.detection ??= monde.t;
     const avant = drone.connu;
+    drone.connus ??= reseau.centres.map(() => (drone.connu ?? null));
     for (const i of voyants) {
-      const arrivee = monde.t + reseau.latences_radars[i];
-      if (arrivee < (drone.connu ?? Infinity)) [drone.connu, drone.radar] = [arrivee, i];
+      reseau.latences_centres.forEach((latences, c) => {
+        const arrivee = monde.t + latences[i];
+        if (Number.isFinite(arrivee) && arrivee < (drone.connus[c] ?? Infinity)) drone.connus[c] = arrivee;
+        if (Number.isFinite(arrivee) && arrivee < (drone.connu ?? Infinity)) [drone.connu, drone.radar] = [arrivee, i];
+      });
     }
     if (premiere || drone.connu !== avant) noter_detection(monde, drone, drone.connu !== avant ? drone.radar : voyants[0], drone.connu);
   }

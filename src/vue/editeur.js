@@ -5,12 +5,12 @@ import {COULEURS} from "./couleurs.js";
 import {ecran, geo_depuis_ecran} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, modifications_ajout_cible, modifications_ajout_passage,
-  modifications_ajout_liaison, modifications_ajout_radar, modifications_panne, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
+  modifications_ajout_centre, modifications_ajout_liaison, modifications_ajout_radar, modifications_panne, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
 import {element_visible} from "./calques.js";
 import {format_duree} from "./format.js";
 
-const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", l: "liaison", p: "plan", z: "zone"};
+const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", k: "centre", l: "liaison", p: "plan", z: "zone"};
 // En deçà de 4 px, un appui est un clic, pas un glisser : on ne déplace rien par mégarde.
 const SEUIL_GLISSER = 4;
 
@@ -71,6 +71,7 @@ export function creer_editeur(env) {
     const geo = geo_depuis_ecran(env.camera(), p);
     if (etat.outil === "cible") return env.appliquer(modifications_ajout_cible(env.monde(), geo));
     if (etat.outil === "radar") return env.appliquer(modifications_ajout_radar(env.monde(), geo));
+    if (etat.outil === "centre") return env.appliquer(modifications_ajout_centre(env.brut(), geo));
     if (etat.outil === "liaison") return relier(p);
     if (etat.outil === "plan") return env.appliquer(modifications_ajout_passage(env.brut(), geo));
     if (etat.outil === "zone") {

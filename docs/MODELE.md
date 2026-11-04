@@ -376,18 +376,18 @@ masquent chaque famille d'entités (avions IR, avions laser, radars, couverture,
 plots, plan de vol, tirs, cibles, zones, anneaux) ; une entité masquée ne se survole, ne s'inspecte ni ne s'édite.
 C'est un filtre d'affichage : la simulation n'en dépend pas.
 
-### 15.4 Pannes, centre de conduite visé, vue du PC
+### 15.4 Pannes, centre de conduite visé, vue du CDC
 - **Latence des consignes** : une décision de la conduite, ou un ordre donné dans l'éditeur, part du centre de
   conduite et n'atteint l'avion qu'après la latence de son accès (§ 15.2) ; un avion injoignable ne la reçoit pas.
   Un ordre en route a priorité sur les décisions suivantes de la conduite.
 - **Pannes datées** (`bleu.reseau.pannes`) : à l'instant t, un radar cesse de voir, une liaison cesse de porter
   l'information, ou le centre de conduite cesse de fonctionner (plus rien n'est connu, plus personne n'est affecté) ;
   une durée la rend temporaire, sinon elle est définitive. Le réseau est recalculé à chaque changement. Dans
-  l'éditeur, en cours de raid, Suppr met hors service le radar, le PC ou la liaison sélectionnés, à cet instant.
-  Après la panne du PC, un drone vu pendant la panne n'est connu qu'à son retour, s'il est encore vu.
+  l'éditeur, en cours de raid, Suppr met hors service le radar, le CDC ou la liaison sélectionnés, à cet instant.
+  Après la panne du CDC, un drone vu pendant la panne n'est connu qu'à son retour, s'il est encore vu.
 - **Centre de conduite visé** (`bleu.reseau.conduite_ciblee`) : il devient une cible de plus de l'essaim, la
   dernière, défendue par des postes sol comme les autres ; à la première frappe, il est détruit pour de bon.
-- **Vue du PC** : l'écran ne montre que les drones que la conduite connaît, et les pistes de son algorithme de
+- **Vue du CDC** : l'écran ne montre que les drones que la conduite connaît, et les pistes de son algorithme de
   pistage ; la vérité terrain reste à un bouton (V). Les positions affichées sont les positions vraies des drones
   connus : le retard de mise à jour des pistes n'est pas encore représenté.
 
@@ -420,9 +420,9 @@ de l'ellipsoïde).
 ## 17 · Circulation de l'information (jalon 8)
 ### 17.1 La chaîne, pas à pas
 1. **Un radar voit.** Un drone entre dans sa portée (ou sort de derrière le relief, § 16.2).
-2. **L'information remonte au PC** après la latence du chemin le plus court par liaisons actives (§ 15.2), ou n'y
+2. **L'information remonte au CDC** après la latence du chemin le plus court par liaisons actives (§ 15.2), ou n'y
    arrive jamais si le radar n'est pas relié ; en réseau complet, aussitôt.
-3. **Le PC attend son délai de réaction** (`bleu.conduite.delai_reaction_s`), puis, à chaque pas de décision, regroupe
+3. **Le CDC attend son délai de réaction** (`bleu.conduite.delai_reaction_s`), puis, à chaque pas de décision, regroupe
    les drones qu'il connaît en pistes (pistage) et affecte à chaque avion libre et joignable sa meilleure piste
    (allocation, § 8.3).
 4. **La mission descend à l'avion** après la latence de son accès (§ 15.4) ; l'avion part vers le point
@@ -434,11 +434,41 @@ de l'ellipsoïde).
 
 ### 17.2 Journal et affichage
 Le moteur journalise, en lecture seulement (pas en campagne), chaque maillon : `detection` (drone, radar, instant
-d'arrivée au PC ou null), `mission` (avion, effectif de la piste, nœud d'accès, instant de réception), `reception`,
+d'arrivée au CDC ou null), `mission` (avion, effectif de la piste, nœud d'accès, instant de réception), `reception`,
 `contact` (avion, drone), `tir`, `impact`, `ordre`, `panne`, `reseau`. Le journal ne change rien au déroulement :
 les bilans de référence restent exacts (`tests/portage_j0.test.js`).
 
-À l'écran (calque « Circulation de l'information ») : impulsion bleue d'un radar vers le PC avec le nombre de drones
-signalés (rouge et arrêtée si l'information ne va nulle part), impulsion blanche du PC vers l'avion missionné,
+À l'écran (calque « Circulation de l'information ») : impulsion bleue d'un radar vers le CDC avec le nombre de drones
+signalés (rouge et arrêtée si l'information ne va nulle part), impulsion blanche du CDC vers l'avion missionné,
 cercle blanc quand l'avion la reçoit, tirets jaunes quand il accroche un drone. Le panneau Journal raconte la même
 histoire en phrases (détections regroupées par radar sur 10 s), filtrable par famille ; l'inspecteur d'un drone en donne la chaîne complète.
+
+## 18 · Centres de détection et de contrôle (jalon 9)
+### 18.1 Plusieurs centres, une situation chacun
+Le centre principal (« conduite », affiché CDC) et les centres ajoutés (`bleu.reseau.centres`, nœuds
+« centre:<k> ») reçoivent les détections des radars, en font des pistes, envoient les avions et désignent les drones
+aux postes sol. Chaque centre a sa propre situation : il connaît un drone vu par le radar i à t + λ_c,i, la latence
+du plus court chemin du radar jusqu'à lui ; un chemin peut passer par un autre centre (échange de pistes entre
+centres). En réseau complet, tous les centres savent tout aussitôt.
+
+### 18.2 Contrôle des avions
+Chaque avion est contrôlé par le centre qui le joint le plus vite (§ 15.2, accès par centre). À chaque pas de
+décision, chaque centre affecte les avions libres qu'il contrôle aux pistes des drones qu'il connaît depuis au moins
+le délai de réaction. Si un centre tombe, ses avions passent au centre qui les joint encore ; s'il n'y en a plus, ils
+ne sont plus affectés. Un seul centre en réseau complet redonne les bilans d'avant (`tests/portage_j0.test.js`).
+
+### 18.3 Désignation des postes sol
+Les postes sol d'une cible forment le nœud « sol:<i> ». Un drone est **désigné** aux postes quand un centre le
+connaît et que l'information a eu le temps d'aller du centre aux postes : connu_c + λ_c,sol ≤ t. Désigné, le poste tire
+aussitôt qu'il est dans sa bulle, sur le plus proche ; sinon, le poste doit l'acquérir seul : il prend le drone qui
+entre dans sa bulle (le plus éloigné, le premier que voit son capteur), que les postes voisins de la même cible n'ont
+pas déjà en acquisition, le garde tant qu'il y reste, et ne tire qu'après le délai d'acquisition de son unité
+(`acquisition_s`, 10 s pour le poste notionnel). Sur le scénario de référence en liaisons (8 raids), les postes
+reliés au CDC abattent 312 drones, contre 231 sans liaison ; les frappes passent de 432 ± 52 à 515 ± 42.
+En réseau complet, tout drone connu est désigné. Le journal distingue les tirs désignés des tirs après acquisition.
+
+### 18.4 Éditeur
+Outil CDC (K) : ajouter un centre ; il se déplace, se supprime, se met hors service en cours de raid comme un
+radar. L'outil Liaison relie aussi un centre, ou les postes d'une cible (clic sur la cible). Le réseau par défaut
+relie chaque radar au CDC au fil, le CDC à chaque groupe d'avions par radio, aux postes de chaque cible et à chaque
+autre centre au fil.
