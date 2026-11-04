@@ -285,13 +285,24 @@ function brancher_reglages_carte() {
     const cle = e.target.name === "fond_carte" ? "fond" : e.target.name;
     etat.reglages_carte = {...etat.reglages_carte, [cle]: e.target.type === "checkbox" ? e.target.checked : e.target.value};
     memoriser_reglages_carte(etat.reglages_carte);
-    if (etat.carte && cle !== "scope_seul") etat.carte.setStyle(style_carte(etat.sources_carte, etat.reglages_carte));
+    if (cle === "scope_seul") preparer_carte();
+    else if (etat.carte) etat.carte.setStyle(style_carte(etat.sources_carte, etat.reglages_carte));
     cadrer(cle === "scope_seul");
   });
-  if (!etat.carte) {
-    panneau.querySelectorAll("select, input:not([name='scope_seul'])").forEach((champ) => (champ.disabled = true));
-    panneau.title = "Carte indisponible dans ce navigateur (WebGL) : vue scope seule.";
-  }
+}
+
+/**
+ * Créer la carte MapLibre au premier besoin seulement : en vue scope seule, une carte masquée consommait du rendu
+ * pour rien. Sans WebGL, les réglages de carte sont grisés et la vue reste au scope.
+ */
+function preparer_carte() {
+  if (etat.carte || etat.reglages_carte.scope_seul || etat.carte_indisponible) return;
+  etat.carte = creer_carte($("#carte"), etat.sources_carte, etat.reglages_carte);
+  if (etat.carte) return;
+  etat.carte_indisponible = true;
+  const panneau = $(".reglages-carte");
+  panneau.querySelectorAll("select, input:not([name='scope_seul'])").forEach((champ) => (champ.disabled = true));
+  panneau.title = "Carte indisponible dans ce navigateur (WebGL) : vue scope seule.";
 }
 
 /** Appliquer un geste d'édition : il s'empile pour l'annulation, puis le raid est recalculé à t = 0. */
@@ -365,8 +376,8 @@ function brancher_editeur() {
 async function demarrer() {
   publier_couleurs(document.documentElement);
   await charger_sources_carte();
-  etat.carte = creer_carte($("#carte"), etat.sources_carte, etat.reglages_carte);
   brancher_reglages_carte();
+  preparer_carte();
   etat.base = en_v2(await lire_json("scenarios/reference.json"));
   etat.afficher_reglages = construire_reglages($("#reglages"), modifier);
   brancher_transport();
