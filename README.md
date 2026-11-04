@@ -277,9 +277,25 @@ prive/unites/…  prive/algos/…             votre catalogue privé (ignoré pa
 scenarios/                                scénarios JSON, chaque clé documentée
 ```
 
-Après tout ajout : `node outils/indexer.js`. La suite de conformité vérifie d'elle-même tout fichier déposé, public ou
-privé : fiche complète, rôle tenu, aucune dépendance cachée, paramètres présents, invariants du rôle. Les rôles et
-leurs fonctions sont décrits dans [docs/MODELE.md § 10](docs/MODELE.md).
+Tout se règle sans toucher au moteur :
+
+- **Unités** : un fichier ne dit que ce qui change par rapport à son parent (`herite_de`) ; les valeurs s'écrivent
+  dans les unités du métier (`vitesse_kmh`, `portee_km`, `acquisition_s`…) et sont converties en SI à la lecture.
+- **Scénarios** : citent les unités et peuvent les surcharger (`surcharges`, `surcharges_emport`) ; toute valeur a un
+  chemin pointé (`bleu.avions.1.nombre`, `rouge.surcharges.vitesse_kmh`) utilisable dans l'interface, le balayage et
+  la ligne de commande.
+- **Algorithmes** : chaque décision (comportement, mouvement, détection, pistage, allocation, tir, tir sol) est un
+  module interchangeable, désigné par une unité ou par le scénario. Il exporte sa fiche `meta` et les fonctions de
+  son rôle, n'importe rien et reçoit géodésie et hasard à graine : il est pur et reproductible.
+  `algos/global/allocation/plus_proche.js` sert d'exemple commenté.
+- **Catalogue privé** : `prive/` reçoit vos unités et algorithmes réels, hors du dépôt public.
+
+Après tout ajout : `node outils/indexer.js`, puis `npm test` — la conformité vérifie d'elle-même tout fichier déposé.
+Pour mesurer l'effet d'un changement : `node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche`.
+
+**Le guide complet est dans [docs/CATALOGUE.md](docs/CATALOGUE.md)** : familles d'unités, héritage, suffixes,
+surcharges, rôles et contrat des algorithmes, exemple pas à pas, catalogue privé, conformité, cartes, reliefs,
+liaisons, et preuve d'un changement.
 
 ## En ligne de commande
 
@@ -337,6 +353,7 @@ node src/preuve.js empreinte
 ## Documentation
 
 - [docs/MODELE.md](docs/MODELE.md) : toutes les équations et hypothèses.
+- [docs/CATALOGUE.md](docs/CATALOGUE.md) : étendre Égide — unités, algorithmes, catalogue privé, preuve d'un changement.
 - [docs/PLAN_V2.md](docs/PLAN_V2.md) : feuille de route, jalons, idées et suggestions retenues.
 
 ## Tests

@@ -6,6 +6,12 @@
     "fidelite": "notionnel"
   },
   {
+    "id": "global/allocation/plus_proche",
+    "nom": "Piste la plus proche",
+    "role": "allocation",
+    "fidelite": "notionnel"
+  },
+  {
     "id": "global/comportement/essaim_direct",
     "nom": "Essaim en groupes directs",
     "role": "comportement",
