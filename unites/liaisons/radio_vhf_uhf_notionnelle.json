@@ -1,0 +1,12 @@
+{
+  "herite_de": "liaisons/_liaison",
+  "nom": "Radio V/UHF en visibilite directe (notionnelle)",
+  "sources": [
+    "Ordre de grandeur notionnel : liaison radio V/UHF sol-air, portee bornee par l'horizon radioelectrique"
+  ],
+  "type": "radio",
+  "latence_s": 1,
+  "portee_km": 400,
+  "visibilite_directe": true,
+  "hauteur_antenne_m": 15
+}

@@ -1,7 +1,8 @@
 {
   "_aide": {
     "_": "Scénario de référence résolu en SI par src/moteur/scenario.js : analyse/scenario.py doit rendre le même (tests/test_scenario.py), et ce fichier change seulement si le catalogue ou la référence change (tests/scenario.test.js).",
-    "resolu": "Le scénario résolu."
+    "resolu": "Le scénario résolu.",
+    "variante_reseau": "Le scénario de référence modifié par « modifications » (réseau en liaisons), résolu par src/moteur/scenario.js."
   },
   "resolu": {
     "nom": "Référence : 1 000 drones rapides contre une défense mixte",
@@ -183,10 +184,280 @@
       "pistage": "global/pistage/cellules",
       "allocation": "global/allocation/densite_pistes"
     },
+    "reseau": {
+      "mode": "complet",
+      "centre": {
+        "lat": 0.8203047484373349,
+        "lon": 0.04363323129985824,
+        "alt": 0
+      },
+      "liaisons": []
+    },
     "ordres": [],
     "simulation": {
       "pas": 0.5,
       "graine": 42
+    }
+  },
+  "variante_reseau": {
+    "modifications": {
+      "bleu.reseau.mode": "liaisons",
+      "bleu.reseau.centre_lat_deg": 47.1,
+      "bleu.reseau.centre_lon_deg": 2.4,
+      "bleu.reseau.liaisons": [
+        {
+          "de": "radar:0",
+          "vers": "conduite",
+          "moyen": "liaisons/filaire_notionnelle"
+        },
+        {
+          "de": "conduite",
+          "vers": "avions:1",
+          "moyen": "liaisons/radio_vhf_uhf_notionnelle"
+        }
+      ]
+    },
+    "resolu": {
+      "nom": "Référence : 1 000 drones rapides contre une défense mixte",
+      "theatre": {
+        "origine": {
+          "lat": 0.8203047484373349,
+          "lon": 0.04363323129985824,
+          "alt": 0
+        },
+        "zone_rayon": 150000,
+        "cibles_nombre": 10,
+        "cibles_placees": [],
+        "zones": []
+      },
+      "rouge": {
+        "id": "vecteurs/drones/drone_reaction_notionnel",
+        "nom": "Drone d'attaque a reaction (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : classe des drones d'attaque a turboreacteur, 600 a 900 km/h, vol tres bas"
+        ],
+        "lignee": [
+          "_unite",
+          "vecteurs/drones/_drone",
+          "vecteurs/drones/drone_reaction_notionnel"
+        ],
+        "algos": {
+          "mouvement": "global/mouvement/croisiere_geodesique"
+        },
+        "vitesse": 222.22222222222223,
+        "altitude_croisiere": 100,
+        "altitude": 100,
+        "nombre": 1000,
+        "tactique": "fourmi",
+        "concentration_max": 300,
+        "etalement": 120,
+        "fourmi_eclatement_rayon": 60000,
+        "fourmi_largeur_couloir": 6000,
+        "plan_de_vol": [],
+        "comportement": "global/comportement/essaim_fourmi"
+      },
+      "avions": [
+        {
+          "id": "vecteurs/avions/turbopropulseur_ir_notionnel",
+          "nom": "Turbopropulseur d'appui, roquettes IR (notionnel)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : classe des turbopropulseurs d'appui leger, 450 a 600 km/h"
+          ],
+          "lignee": [
+            "_unite",
+            "vecteurs/avions/_avion",
+            "vecteurs/avions/turbopropulseur_ir_notionnel"
+          ],
+          "algos": {
+            "mouvement": "global/mouvement/croisiere_geodesique"
+          },
+          "vitesse_mise_a_poste": 138.88888888888889,
+          "vitesse_engagement": 97.22222222222223,
+          "facteur_charge_max": 5,
+          "emport": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+          "emport_nombre": 12,
+          "nombre": 20,
+          "altitude": 1000,
+          "orbites_placees": [],
+          "arme": {
+            "id": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+            "nom": "Roquette guidee infrarouge (notionnelle)",
+            "fidelite": "notionnel",
+            "sources": [
+              "Ordre de grandeur notionnel : classe des roquettes a autodirecteur infrarouge, tire et oublie"
+            ],
+            "lignee": [
+              "_unite",
+              "effecteurs/roquettes/_roquette_guidee",
+              "effecteurs/roquettes/roquette_guidee_ir_notionnelle"
+            ],
+            "algos": {
+              "tir": "global/tir/tire_et_oublie"
+            },
+            "guidage": "ir",
+            "portee": 8000,
+            "pk": 0.7,
+            "duree_designation": 10,
+            "cadence": 3,
+            "vitesse": 700
+          }
+        },
+        {
+          "id": "vecteurs/avions/turbopropulseur_laser_notionnel",
+          "nom": "Turbopropulseur d'appui, roquettes laser (notionnel)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : classe des turbopropulseurs d'appui leger, 450 a 600 km/h"
+          ],
+          "lignee": [
+            "_unite",
+            "vecteurs/avions/_avion",
+            "vecteurs/avions/turbopropulseur_laser_notionnel"
+          ],
+          "algos": {
+            "mouvement": "global/mouvement/croisiere_geodesique"
+          },
+          "vitesse_mise_a_poste": 138.88888888888889,
+          "vitesse_engagement": 97.22222222222223,
+          "facteur_charge_max": 5,
+          "emport": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+          "emport_nombre": 12,
+          "nombre": 30,
+          "altitude": 1000,
+          "orbites_placees": [],
+          "arme": {
+            "id": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+            "nom": "Roquette guidee laser de 70 mm (notionnelle)",
+            "fidelite": "notionnel",
+            "sources": [
+              "Ordre de grandeur notionnel : classe des roquettes de 70 mm a guidage laser semi-actif, 5 a 10 km"
+            ],
+            "lignee": [
+              "_unite",
+              "effecteurs/roquettes/_roquette_guidee",
+              "effecteurs/roquettes/roquette_guidee_laser_notionnelle"
+            ],
+            "algos": {
+              "tir": "global/tir/guidage_laser_semi_actif"
+            },
+            "guidage": "laser",
+            "portee": 8000,
+            "pk": 0.7,
+            "duree_designation": 10,
+            "cadence": 3,
+            "vitesse": 700
+          }
+        }
+      ],
+      "sol": {
+        "id": "sites/postes/poste_sol_air_notionnel",
+        "nom": "Poste sol-air de courte portee (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : defense sol-air tres courte portee, roquettes et missiles"
+        ],
+        "lignee": [
+          "_unite",
+          "sites/postes/poste_sol_air_notionnel"
+        ],
+        "algos": {
+          "tir_sol": "global/tir_sol/cadence_par_passage"
+        },
+        "portee": 8000,
+        "pk": 0.7,
+        "engagements_par_passage": 8,
+        "nombre": 200,
+        "munitions": 1020
+      },
+      "radar": {
+        "id": "capteurs/radars/radar_basse_altitude_notionnel",
+        "nom": "Radar de surveillance basse altitude (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : radar de surveillance terrestre, antenne sur mat"
+        ],
+        "lignee": [
+          "_unite",
+          "capteurs/radars/radar_basse_altitude_notionnel"
+        ],
+        "algos": {
+          "detection": "global/detection/couverture_frontiere"
+        },
+        "hauteur_antenne": 20,
+        "portee_max": 250000,
+        "disposition": "frontiere",
+        "sites": []
+      },
+      "conduite": {
+        "delai_reaction": 90,
+        "pas_decision": 5,
+        "interception_profondeur": 50000,
+        "pistage": "global/pistage/cellules",
+        "allocation": "global/allocation/densite_pistes"
+      },
+      "reseau": {
+        "mode": "liaisons",
+        "centre": {
+          "lat": 0.8220500776893293,
+          "lon": 0.041887902047863905,
+          "alt": 0
+        },
+        "liaisons": [
+          {
+            "de": "radar:0",
+            "vers": "conduite",
+            "moyen": {
+              "id": "liaisons/filaire_notionnelle",
+              "nom": "Liaison filaire (notionnelle)",
+              "fidelite": "notionnel",
+              "sources": [
+                "Ordre de grandeur notionnel : reseau terrestre fibre ou cuivre, sans limite de portee a l'echelle du theatre"
+              ],
+              "lignee": [
+                "_unite",
+                "liaisons/_liaison",
+                "liaisons/filaire_notionnelle"
+              ],
+              "algos": {},
+              "type": "filaire",
+              "latence": 0.5,
+              "portee": 40000000,
+              "visibilite_directe": false,
+              "hauteur_antenne": 0
+            }
+          },
+          {
+            "de": "conduite",
+            "vers": "avions:1",
+            "moyen": {
+              "id": "liaisons/radio_vhf_uhf_notionnelle",
+              "nom": "Radio V/UHF en visibilite directe (notionnelle)",
+              "fidelite": "notionnel",
+              "sources": [
+                "Ordre de grandeur notionnel : liaison radio V/UHF sol-air, portee bornee par l'horizon radioelectrique"
+              ],
+              "lignee": [
+                "_unite",
+                "liaisons/_liaison",
+                "liaisons/radio_vhf_uhf_notionnelle"
+              ],
+              "algos": {},
+              "type": "radio",
+              "latence": 1,
+              "portee": 400000,
+              "visibilite_directe": true,
+              "hauteur_antenne": 15
+            }
+          }
+        ]
+      },
+      "ordres": [],
+      "simulation": {
+        "pas": 0.5,
+        "graine": 42
+      }
     }
   }
 }

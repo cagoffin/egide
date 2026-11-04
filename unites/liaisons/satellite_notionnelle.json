@@ -1,0 +1,12 @@
+{
+  "herite_de": "liaisons/_liaison",
+  "nom": "Liaison satellite (notionnelle)",
+  "sources": [
+    "Ordre de grandeur notionnel : relais par satellite geostationnaire, environ 0,25 s de propagation aller, plus le traitement"
+  ],
+  "type": "satellite",
+  "latence_s": 3,
+  "portee_km": 40000,
+  "visibilite_directe": false,
+  "hauteur_antenne_m": 2
+}

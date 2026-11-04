@@ -68,7 +68,8 @@
       "ordres[].t_s": "Instant de l'ordre depuis le debut du raid.",
       "ordres[].avions": "Numeros des avions concernes (ordre de creation : groupes dans l'ordre du scenario).",
       "ordres[].lat_deg": "Latitude du point a rallier (WGS84).",
-      "ordres[].lon_deg": "Longitude du point a rallier (WGS84)."
+      "ordres[].lon_deg": "Longitude du point a rallier (WGS84).",
+      "reseau": "Reseau d'information entre radars, centre de conduite et avions (MODELE § 15.2)."
     },
     "avions": [
       {
@@ -125,6 +126,21 @@
       "interception_profondeur_km": 50,
       "pistage": "global/pistage/cellules",
       "allocation": "global/allocation/densite_pistes"
+    },
+    "reseau": {
+      "_aide": {
+        "mode": "'complet' : tout le monde parle avec tout le monde, sans delai ; 'liaisons' : seules les liaisons listees portent l'information (MODELE § 15.2).",
+        "centre_lat_deg": "Latitude du centre de conduite ; null : au centre du theatre.",
+        "centre_lon_deg": "Longitude du centre de conduite ; null : au centre du theatre.",
+        "liaisons": "Liaisons du reseau en mode 'liaisons'.",
+        "liaisons[].de": "Extremite : 'conduite', 'radar:<i>' (R<i+1>) ou 'avions:<g>' (groupe g de bleu.avions).",
+        "liaisons[].vers": "Autre extremite, memes noms ; une liaison porte l'information dans les deux sens.",
+        "liaisons[].moyen": "Moyen de communication : identifiant d'une unite de unites/liaisons/."
+      },
+      "mode": "complet",
+      "centre_lat_deg": null,
+      "centre_lon_deg": null,
+      "liaisons": []
     }
   },
   "simulation": {

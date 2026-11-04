@@ -4,6 +4,7 @@ import {dessiner_anneaux, dessiner_balayage, dessiner_echelle} from "./cadre.js"
 import {COULEURS} from "./couleurs.js";
 import {positions_radars} from "../moteur/radars.js";
 import {calques_par_defaut, element_visible} from "./calques.js";
+import {dessiner_reseau} from "./reseau_vue.js";
 import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_radars, dessiner_tirs} from "./symboles.js";
 
 /**
@@ -23,6 +24,7 @@ export function dessiner_scope(ctx, camera, etat) {
   if (etat.balayage && calques.balayage) dessiner_balayage(ctx, camera, monde, etat.angle);
   dessiner_anneaux(ctx, camera, monde, calques);
   dessiner_cibles(ctx, camera, monde, effets, maintenant, calques);
+  if (calques.reseau) dessiner_reseau(ctx, camera, monde);
   if (calques.radars) dessiner_radars(ctx, camera, positions_radars(monde.scenario));
   dessiner_drones(ctx, camera, monde, traces, calques);
   if (calques.tirs) dessiner_tirs(ctx, camera, effets, maintenant);
@@ -65,6 +67,8 @@ export function trouver_sous_curseur(camera, monde, ecran, calques = calques_par
   const radars = calques.radars ? positions_radars(monde.scenario).map((geo, indice) => ({geo, indice})) : [];
   const radar = plus_proche_ecran(camera, radars, (r) => r.geo, ecran, 10);
   if (radar) return {type: "radar", objet: radar, indice: radar.indice};
+  const conduite = calques.reseau ? plus_proche_ecran(camera, [{geo: monde.scenario.reseau.centre}], (c) => c.geo, ecran, 12) : null;
+  if (conduite) return {type: "conduite", objet: conduite};
   const indice = !calques.cibles ? -1 : monde.cibles.findIndex((cible) => {
     const point = projeter_ecran(camera, cible.geo);
     return Math.abs(point.x - ecran.x) <= 8 && Math.abs(point.y - ecran.y) <= 8;

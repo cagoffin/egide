@@ -10,6 +10,7 @@ import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./cart
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
 import {creer_editeur} from "./editeur.js";
+import {MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {dessiner_inspection, inspection} from "./inspecteur.js";
 import {dessiner_profil} from "./profil.js";
 import {altitudes_relief, echantillonner_chemin} from "./relief.js";
@@ -80,7 +81,7 @@ async function charger() {
   etat.traces = creer_traces();
   etat.effets = creer_effets();
   const {monde} = etat.lecteur;
-  const nombres = {avion: monde.avions.length, drone: monde.drones.length, cible: monde.cibles.length, radar: positions_radars(monde.scenario).length};
+  const nombres = {avion: monde.avions.length, drone: monde.drones.length, cible: monde.cibles.length, radar: positions_radars(monde.scenario).length, conduite: 1};
   const existe = etat.inspection && etat.inspection.id < nombres[etat.inspection.type];
   if (etat.inspection && !existe) inspecter(null);
   $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
@@ -126,6 +127,8 @@ function cadrer(forcer = false) {
 }
 
 function image(maintenant, precedent) {
+  // L'image suivante est demandée d'abord : une erreur de dessin ne doit pas figer l'affichage.
+  requestAnimationFrame((suivant) => image(suivant, maintenant));
   const {lecteur} = etat;
   if (lecteur && etat.camera) {
     const fini = avancer_temps_reel(lecteur, (maintenant - precedent) / 1000, (monde) => echantillonner(etat.traces, monde));
@@ -139,7 +142,6 @@ function image(maintenant, precedent) {
     dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
   }
-  requestAnimationFrame((suivant) => image(suivant, maintenant));
 }
 
 /** Mettre à jour le panneau de l'inspecteur (au plus quatre fois par seconde : le texte se lit, il ne s'anime pas). */
@@ -246,7 +248,7 @@ function brancher_scope() {
     if (appui && Math.hypot(e.clientX - appui.x, e.clientY - appui.y) > 4) return;
     const cadre = vue.getBoundingClientRect();
     const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques);
-    if (touche) inspecter({type: touche.type, id: ["cible", "radar"].includes(touche.type) ? touche.indice : touche.objet.id});
+    if (touche) inspecter({type: touche.type, id: touche.type === "conduite" ? 0 : ["cible", "radar"].includes(touche.type) ? touche.indice : touche.objet.id});
   });
   $("[data-action='fermer_inspecteur']").addEventListener("click", () => inspecter(null));
   addEventListener("keydown", (e) => e.key === "Escape" && !etat.editeur?.est_actif() && inspecter(null));
@@ -367,6 +369,7 @@ function brancher_editeur() {
   etat.editeur = creer_editeur({
     vue: $("#vue"), toile: $("#scope"), barre: $(".barre-edition"),
     camera: () => etat.camera, monde: () => etat.lecteur.monde, brut: brut_courant, calques: () => etat.calques,
+    moyen: () => $("[name='moyen_liaison']").value,
     appliquer: appliquer_edition, annuler: annuler_edition,
     panoramique: (dx, dy) => {
       if (etat.camera.type === "carte") etat.carte.panBy([-dx, -dy], {duration: 0});
@@ -389,7 +392,7 @@ function brancher_editeur() {
 }
 
 // Pastille de légende de chaque calque (classes définies dans style.css).
-const PASTILLES = {avions_ir: "ami-plein", avions_laser: "ami-creux", missions: "trait-ami", radars: "radar", couverture: "trait-ami",
+const PASTILLES = {avions_ir: "ami-plein", avions_laser: "ami-creux", missions: "trait-ami", radars: "radar", reseau: "reseau", couverture: "trait-ami",
   balayage: "faisceau", postes: "sol", drones_detectes: "hostile", drones_inconnus: "inconnu", plots: "plots", plan: "trait-hostile",
   tirs: "eclat", cibles: "cible", zones: "zone", anneaux: "trait"};
 
@@ -410,6 +413,15 @@ function brancher_calques() {
   afficher();
 }
 
+/** Proposer dans la barre d'édition les moyens de liaison du catalogue (unites/liaisons/), radio par défaut. */
+async function remplir_moyens() {
+  const index = await lire_json("unites/index.json");
+  const moyens = index.filter((u) => u.famille === "liaisons" && !u.base);
+  const choix = $("[name='moyen_liaison']");
+  choix.innerHTML = moyens.map((u) => `<option value="${u.id}">${u.nom.replace(/ \(notionnelle?\)$/, "")}</option>`).join("");
+  choix.value = MOYENS_PAR_DEFAUT.avions;
+}
+
 async function demarrer() {
   publier_couleurs(document.documentElement);
   await charger_sources_carte();
@@ -421,6 +433,7 @@ async function demarrer() {
   brancher_scope();
   brancher_editeur();
   brancher_calques();
+  await remplir_moyens();
   etat.panneaux = brancher_panneaux($("#vue"), $(".rail"), (id) => id === "profil" && rafraichir_profil());
   brancher_prereglages();
   brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));

@@ -7,6 +7,7 @@ import {echapper, LIBELLES_FIDELITE} from "./fiches.js";
 import {format_decimal, format_duree, format_entier} from "./format.js";
 import {ms_vers_kmh} from "../moteur/unites.js";
 import {positions_radars} from "../moteur/radars.js";
+import {libelle_noeud} from "./reseau_vue.js";
 
 const ETATS = {orbite: "en orbite", ralliement: "en route vers son point", engagement: "au contact d'un drone",
   poste: "à poste, en attente", retour: "retour vers son orbite"};
@@ -19,6 +20,9 @@ const pourcent = (p) => `${format_decimal(100 * p)} %`;
 
 function pourquoi_avion(avion) {
   const decision = avion.decision;
+  if (avion.acces === null && !avion.ordre) {
+    return "<p><b>Hors liaison</b> : la conduite ne peut pas le joindre (docs/MODELE.md § 15.2). Il finit sa dernière mission, puis reste où il est ; il n'engage que les drones qui passent à sa portée.</p>";
+  }
   if (avion.ordre) return `<p>Il exécute un <b>ordre</b> donné dans l'éditeur : il rallie son point, et la conduite ne le réaffecte pas avant son arrivée.</p>`;
   if (!decision?.explication) return "<p>La conduite ne l'a pas encore affecté : aucune piste n'était connue.</p>";
   const {explication: x, t} = decision;
@@ -44,6 +48,7 @@ function inspection_avion(avion, monde) {
       ligne("Altitude", `${format_entier(avion.geo.alt)} m`),
       ligne("Vitesse", vitesse ? `${format_entier(ms_vers_kmh(vitesse))} km/h` : "en orbite"),
       ligne("Arme", `${lien_fiche("unite", groupe.arme.id, groupe.arme.nom)}, ${avion.munitions} sur ${groupe.emport_nombre}`),
+      ligne("Liaison", acces_texte(monde, avion)),
     ].join("")}</table>
     <h4>Pourquoi va-t-il là ?</h4>${pourquoi_avion(avion, monde)}
     <h4>Modèles</h4><ul>
@@ -103,6 +108,40 @@ function inspection_cible(indice, monde) {
 }
 
 /** Rendre le HTML de l'inspection de `cible` ({type: avion|drone|cible, id}) dans le monde. */
+function reseau_radar(monde, indice) {
+  const latence = monde.reseau.latences_radars[indice];
+  if (monde.reseau.mode === "complet") return "Relié à toute la défense : chaque détection profite aussitôt à tous (réseau complet, docs/MODELE.md § 15.2).";
+  if (!Number.isFinite(latence)) return "<b>Non relié à la conduite</b> : ce qu'il voit ne sert à personne.";
+  return `Relié à la conduite : ses détections y arrivent en <b>${format_decimal(latence)} s</b>.`;
+}
+
+function acces_texte(monde, avion) {
+  if (monde.reseau.mode === "complet") return "réseau complet";
+  if (avion.acces === undefined) return "pas encore évaluée";
+  if (!avion.acces) return "<b>hors liaison</b> : la conduite ne peut pas l'affecter";
+  return `${echapper(avion.acces.moyen.nom)} depuis ${libelle_noeud(monde, avion.acces.sol)}, ${format_decimal(avion.acces.latence)} s`;
+}
+
+function inspection_conduite(monde) {
+  const {reseau} = monde;
+  const lignes = reseau.fixes.map((l) => `<li>${libelle_noeud(monde, l.de)} ↔ ${libelle_noeud(monde, l.vers)} : ${echapper(l.moyen.nom)},
+    ${l.active ? `${format_decimal(l.moyen.latence)} s` : `<b>hors portée</b> (${format_decimal(l.distance / 1000)} km pour ${format_decimal(l.portee / 1000)} km)`}</li>`).join("");
+  const nonRelies = reseau.latences_radars.map((l, i) => (Number.isFinite(l) ? null : `R${i + 1}`)).filter(Boolean);
+  const joignables = monde.avions.filter((a) => a.acces).length;
+  const groupes = reseau.acces.map((liste, g) => `<li>${libelle_noeud(monde, `avions:${g}`)} : ${liste.length
+    ? liste.map((a) => `${echapper(a.moyen.nom)} depuis ${libelle_noeud(monde, a.sol)}`).join(", ") : "<b>aucun accès</b>"}</li>`).join("");
+  return `<h3>Centre de conduite (C2)</h3>
+    <table>${[
+      ligne("Position", position(reseau.centre)),
+      ligne("Réseau", reseau.mode === "complet" ? "complet : tout le monde parle avec tout le monde, sans délai" : "liaisons listées"),
+    ].join("")}</table>
+    ${reseau.mode === "complet" ? "<p>Chaque détection est connue aussitôt ; chaque avion est joignable. Pour décrire le réseau, outil Liaison de l'éditeur (docs/MODELE.md § 15.2).</p>" : `
+    <h4>Liaisons au sol</h4>${lignes ? `<ul>${lignes}</ul>` : "<p>Aucune.</p>"}
+    <p>${nonRelies.length ? `Radars non reliés : <b>${nonRelies.join(", ")}</b>.` : "Tous les radars sont reliés."}</p>
+    <h4>Accès aux avions</h4><ul>${groupes}</ul>
+    <p>${format_entier(joignables)} avions joignables sur ${format_entier(monde.avions.length)} à la dernière décision.</p>`}`;
+}
+
 function inspection_radar(indice, monde) {
   const {radar} = monde.scenario;
   const geo = positions_radars(monde.scenario)[indice];
@@ -122,12 +161,12 @@ function inspection_radar(indice, monde) {
       ligne("Détection", lien_fiche("algo", radar.algos.detection, radar.algos.detection)),
     ].join("")}</table>
     <h4>Réseau</h4>
-    <p>Relié à toute la défense : chaque détection profite aussitôt à tous (réseau entièrement connecté, docs/MODELE.md § 15.2).
-      ${format_entier(vus)} drones détectés depuis le début du raid par l'ensemble des radars.</p>`;
+    <p>${reseau_radar(monde, indice)} ${format_entier(vus)} drones détectés depuis le début du raid par l'ensemble des radars.</p>`;
 }
 
 export function inspection(cible, monde) {
   if (cible.type === "radar") return inspection_radar(cible.id, monde);
+  if (cible.type === "conduite") return inspection_conduite(monde);
   if (cible.type === "avion") return inspection_avion(monde.avions[cible.id], monde);
   if (cible.type === "drone") return inspection_drone(monde.drones[cible.id], monde);
   return inspection_cible(cible.id, monde);
@@ -138,6 +177,7 @@ export function position_inspectee(cible, monde) {
   if (cible.type === "avion") return monde.avions[cible.id]?.geo ?? null;
   if (cible.type === "cible") return monde.cibles[cible.id]?.geo ?? null;
   if (cible.type === "radar") return positions_radars(monde.scenario)[cible.id] ?? null;
+  if (cible.type === "conduite") return monde.scenario.reseau.centre;
   const drone = monde.drones[cible.id];
   return drone && drone.vivant && !drone.arrive ? drone.geo : null;
 }

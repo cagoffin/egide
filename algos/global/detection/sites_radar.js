@@ -27,6 +27,16 @@ export function preparer(scenario, radar, outils) {
   return {origine: scenario.theatre.origine, rayon_couverture: Math.max(scenario.theatre.zone_rayon, ...eloignement), sites};
 }
 
+/** Rendre les indices des sites dont la portée contient `drone` (réseau d'information, MODELE § 15.2). */
+export function detecte_par(etat, drone) {
+  const {x, y, z} = drone.ecef;
+  const voyants = [];
+  etat.sites.forEach(({ecef, seuil2}, i) => {
+    if ((x - ecef.x) ** 2 + (y - ecef.y) ** 2 + (z - ecef.z) ** 2 <= seuil2) voyants.push(i);
+  });
+  return voyants;
+}
+
 /** Rendre vrai si `drone` est dans la portée d'au moins un site. */
 export function detecte(etat, drone) {
   const {x, y, z} = drone.ecef;

@@ -1,0 +1,12 @@
+{
+  "herite_de": "liaisons/_liaison",
+  "nom": "Liaison optique en espace libre (notionnelle)",
+  "sources": [
+    "Ordre de grandeur notionnel : faisceau optique point a point, courte portee et visibilite directe"
+  ],
+  "type": "optique",
+  "latence_s": 0.1,
+  "portee_km": 20,
+  "visibilite_directe": true,
+  "hauteur_antenne_m": 15
+}

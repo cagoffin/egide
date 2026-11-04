@@ -32,7 +32,7 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | **fait** : explorateur `catalogue.html`, inspecteur au clic, renvois au modèle vérifiés |
 | 5 | Preuve : convergence en pas de temps, sensibilité (Morris, Sobol), duel A/B, empreinte de reproductibilité, dossier de preuve | Les résultats publiés portent leur empreinte et leur convergence | **outils faits** en ligne de commande (`src/preuve.js` : empreinte, convergence, duel apparié, Morris, dossier) ; Sobol et duel en écran partagé à faire |
 | 6 | Idées ci-dessous, par lots | Selon l'idée | **en cours** : interface centrée sur la carte, radars placés et déplaçables, calques par type d'unité |
-| 7 | Réseau d'information : liaisons paramétrables entre unités, synoptique de connectivité, situation perçue par unité | Avec un réseau entièrement connecté sans délai, bilans identiques à aujourd'hui | à faire |
+| 7 | Réseau d'information : liaisons paramétrables entre unités, synoptique de connectivité, situation perçue par unité | Avec un réseau entièrement connecté sans délai, bilans identiques à aujourd'hui | **lot 1 fait** : moyens filaire, radio, satellite, optique ; liaisons radar–conduite–avions avec latence et portée ; synoptique ; outil Liaison. Reste : latence des ordres, débit, brouillage, liaisons entre drones, postes sol en réseau |
 
 ## Idées retenues
 
@@ -74,6 +74,11 @@ scenarios/                                  placements, plans de vol, zones, mé
 
 ## Suggestions au fil de l'eau
 Nouvelles idées proposées pendant le développement, à trier avec l'utilisateur.
+- *Jalon 7* — **Panne et attaque du réseau** : couper une liaison ou un nœud à un instant donné (comme un ordre), pour
+  mesurer la résilience ; le centre de conduite devient une cible possible de l'essaim.
+- *Jalon 7* — **Situation perçue à l'écran** : basculer l'affichage entre la vérité terrain et ce que sait la conduite
+  (pistes connues, avec leur retard), pour voir l'effet du réseau d'un coup d'œil.
+- *Jalon 7* — **Duel de réseaux** : comparer avec `src/preuve.js duel` deux architectures de liaisons sur les mêmes graines.
 - *Jalon 5* — **Réglages inertes** : le criblage de Morris montre qu'un réglage peut n'avoir aucun effet (rouge.etalement_s
   ne joue qu'en tactique dispersée). Griser dans l'interface les réglages que l'algorithme en jeu ne lit pas, en
   croisant `meta.parametres` et le scénario.

@@ -1,0 +1,12 @@
+{
+  "herite_de": "liaisons/_liaison",
+  "nom": "Liaison filaire (notionnelle)",
+  "sources": [
+    "Ordre de grandeur notionnel : reseau terrestre fibre ou cuivre, sans limite de portee a l'echelle du theatre"
+  ],
+  "type": "filaire",
+  "latence_s": 0.5,
+  "portee_km": 40000,
+  "visibilite_directe": false,
+  "hauteur_antenne_m": 0
+}

@@ -1,0 +1,152 @@
+// Synoptique du réseau d'information (MODELE § 15.2) : centre de conduite, liaisons entre radars, conduite et
+// groupes d'avions, état de chaque liaison. Positions et libellés purs ; le tracé lit le monde sans le modifier.
+import {chemin_cercle, ecran} from "./ecran.js";
+import {COULEURS} from "./couleurs.js";
+import {format_decimal} from "./format.js";
+import {portee_liaison} from "../moteur/reseau.js";
+import {positions_radars} from "../moteur/radars.js";
+
+/** Moyens proposés par défaut quand le réseau passe en liaisons : radars → conduite au fil, conduite → avions par radio. */
+export const MOYENS_PAR_DEFAUT = {radars: "liaisons/filaire_notionnelle", avions: "liaisons/radio_vhf_uhf_notionnelle"};
+
+/** Trait de chaque famille de moyens : couleur et pointillé. */
+export const TRAITS = {
+  filaire: {couleur: "#b7c4d1", tirets: []},
+  radio: {couleur: COULEURS.ami, tirets: [7, 4]},
+  satellite: {couleur: "#b48ee8", tirets: [2, 4]},
+  optique: {couleur: "#e8d36a", tirets: [12, 3, 2, 3]},
+};
+
+/** Rendre le barycentre au sol des orbites du groupe d'avions g (point d'ancrage du groupe dans le synoptique). */
+function ancrage_groupe(monde, g) {
+  const avions = monde.avions.filter((a) => a.groupe === monde.scenario.avions[g]);
+  if (!avions.length) return null;
+  const somme = avions.reduce((s, a) => ({lat: s.lat + a.orbite.lat, lon: s.lon + a.orbite.lon}), {lat: 0, lon: 0});
+  return {lat: somme.lat / avions.length, lon: somme.lon / avions.length, alt: 0};
+}
+
+/** Rendre la position d'un nœud du réseau (« conduite », « radar:<i> », « avions:<g> »), ou null. */
+export function position_noeud(monde, noeud) {
+  if (noeud === "conduite") return monde.scenario.reseau.centre;
+  if (noeud.startsWith("radar:")) return positions_radars(monde.scenario)[Number(noeud.slice(6))] ?? null;
+  return ancrage_groupe(monde, Number(noeud.slice(7)));
+}
+
+/** Rendre le nom lisible d'un nœud : « conduite », « R3 », « avions IR »… */
+export function libelle_noeud(monde, noeud) {
+  if (noeud === "conduite") return "conduite";
+  if (noeud.startsWith("radar:")) return `R${Number(noeud.slice(6)) + 1}`;
+  const groupe = monde.scenario.avions[Number(noeud.slice(7))];
+  return groupe ? `avions ${groupe.nom}` : noeud;
+}
+
+/** Rendre les liaisons qui matérialisent le réseau complet : chaque radar à la conduite, la conduite à chaque groupe. */
+export function liaisons_par_defaut(monde) {
+  return [
+    ...positions_radars(monde.scenario).map((_, i) => ({de: `radar:${i}`, vers: "conduite", moyen: MOYENS_PAR_DEFAUT.radars})),
+    ...monde.scenario.avions.map((_, g) => ({de: "conduite", vers: `avions:${g}`, moyen: MOYENS_PAR_DEFAUT.avions})),
+  ];
+}
+
+function trait(ctx, type, actif) {
+  const style = TRAITS[type] ?? TRAITS.radio;
+  ctx.strokeStyle = actif ? style.couleur : COULEURS.hostile;
+  ctx.setLineDash(actif ? style.tirets : [3, 3]);
+  ctx.lineWidth = actif ? 1.6 : 1.2;
+}
+
+/** Tracer le centre de conduite : cadre ami et hampe, à la manière d'un poste de commandement APP-6. */
+function dessiner_conduite(ctx, camera, monde) {
+  const p = ecran(camera, monde.scenario.reseau.centre);
+  ctx.setLineDash([]);
+  ctx.fillStyle = COULEURS.fond;
+  ctx.strokeStyle = COULEURS.ami;
+  ctx.lineWidth = 2;
+  ctx.fillRect(p.x - 10, p.y - 7, 20, 14);
+  ctx.strokeRect(p.x - 10, p.y - 7, 20, 14);
+  ctx.beginPath();
+  ctx.moveTo(p.x - 10, p.y + 7);
+  ctx.lineTo(p.x - 10, p.y + 16);
+  ctx.stroke();
+  ctx.fillStyle = COULEURS.ami;
+  ctx.font = "bold 10px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("C2", p.x, p.y + 4);
+  ctx.textAlign = "start";
+}
+
+function dessiner_liaison(ctx, camera, a, b, type, actif, texte) {
+  const [p, q] = [ecran(camera, a), ecran(camera, b)];
+  trait(ctx, type, actif);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+  ctx.lineTo(q.x, q.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  const m = {x: (p.x + q.x) / 2, y: (p.y + q.y) / 2};
+  if (!actif) {
+    ctx.strokeStyle = COULEURS.hostile;
+    ctx.beginPath();
+    ctx.moveTo(m.x - 5, m.y - 5);
+    ctx.lineTo(m.x + 5, m.y + 5);
+    ctx.moveTo(m.x + 5, m.y - 5);
+    ctx.lineTo(m.x - 5, m.y + 5);
+    ctx.stroke();
+  }
+  if (texte) {
+    ctx.fillStyle = actif ? COULEURS.texte_secondaire : COULEURS.hostile;
+    ctx.font = "10px system-ui, sans-serif";
+    ctx.fillText(texte, m.x + 6, m.y - 4);
+  }
+}
+
+/**
+ * Tracer le synoptique : en réseau complet, un trait discret de chaque radar à la conduite ; en liaisons, chaque
+ * liaison fixe avec son moyen et sa latence (rouge barrée si hors de portée), la portée de chaque accès sol-air à
+ * l'altitude du groupe, et une croix rouge sur chaque avion que la conduite ne peut pas joindre.
+ */
+export function dessiner_reseau(ctx, camera, monde) {
+  const {reseau} = monde;
+  if (reseau.mode === "complet") {
+    ctx.globalAlpha = 0.35;
+    for (const radar of reseau.radars) dessiner_liaison(ctx, camera, radar, reseau.centre, "filaire", true, "");
+    ctx.globalAlpha = 1;
+  } else {
+    for (const l of reseau.fixes) {
+      const [a, b] = [position_noeud(monde, l.de), position_noeud(monde, l.vers)];
+      if (a && b) dessiner_liaison(ctx, camera, a, b, l.moyen.type, l.active, l.active ? `${format_decimal(l.moyen.latence)} s` : "hors portée");
+    }
+    dessiner_acces(ctx, camera, monde);
+  }
+  dessiner_conduite(ctx, camera, monde);
+}
+
+function dessiner_acces(ctx, camera, monde) {
+  monde.reseau.acces.forEach((liste, g) => {
+    const groupe = monde.scenario.avions[g];
+    const ancre = position_noeud(monde, `avions:${g}`);
+    for (const acces of liste) {
+      if (ancre) dessiner_liaison(ctx, camera, acces.position, ancre, acces.moyen.type, true, `${format_decimal(acces.latence)} s`);
+      const portee = portee_liaison(acces.moyen, acces.moyen.hauteur_antenne, groupe.altitude);
+      if (portee > 2_000_000) continue;
+      trait(ctx, acces.moyen.type, true);
+      ctx.globalAlpha = 0.5;
+      chemin_cercle(ctx, camera, acces.position, portee, 96);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
+    }
+  });
+  ctx.strokeStyle = COULEURS.hostile;
+  ctx.lineWidth = 1.5;
+  for (const avion of monde.avions) {
+    if (avion.acces !== null || avion.munitions === 0) continue;
+    const p = ecran(camera, avion.geo);
+    ctx.beginPath();
+    ctx.moveTo(p.x + 6, p.y - 10);
+    ctx.lineTo(p.x + 12, p.y - 4);
+    ctx.moveTo(p.x + 12, p.y - 10);
+    ctx.lineTo(p.x + 6, p.y - 4);
+    ctx.stroke();
+  }
+}

@@ -297,3 +297,52 @@ test("calques : tout visible par défaut, mémoire protégée, masqué = ni surv
   assert.equal(trouver_sous_curseur(camera, MONDE, p)?.type, "radar");
   assert.notEqual(trouver_sous_curseur(camera, MONDE, p, sans)?.type, "radar");
 });
+
+import {modifications_ajout_liaison, modifications_reseau_complet, noeud_element} from "../src/vue/edition.js";
+import {modifier_scenario} from "../src/moteur/scenario.js";
+import {liaisons_par_defaut, libelle_noeud, position_noeud} from "../src/vue/reseau_vue.js";
+import {inspection as inspecter_entite} from "../src/vue/inspecteur.js";
+
+test("réseau dans l'éditeur : une liaison depuis le réseau complet le matérialise, puis s'y ajoute", () => {
+  const radars = positions_radars(MONDE.scenario).length;
+  const defaut = liaisons_par_defaut(MONDE);
+  assert.equal(defaut.length, radars + MONDE.scenario.avions.length);
+  const avion = elements_editables(MONDE, REFERENCE).find((e) => e.type === "avion");
+  assert.match(noeud_element(MONDE, avion), /^avions:\d$/);
+  const ajout = modifications_ajout_liaison(MONDE, REFERENCE, "radar:0", "avions:1", "liaisons/satellite_notionnelle");
+  assert.equal(ajout["bleu.reseau.mode"], "liaisons");
+  assert.equal(ajout["bleu.reseau.liaisons"].length, defaut.length + 1);
+  assert.deepEqual(modifications_ajout_liaison(MONDE, REFERENCE, "conduite", "conduite", "x"), {});
+  // Relier deux nœuds déjà reliés change le moyen au lieu de doubler la liaison.
+  const remplace = modifications_ajout_liaison(MONDE, REFERENCE, "conduite", "radar:0", "liaisons/radio_vhf_uhf_notionnelle");
+  assert.equal(remplace["bleu.reseau.liaisons"].length, defaut.length);
+  assert.deepEqual(modifications_reseau_complet(), {"bleu.reseau.mode": "complet", "bleu.reseau.liaisons": []});
+  assert.equal(libelle_noeud(MONDE, "radar:2"), "R3");
+  assert.ok(position_noeud(MONDE, "avions:0"));
+});
+
+test("réseau dans l'éditeur : liaisons sélectionnables, supprimables ; ôter un radar renumérote ses liaisons", () => {
+  const brut = modifier_scenario(REFERENCE, modifications_ajout_liaison(MONDE, REFERENCE, "radar:0", "avions:1", "liaisons/satellite_notionnelle"));
+  const monde = creer_monde(scenario(modifications_ajout_liaison(MONDE, REFERENCE, "radar:0", "avions:1", "liaisons/satellite_notionnelle")), {registre: REGISTRE});
+  const liaisons = elements_editables(monde, brut).filter((e) => e.type === "liaison");
+  assert.equal(liaisons.length, brut.bleu.reseau.liaisons.length);
+  const sans = modifications_suppression(monde, brut, ["liaison:0"]);
+  assert.equal(sans["bleu.reseau.liaisons"].length, liaisons.length - 1);
+  const sansR1 = modifications_suppression(monde, brut, ["radar:0"])["bleu.reseau.liaisons"];
+  assert.ok(sansR1.every((l) => l.de !== "radar:0" || l.vers === "conduite"), "R2 devient radar:0");
+  assert.equal(sansR1.filter((l) => l.vers === "avions:1" && l.de.startsWith("radar")).length, 0, "la liaison de R1 disparaît");
+  assert.equal(sansR1.filter((l) => l.de.startsWith("radar:")).length, positions_radars(monde.scenario).length - 1);
+  const vers = direct(monde.scenario.reseau.centre, 0, 30_000);
+  const deplace = modifications_deplacement(monde, brut, ["conduite"], monde.scenario.reseau.centre, vers);
+  assert.ok(inverse(geo_deg(deplace["bleu.reseau.centre_lat_deg"], deplace["bleu.reseau.centre_lon_deg"]), vers).distance < 1);
+  assert.match(inspecter_entite({type: "conduite", id: 0}, monde), /Liaisons au sol/);
+  assert.match(inspecter_entite({type: "radar", id: 0}, monde), /arrivent en/);
+});
+
+test("survol du centre de conduite : l'entité trouvée porte sa position, comme les autres", () => {
+  const camera = creer_camera(800, 800, 250_000, MONDE.scenario.theatre.origine);
+  const sans = {...calques_par_defaut(), cibles: false};
+  const touche = trouver_sous_curseur(camera, MONDE, ecran(camera, MONDE.scenario.reseau.centre), sans);
+  assert.equal(touche.type, "conduite");
+  assert.ok(touche.objet.geo && Number.isFinite(touche.objet.geo.lat));
+});

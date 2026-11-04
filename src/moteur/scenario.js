@@ -60,7 +60,8 @@ export const en_v2 = (brut) => (brut.format === FORMAT ? brut : migrer_v1(brut))
 /** Rendre la liste des identifiants d'unités qu'un scénario cite directement. */
 export function ids_unites(brut) {
   const v2 = en_v2(brut);
-  return [v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), v2.bleu.sol.unite, v2.bleu.radar.unite];
+  const moyens = (v2.bleu.reseau?.liaisons ?? []).map((liaison) => liaison.moyen);
+  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens])];
 }
 
 function resoudre_avions(groupes, fichiers) {
@@ -82,6 +83,23 @@ function resoudre_radar(radar, fichiers) {
   if (disposition === "sites" && sites.length === 0) throw new ScenarioInvalide("disposition « sites » : au moins un radar placé");
   const detection = DISPOSITIONS_RADAR[disposition] ?? unite.algos.detection;
   return {...unite, algos: {...unite.algos, detection}, disposition, sites};
+}
+
+/** Modes du réseau d'information (MODELE § 15.2). */
+export const MODES_RESEAU = ["complet", "liaisons"];
+
+/** Rendre vrai si `noeud` nomme un nœud du réseau : « conduite », « radar:<i> » ou « avions:<g> » (g existant). */
+const noeud_valide = (noeud, groupes) => noeud === "conduite" || /^radar:\d+$/.test(noeud) || (/^avions:\d+$/.test(noeud) && Number(noeud.slice(7)) < groupes);
+
+function resoudre_reseau(reseau, theatre, groupes, fichiers) {
+  const {mode = "complet", centre_lat_deg: lat = null, centre_lon_deg: lon = null, liaisons = []} = reseau ?? {};
+  if (!MODES_RESEAU.includes(mode)) throw new ScenarioInvalide(`mode de réseau inconnu « ${mode} » (${MODES_RESEAU.join(", ")})`);
+  for (const {de, vers} of liaisons) {
+    for (const noeud of [de, vers]) if (!noeud_valide(noeud, groupes)) throw new ScenarioInvalide(`liaison : nœud inconnu « ${noeud} »`);
+    if (de === vers) throw new ScenarioInvalide(`liaison de « ${de} » vers lui-même`);
+  }
+  const centre = lat === null || lon === null ? geo_deg(theatre.origine_lat_deg, theatre.origine_lon_deg, 0) : geo_deg(lat, lon, 0);
+  return {mode, centre, liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)}))};
 }
 
 /**
@@ -122,6 +140,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
       sol: {...unite_si(bleu.sol.unite, fichiers, bleu.sol.surcharges), nombre: bleu.sol.nombre, munitions: bleu.sol.munitions},
       radar: resoudre_radar(bleu.radar, fichiers),
       conduite: convertir_objet(bleu.conduite),
+      reseau: resoudre_reseau(bleu.reseau, reglagesTheatre, bleu.avions.length, fichiers),
       // Ordres triés par instant : le moteur les applique dans l'ordre, sans revenir en arrière.
       ordres: (bleu.ordres ?? []).map((o) => ({t: o.t_s, avions: o.avions, point: geo_deg(o.lat_deg, o.lon_deg, 0)})).sort((a, b) => a.t - b.t),
       simulation: convertir_objet(simulation),
@@ -190,6 +209,7 @@ export function migrer_v1(v1) {
         _aide: AIDE.conduite, delai_reaction_s: v1.delai_reaction_s, pas_decision_s: v1.avions_pas_decision_s,
         interception_profondeur_km: v1.interception_profondeur_km, pistage: "global/pistage/cellules", allocation: "global/allocation/densite_pistes",
       },
+      reseau: {_aide: AIDE.reseau, mode: "complet", centre_lat_deg: null, centre_lon_deg: null, liaisons: []},
     },
     simulation: {_aide: AIDE.simulation, pas_s: v1.simulation_pas_s, graine: v1.graine},
   };

@@ -145,3 +145,54 @@ test("radars placés : la disposition frontière matérialisée détecte comme l
   assert.throws(() => scenario({"bleu.radar.disposition": "sites"}), /au moins un radar/);
   assert.throws(() => scenario({"bleu.radar.disposition": "partout"}), /disposition/);
 });
+
+test("réseau complet : la conduite apprend chaque détection à l'instant même", () => {
+  const monde = simuler(scenario(PETIT), {registre: REGISTRE, journal: false});
+  assert.ok(monde.drones.every((d) => d.connu === d.detection));
+  assert.equal(monde.reseau.mode, "complet");
+});
+
+const liaisons_partout = (moyenRadars, moyenAvions, nombreRadars = 10) => ({
+  "bleu.reseau.mode": "liaisons",
+  "bleu.reseau.liaisons": [
+    ...Array.from({length: nombreRadars}, (_, i) => ({de: `radar:${i}`, vers: "conduite", moyen: moyenRadars})),
+    {de: "conduite", vers: "avions:0", moyen: moyenAvions}, {de: "conduite", vers: "avions:1", moyen: moyenAvions},
+  ],
+});
+
+test("réseau en liaisons : la conduite apprend chaque détection après la latence du chemin", () => {
+  const s = scenario({...PETIT, ...liaisons_partout("liaisons/satellite_notionnelle", "liaisons/satellite_notionnelle")});
+  const monde = simuler(s, {registre: REGISTRE, journal: false});
+  const vus = monde.drones.filter((d) => d.detection !== null);
+  assert.ok(vus.length > 0);
+  for (const d of vus) assert.ok(Math.abs(d.connu - d.detection - 3) < 1e-9, `${d.connu} − ${d.detection}`);
+  assert.ok(monde.avions.some((a) => a.decision?.point), "les avions joignables sont affectés");
+});
+
+test("réseau en liaisons : sans radar relié, la conduite ne sait rien et n'affecte personne", () => {
+  const s = scenario({...PETIT, "bleu.reseau.mode": "liaisons",
+    "bleu.reseau.liaisons": [{de: "conduite", vers: "avions:1", moyen: "liaisons/satellite_notionnelle"}]});
+  const monde = simuler(s, {registre: REGISTRE, journal: false});
+  assert.ok(monde.drones.some((d) => d.detection !== null), "les radars voient toujours");
+  assert.ok(monde.drones.every((d) => d.connu === null));
+  assert.ok(monde.avions.every((a) => !a.decision?.point));
+});
+
+test("réseau : un avion hors de l'horizon radio de la conduite n'est pas joignable ; le satellite l'est toujours", async () => {
+  const {acces_avion, portee_liaison, preparer_reseau} = await import("../src/moteur/reseau.js");
+  const {direct} = await import("../src/moteur/geodesie.js");
+  const s = scenario({...PETIT, ...liaisons_partout("liaisons/filaire_notionnelle", "liaisons/radio_vhf_uhf_notionnelle")});
+  const reseau = preparer_reseau(s);
+  assert.ok(reseau.latences_radars.every((l) => l === 0.5));
+  const radio = s.reseau.liaisons.at(-1).moyen;
+  const portee = portee_liaison(radio, radio.hauteur_antenne, 1000);
+  assert.ok(portee > 100_000 && portee < 160_000, `horizon radio sol-air à 1 000 m : ${portee}`);
+  const avion = (distance) => ({geo: {...direct(reseau.centre, 1, distance), alt: 1000}});
+  assert.equal(acces_avion(reseau, avion(portee - 1000), 1).sol, "conduite");
+  assert.equal(acces_avion(reseau, avion(portee + 1000), 1), null);
+  const satellite = preparer_reseau(scenario({...PETIT, ...liaisons_partout("liaisons/filaire_notionnelle", "liaisons/satellite_notionnelle")}));
+  assert.equal(acces_avion(satellite, avion(portee + 1000), 1).latence, 3);
+  // Une liaison optique (20 km) entre radars éloignés est coupée : le radar n'est pas relié.
+  const optique = preparer_reseau(scenario({...PETIT, ...liaisons_partout("liaisons/optique_notionnelle", "liaisons/satellite_notionnelle")}));
+  assert.ok(optique.fixes.every((l) => !l.active) && optique.latences_radars.every((l) => l === Infinity));
+});

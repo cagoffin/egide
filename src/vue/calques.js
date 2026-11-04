@@ -7,6 +7,7 @@ export const CALQUES = [
   {id: "avions_laser", groupe: "Défense", libelle: "Avions laser"},
   {id: "missions", groupe: "Défense", libelle: "Mises à poste et ordres"},
   {id: "radars", groupe: "Défense", libelle: "Radars"},
+  {id: "reseau", groupe: "Défense", libelle: "Réseau et centre de conduite"},
   {id: "couverture", groupe: "Défense", libelle: "Couverture radar"},
   {id: "balayage", groupe: "Défense", libelle: "Faisceau radar"},
   {id: "postes", groupe: "Défense", libelle: "Bulles des postes sol"},
@@ -49,6 +50,6 @@ export function element_visible(calques, element) {
   const avion = element.type === "avion" ? (element.guidage ?? element.objet?.guidage) : null;
   if (avion) return calques[avion === "ir" ? "avions_ir" : "avions_laser"];
   if (element.type === "drone") return calques[element.objet.detection === null ? "drones_inconnus" : "drones_detectes"];
-  const calque = {cible: "cibles", radar: "radars", passage: "plan", zone: "zones"}[element.type];
+  const calque = {cible: "cibles", radar: "radars", passage: "plan", zone: "zones", conduite: "reseau", liaison: "reseau"}[element.type];
   return calque ? calques[calque] : true;
 }

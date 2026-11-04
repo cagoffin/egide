@@ -100,6 +100,7 @@
       <li><i class="ami-plein"></i>Avion à roquettes IR</li>
       <li><i class="ami-creux"></i>Avion à roquettes laser</li>
       <li><i class="radar"></i>Radar (R1, R2…)</li>
+      <li><i class="reseau"></i>Centre de conduite (C2) et liaisons ; croix rouge : liaison coupée ou avion injoignable</li>
       <li><i class="hostile"></i>Drone détecté</li>
       <li><i class="inconnu"></i>Drone non détecté</li>
       <li><i class="cible"></i>Cible (C1, C2…)</li>
@@ -110,6 +111,7 @@
       <dt>Espace</dt><dd>Lire ou suspendre</dd>
       <dt>← →</dt><dd>Reculer ou avancer de 30 s</dd>
       <dt>E</dt><dd>Éditer le scénario</dd>
+      <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
       <dt>1 à 5</dt><dd>Ouvrir un panneau (hors édition)</dd>
       <dt>Molette</dt><dd>Zoom</dd>
       <dt>Clic droit glissé</dt><dd>Incliner et tourner la carte</dd>
@@ -154,6 +156,9 @@
       <button data-outil="selection" aria-pressed="true" title="Sélectionner et déplacer (S)">Sélection</button>
       <button data-outil="cible" aria-pressed="false" title="Ajouter une cible (C)">Cible</button>
       <button data-outil="radar" aria-pressed="false" title="Ajouter un radar (R)">Radar</button>
+      <button data-outil="liaison" aria-pressed="false" title="Relier deux unités : clic sur un radar, le centre de conduite ou un avion, puis sur l'autre (L)">Liaison</button>
+      <select name="moyen_liaison" aria-label="Moyen de la liaison" title="Moyen de communication des nouvelles liaisons"></select>
+      <button data-action="reseau_complet" title="Revenir au réseau complet : tout le monde parle avec tout le monde, sans délai">Réseau complet</button>
       <button data-outil="plan" aria-pressed="false" title="Ajouter un point au plan de vol de l'essaim (P)">Plan de vol</button>
       <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
       <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>

@@ -37,6 +37,7 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 /* En édition, le canevas reprend la souris, même sur la carte : c'est lui qui sélectionne et déplace. */
 .vue.edition #scope { pointer-events: auto; cursor: default; }
 .vue.edition:is([data-outil="cible"], [data-outil="radar"], [data-outil="plan"], [data-outil="zone"]) #scope { cursor: crosshair; }
+.vue.edition[data-outil="liaison"] #scope { cursor: cell; }
 .maplibregl-ctrl-attrib, .maplibregl-ctrl-group { filter: invert(0.9) hue-rotate(180deg); }
 .maplibregl-ctrl-bottom-right { inset-block-end: 64px; }
 
@@ -96,6 +97,7 @@ i.inconnu { background: var(--inconnu); clip-path: polygon(50% 0, 100% 100%, 0 1
 i.sol { border: 1px solid var(--sol); border-radius: 50%; background: rgba(184, 134, 11, 0.25); }
 i.cible { border: 1.5px solid var(--texte); }
 i.radar { border: 1.5px solid var(--ami); border-radius: 2px; }
+i.reseau { border: 2px solid var(--ami); border-inline-start-width: 4px; }
 i.trait-ami { border-block-start: 2px dashed var(--ami); block-size: 0 !important; }
 i.trait-hostile { border-block-start: 2px dashed var(--hostile); block-size: 0 !important; }
 i.trait { border-block-start: 1px solid var(--texte-secondaire); block-size: 0 !important; }
@@ -158,7 +160,8 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .barre-edition { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; padding: 7px 10px; max-inline-size: 900px; }
 .barre-edition[hidden] { display: none; }
 .barre-edition [aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
-.vue[data-mode="ordres"] .barre-edition [data-outil]:not([data-outil="selection"]), .vue[data-mode="ordres"] .seulement-edition,
+.vue[data-mode="ordres"] .barre-edition :is([data-outil]:not([data-outil="selection"]), [name="moyen_liaison"], [data-action="reseau_complet"]),
+.vue[data-mode="ordres"] .seulement-edition,
 .vue[data-mode="edition"] .seulement-ordres { display: none; }
 .aide-edition { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: var(--texte-secondaire); text-align: center; }
 

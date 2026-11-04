@@ -64,3 +64,24 @@ def test_flotte_heterogene_en_portee_refusee_par_la_vue_plate():
     brut["bleu"]["avions"][0]["surcharges_emport"] = {"portee_km": 12}
     with pytest.raises(ScenarioInvalideError, match="heterogene"):
         aplatir(resoudre_scenario(brut, FICHIERS))
+
+
+def test_resolution_du_reseau_identique_au_jumeau_javascript():
+    variante = json.loads((ICI / "resolution_reference.json").read_text(encoding="utf-8"))["variante_reseau"]
+    brut = json.loads(json.dumps(BRUT))
+    for chemin, valeur in variante["modifications"].items():
+        *parents, dernier = chemin.split(".")
+        noeud = brut
+        for cle in parents:
+            noeud = noeud[cle]
+        noeud[dernier] = valeur
+    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), variante["resolu"])
+
+
+def test_reseau_refuse_un_noeud_inconnu():
+    brut = json.loads(json.dumps(BRUT))
+    brut["bleu"]["reseau"]["liaisons"] = [
+        {"de": "avions:9", "vers": "conduite", "moyen": "liaisons/filaire_notionnelle"}
+    ]
+    with pytest.raises(ScenarioInvalideError, match="noeud inconnu"):
+        resoudre_scenario(brut, charger_unites(ids_unites(brut)))

@@ -48,6 +48,7 @@ export const AIDE = {
     sol: "Postes sol-air, repartis a parts egales sur les cibles.",
     radar: "Couverture radar : continue le long de la frontiere, a l'horizon du type de radar choisi (MODELE § 2).",
     conduite: "Centre de conduite des avions.",
+    reseau: "Reseau d'information entre radars, centre de conduite et avions (MODELE § 15.2).",
     ordres: "Ordres donnes en cours de raid (editeur) : a l'instant t_s, les avions cites rallient le point ; la conduite les reprend une fois arrives.",
     "ordres[].t_s": "Instant de l'ordre depuis le debut du raid.",
     "ordres[].avions": "Numeros des avions concernes (ordre de creation : groupes dans l'ordre du scenario).",
@@ -74,6 +75,15 @@ export const AIDE = {
     interception_profondeur_km: "Profondeur dans la zone ou l'on veut intercepter ; sert aux abaques (MODELE § 3.2).",
     pistage: "Algorithme qui regroupe les detections en pistes (algos/global/pistage/…).",
     allocation: "Algorithme qui affecte les avions libres aux pistes (algos/global/allocation/…).",
+  },
+  reseau: {
+    mode: "'complet' : tout le monde parle avec tout le monde, sans delai ; 'liaisons' : seules les liaisons listees portent l'information (MODELE § 15.2).",
+    centre_lat_deg: "Latitude du centre de conduite ; null : au centre du theatre.",
+    centre_lon_deg: "Longitude du centre de conduite ; null : au centre du theatre.",
+    liaisons: "Liaisons du reseau en mode 'liaisons'.",
+    "liaisons[].de": "Extremite : 'conduite', 'radar:<i>' (R<i+1>) ou 'avions:<g>' (groupe g de bleu.avions).",
+    "liaisons[].vers": "Autre extremite, memes noms ; une liaison porte l'information dans les deux sens.",
+    "liaisons[].moyen": "Moyen de communication : identifiant d'une unite de unites/liaisons/.",
   },
   simulation: {
     pas_s: "Pas de temps ; 0,5 s = 111 m parcourus par un drone a 800 km/h.",

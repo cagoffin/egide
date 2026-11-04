@@ -5,6 +5,7 @@ import {algo} from "./algos.js";
 import {direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
 import {OUTILS} from "./outils.js";
+import {acces_avion} from "./reseau.js";
 import {est_actif, plus_proche, resoudre_tir} from "./tir.js";
 // Un drone qui se rapproche à moins de 3 portées d'arme fait passer l'avion de la mise à poste à l'engagement.
 const PORTEES_ENGAGEMENT = 3;
@@ -48,15 +49,19 @@ export function drone_approchant(monde, avion) {
   return retenu;
 }
 
-/** Réaffecter les avions libres (armés, sans drone en approche) par les algorithmes de pistage et d'allocation. */
+/**
+ * Réaffecter les avions libres (armés, sans drone en approche, joignables par le réseau) par les algorithmes de
+ * pistage et d'allocation, sur les seuls drones que la conduite connaît depuis au moins le délai de réaction.
+ */
 export function planifier_avions(monde) {
   const {conduite} = monde.scenario;
   const connus = monde.drones.filter(
-    (drone) => est_actif(drone, monde.t) && drone.detection !== null && monde.t - drone.detection >= conduite.delai_reaction,
+    (drone) => est_actif(drone, monde.t) && drone.connu !== null && monde.t - drone.connu >= conduite.delai_reaction,
   );
+  for (const avion of monde.avions) avion.acces = acces_avion(monde.reseau, avion, monde.scenario.avions.indexOf(avion.groupe));
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
   // Un avion sous ordre n'est pas réaffecté par la conduite avant d'avoir rallié son point.
-  const libres = monde.avions.filter((avion) => avion.munitions > 0 && !avion.ordre && !drone_approchant(monde, avion));
+  const libres = monde.avions.filter((avion) => avion.acces && avion.munitions > 0 && !avion.ordre && !drone_approchant(monde, avion));
   for (const {avion, point, explication} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
     // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
     avion.decision = {t: monde.t, point, explication};

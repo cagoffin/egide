@@ -4,6 +4,7 @@ import {algo} from "./algos.js";
 import {vers_ecef} from "./geodesie.js";
 import {melanger} from "./hasard.js";
 import {OUTILS} from "./outils.js";
+import {radars_voyants} from "./reseau.js";
 import {est_actif, journaliser} from "./tir.js";
 
 /** Rendre l'indice de cible de chaque drone : au plus `concentration_max` par cible (MODELE § 6.1). */
@@ -33,7 +34,7 @@ export function creer_drones(scenario, registre, cibles, hasard, rayonApparition
     // Chaque point de route garde son ECEF à l'altitude du drone : un pas ne coûte qu'un changement de repère.
     const points = route.map((point) => ({geo: point, ecef: vers_ecef({...point, alt: rouge.altitude})}));
     return {
-      id, cible, vivant: true, arrive: false, vise: false, detection: null, depart, route: points,
+      id, cible, vivant: true, arrive: false, vise: false, detection: null, connu: null, depart, route: points,
       geo, ecef: vers_ecef(geo), vitesse: {x: 0, y: 0, z: 0},
     };
   });
@@ -59,11 +60,27 @@ export function avancer_drones(monde, dt) {
   }
 }
 
-/** Marquer l'instant où chaque drone est détecté, selon l'algorithme de détection du radar. */
+/**
+ * Marquer l'instant où chaque drone est détecté (`detection`) et celui où la conduite l'apprend (`connu`). En réseau
+ * complet, c'est le même instant ; en liaisons, l'information part de chaque radar qui le voit et arrive après la
+ * latence de son chemin jusqu'à la conduite, jamais si ce radar n'y est pas relié (MODELE § 15.2).
+ */
 export function detecter_drones(monde) {
   const detection = algo(monde.registre, monde.scenario.radar.algos.detection, "detection");
+  const {reseau} = monde;
   for (const drone of monde.drones) {
-    if (drone.detection !== null || !est_actif(drone, monde.t)) continue;
-    if (detection.detecte(monde.couverture, drone, OUTILS)) drone.detection = monde.t;
+    if (!est_actif(drone, monde.t)) continue;
+    if (reseau.mode === "complet") {
+      if (drone.detection === null && detection.detecte(monde.couverture, drone, OUTILS)) [drone.detection, drone.connu] = [monde.t, monde.t];
+      continue;
+    }
+    if (drone.connu !== null && drone.connu <= monde.t) continue;
+    const voyants = radars_voyants(detection, monde.couverture, reseau, drone, OUTILS);
+    if (!voyants.length) continue;
+    drone.detection ??= monde.t;
+    for (const i of voyants) {
+      const arrivee = monde.t + reseau.latences_radars[i];
+      if (arrivee < (drone.connu ?? Infinity)) drone.connu = arrivee;
+    }
   }
 }

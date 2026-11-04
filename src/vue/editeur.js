@@ -5,22 +5,22 @@ import {COULEURS} from "./couleurs.js";
 import {ecran, geo_depuis_ecran} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, modifications_ajout_cible, modifications_ajout_passage,
-  modifications_ajout_radar, modifications_ajout_zone, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
+  modifications_ajout_liaison, modifications_ajout_radar, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
 import {element_visible} from "./calques.js";
 import {format_duree} from "./format.js";
 
-const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", p: "plan", z: "zone"};
+const TOUCHES_OUTILS = {s: "selection", c: "cible", r: "radar", l: "liaison", p: "plan", z: "zone"};
 // En deçà de 4 px, un appui est un clic, pas un glisser : on ne déplace rien par mégarde.
 const SEUIL_GLISSER = 4;
 
 /**
- * Rendre l'éditeur branché sur `env` : {vue, toile, barre, camera(), monde(), brut(), calques(), appliquer(modifs),
+ * Rendre l'éditeur branché sur `env` : {vue, toile, barre, camera(), monde(), brut(), calques(), moyen(), appliquer(modifs),
  * annuler(), panoramique(dx, dy), zoom(facteur, point), sur_activation(actif)}. Un calque masqué ne s'édite pas.
  */
 export function creer_editeur(env) {
   // mode « edition » : on prépare le scénario à t = 0 ; mode « ordres » : en pause au cours du raid, on envoie des avions.
-  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null};
+  const etat = {actif: false, mode: "edition", outil: "selection", selection: [], groupes: {}, geste: null, brouillon: [], curseur: null, liaison: null};
   const elements = () => elements_editables(env.monde(), env.brut(), etat.mode).filter((e) => element_visible(env.calques(), e));
   const vers_ecran = (geo) => ecran(env.camera(), geo);
   const local = (e) => {
@@ -30,6 +30,7 @@ export function creer_editeur(env) {
 
   function choisir_outil(outil) {
     etat.outil = outil;
+    etat.liaison = null;
     env.vue.dataset.outil = outil;
     env.barre.querySelectorAll("[data-outil]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.outil === outil)));
   }
@@ -43,6 +44,16 @@ export function creer_editeur(env) {
     env.barre.querySelector("[data-champ='instant_ordres']").textContent = format_duree(env.monde().t);
     choisir_outil("selection");
     env.sur_activation(actif, mode);
+  }
+
+  /** Outil liaison : un clic sur un premier nœud (radar, conduite, avion), un clic sur le second, et la liaison existe. */
+  function relier(p) {
+    const touche = element_sous(elements(), vers_ecran, p, 14);
+    const noeud = touche && noeud_element(env.monde(), touche);
+    if (!noeud) return void (etat.liaison = null);
+    if (!etat.liaison) return void (etat.liaison = {noeud, geo: touche.geo});
+    env.appliquer(modifications_ajout_liaison(env.monde(), env.brut(), etat.liaison.noeud, noeud, env.moyen()));
+    etat.liaison = null;
   }
 
   function fermer_zone() {
@@ -60,6 +71,7 @@ export function creer_editeur(env) {
     const geo = geo_depuis_ecran(env.camera(), p);
     if (etat.outil === "cible") return env.appliquer(modifications_ajout_cible(env.monde(), geo));
     if (etat.outil === "radar") return env.appliquer(modifications_ajout_radar(env.monde(), geo));
+    if (etat.outil === "liaison") return relier(p);
     if (etat.outil === "plan") return env.appliquer(modifications_ajout_passage(env.brut(), geo));
     if (etat.outil === "zone") {
       // Double-clic (ou Entrée) : la zone se ferme ; le second clic du double-clic n'ajoute pas de sommet.
@@ -118,7 +130,8 @@ export function creer_editeur(env) {
     if (!etat.actif || e.target.closest("input, select, textarea")) return;
     const commande = e.ctrlKey || e.metaKey;
     const chiffre = /^Digit([1-9])$/.exec(e.code)?.[1];
-    if (e.key === "Escape" && etat.brouillon.length) etat.brouillon = [];
+    if (e.key === "Escape" && etat.liaison) etat.liaison = null;
+    else if (e.key === "Escape" && etat.brouillon.length) etat.brouillon = [];
     else if (e.key === "Enter" && etat.outil === "zone") fermer_zone();
     else if (e.key === "Escape") etat.outil === "selection" ? (etat.selection = []) : choisir_outil("selection");
     else if (e.key === "Delete" || e.key === "Backspace") {
@@ -153,6 +166,7 @@ export function creer_editeur(env) {
     if (bouton?.dataset.outil) choisir_outil(bouton.dataset.outil);
     if (bouton?.dataset.action === "annuler_edition") env.annuler();
     if (bouton?.dataset.action === "terminer_edition") activer(false);
+    if (bouton?.dataset.action === "reseau_complet") env.appliquer(modifications_reseau_complet());
   });
 
   /** Dessiner zones, plan de vol et ordres (toujours) puis, en édition, la sélection, le glisser, le rectangle, le brouillon. */
@@ -163,6 +177,16 @@ export function creer_editeur(env) {
     if (calques.missions) dessiner_ordres(ctx, camera, monde);
     if (!etat.actif) return;
     dessiner_brouillon(ctx, camera);
+    if (etat.liaison && etat.curseur) {
+      const p = ecran(camera, etat.liaison.geo);
+      ctx.strokeStyle = COULEURS.selection;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(etat.curseur.x, etat.curseur.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     const choisis = elements().filter((element) => etat.selection.includes(element.cle));
     const geste = etat.geste;
     ctx.strokeStyle = COULEURS.selection;

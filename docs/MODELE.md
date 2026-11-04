@@ -342,9 +342,31 @@ Dans l'éditeur, déplacer, ajouter ou supprimer un radar fait passer le scénar
 inscrivant la position de tous les radars affichés. La détection reste mémorisée : un drone vu une fois reste pisté.
 
 ### 15.2 Réseau d'information
-Pour l'instant, tout le monde parle avec tout le monde : la détection d'un radar profite immédiatement à toute la
-défense. Le réseau de liaisons (filaires, radio, satellite, optiques, entre unités et entre drones) est une évolution
-prévue, paramétrable comme le reste (docs/PLAN_V2.md).
+Le réseau dit ce que la conduite sait et qui elle peut joindre (`bleu.reseau`). Ses nœuds : le centre de conduite
+(« conduite », au centre du théâtre sauf position donnée), chaque radar (« radar:<i> », R<i+1>) et chaque groupe
+d'avions (« avions:<g> »). Une liaison relie deux nœuds par un moyen du catalogue (`unites/liaisons/`) : famille
+(filaire, radio, satellite, optique), latence de bout en bout λ, portée P et, pour les moyens à vue directe, une
+hauteur d'antenne au sol h. La portée effective entre deux extrémités de hauteurs h₁ et h₂ vaut
+P_eff = min(P, √(2 k R_T) (√h₁ + √h₂)), k = 4/3, pour un moyen à vue directe, P sinon.
+
+- **Mode complet** (référence) : tout le monde parle avec tout le monde, sans délai. La conduite apprend chaque
+  détection à l'instant même ; chaque avion est joignable. Les bilans sont ceux d'avant le réseau, à l'identique
+  (`tests/portage_j0.test.js`).
+- **Mode liaisons** : seules les liaisons listées portent l'information, dans les deux sens.
+  - Les liaisons entre nœuds au sol sont actives si leurs extrémités sont à moins de P_eff ; la latence d'un radar
+    jusqu'à la conduite est celle du plus court chemin par liaisons actives (relais possibles), infinie sans chemin.
+  - Un drone vu par le radar i à l'instant t est connu de la conduite à t + λ_i ; un radar non relié voit pour
+    rien. Le radar qui voit est désigné par l'algorithme de détection (`detecte_par`) ou, à défaut, est le plus proche.
+  - Le délai de réaction de la conduite court à partir de l'instant où elle connaît le drone.
+  - Un avion est joignable s'il est à portée d'au moins une liaison entre son groupe et un nœud au sol relié à la
+    conduite, à l'altitude de l'avion. Un avion hors liaison n'est plus affecté : il finit sa mission en cours, puis
+    reste où il est ; ses propres capteurs d'arme engagent toujours les drones qui passent à sa portée.
+
+Dans l'éditeur, l'outil Liaison relie deux nœuds (radar, centre de conduite, avion pour son groupe) par le moyen
+choisi ; depuis le réseau complet, la première liaison matérialise d'abord le réseau par défaut (chaque radar à la
+conduite au fil, la conduite à chaque groupe par radio). « Réseau complet » y revient. Le centre de conduite se
+déplace comme une unité. Limites de ce premier lot : la latence des ordres vers les avions, le débit, le brouillage
+et les liaisons entre drones ne sont pas encore modélisés (docs/PLAN_V2.md, jalon 7).
 
 ### 15.3 Interface centrée sur la carte
 La carte (ou le scope) occupe tout l'écran. Le reste flotte par-dessus et se replie : barre de tactique et d'édition

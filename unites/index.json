@@ -35,6 +35,41 @@
     "base": false
   },
   {
+    "id": "liaisons/_liaison",
+    "nom": "Liaison",
+    "famille": "liaisons",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "liaisons/filaire_notionnelle",
+    "nom": "Liaison filaire (notionnelle)",
+    "famille": "liaisons",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "liaisons/optique_notionnelle",
+    "nom": "Liaison optique en espace libre (notionnelle)",
+    "famille": "liaisons",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "liaisons/radio_vhf_uhf_notionnelle",
+    "nom": "Radio V/UHF en visibilite directe (notionnelle)",
+    "famille": "liaisons",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "liaisons/satellite_notionnelle",
+    "nom": "Liaison satellite (notionnelle)",
+    "famille": "liaisons",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
     "id": "sites/postes/poste_sol_air_notionnel",
     "nom": "Poste sol-air de courte portee (notionnel)",
     "famille": "sites",

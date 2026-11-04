@@ -17,6 +17,12 @@ export function decrire(survol, monde) {
     const munitions = postes.reduce((somme, p) => somme + p.munitions, 0);
     return `Cible C${survol.indice + 1}\n${postes.length} postes sol, ${munitions} munitions\n${monde.fuites[survol.indice]} drones arrivés`;
   }
+  if (survol.type === "conduite") {
+    const {reseau} = monde;
+    const etat = reseau.mode === "complet" ? "réseau complet : tout le monde est relié, sans délai"
+      : `${reseau.fixes.filter((l) => l.active).length} liaisons au sol actives sur ${reseau.fixes.length}`;
+    return `Centre de conduite (C2)\n${etat}`;
+  }
   if (survol.type === "radar") {
     const {radar} = monde.scenario;
     const site = monde.couverture.sites?.[survol.indice];

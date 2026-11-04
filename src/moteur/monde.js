@@ -7,6 +7,7 @@ import {indexer_drones} from "./grille.js";
 import {creer_hasard} from "./hasard.js";
 import {avancer_drones, creer_drones, detecter_drones} from "./menace.js";
 import {OUTILS} from "./outils.js";
+import {preparer_reseau} from "./reseau.js";
 import {journaliser} from "./tir.js";
 import {compter_incursions, preparer_zone} from "./zones.js";
 
@@ -46,7 +47,7 @@ export function creer_monde(scenario, {registre, journal = true}) {
   const couverture = algo(registre, scenario.radar.algos.detection, "detection").preparer(scenario, scenario.radar, OUTILS);
   const rayonDetection = couverture.rayon_couverture;
   return {
-    scenario, registre, hasard, t: 0, cibles, couverture, rayonDetection,
+    scenario, registre, hasard, t: 0, cibles, couverture, rayonDetection, reseau: preparer_reseau(scenario),
     drones: creer_drones(scenario, registre, cibles.map((cible) => cible.geo), hasard, rayonDetection + MARGE_APPARITION),
     avions: creer_avions(scenario, hasard),
     postes: creer_postes(scenario, cibles),

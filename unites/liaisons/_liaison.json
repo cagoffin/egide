@@ -1,0 +1,17 @@
+{
+  "_aide": {
+    "_": "Base des moyens de communication entre unites : delai de bout en bout et portee, avec ou sans visibilite directe (MODELE § 15.2).",
+    "type": "Famille du moyen : filaire, radio, satellite ou optique ; fixe le trait du synoptique.",
+    "latence_s": "Delai de bout en bout d'un message : propagation, traitement et mise en forme comprises.",
+    "portee_km": "Distance maximale entre les deux extremites ; 40 000 km : sans limite pratique.",
+    "visibilite_directe": "Vrai si la liaison exige que les antennes se voient : la portee est alors bornee par l'horizon radioelectrique (k = 4/3).",
+    "hauteur_antenne_m": "Hauteur de l'antenne au sol (mat) ; l'extremite aerienne est a l'altitude de l'avion."
+  },
+  "herite_de": "_unite",
+  "nom": "Liaison",
+  "type": "radio",
+  "latence_s": 1,
+  "portee_km": 40000,
+  "visibilite_directe": false,
+  "hauteur_antenne_m": 10
+}

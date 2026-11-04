@@ -5,6 +5,7 @@ Jumeau de src/moteur/scenario.js pour la resolution (sans la migration v1, faite
 
 import json
 import math
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -51,7 +52,15 @@ def _valider_aide(objet: dict, chemin: str) -> None:
 def ids_unites(brut: dict) -> list[str]:
     """Rendre les identifiants d'unites que cite le scenario."""
     bleu = brut["bleu"]
-    return [brut["rouge"]["unite"], *(g["unite"] for g in bleu["avions"]), bleu["sol"]["unite"], bleu["radar"]["unite"]]
+    moyens = [liaison["moyen"] for liaison in bleu.get("reseau", {}).get("liaisons", [])]
+    ids = [
+        brut["rouge"]["unite"],
+        *(g["unite"] for g in bleu["avions"]),
+        bleu["sol"]["unite"],
+        bleu["radar"]["unite"],
+        *moyens,
+    ]
+    return list(dict.fromkeys(ids))
 
 
 def _resoudre_avions(groupes: list, fichiers: dict) -> list[dict]:
@@ -82,6 +91,41 @@ def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
         raise ScenarioInvalideError("disposition « sites » : au moins un radar place")
     detection = DISPOSITIONS_RADAR[disposition] or unite["algos"]["detection"]
     return {**unite, "algos": {**unite["algos"], "detection": detection}, "disposition": disposition, "sites": sites}
+
+
+MODES_RESEAU = ("complet", "liaisons")
+
+
+def _noeud_valide(noeud: str, groupes: int) -> bool:
+    """Rendre vrai si `noeud` nomme un noeud du reseau : conduite, radar:<i> ou avions:<g> (g existant)."""
+    if noeud == "conduite" or re.fullmatch(r"radar:\d+", noeud):
+        return True
+    return bool(re.fullmatch(r"avions:\d+", noeud)) and int(noeud[7:]) < groupes
+
+
+def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers: dict) -> dict:
+    """Rendre le reseau resolu : mode, centre de conduite (radians) et liaisons avec leur moyen en SI."""
+    reseau = reseau or {}
+    mode = reseau.get("mode", "complet")
+    if mode not in MODES_RESEAU:
+        raise ScenarioInvalideError(f"mode de reseau inconnu « {mode} »")
+    liaisons = reseau.get("liaisons", [])
+    for liaison in liaisons:
+        for noeud in (liaison["de"], liaison["vers"]):
+            if not _noeud_valide(noeud, groupes):
+                raise ScenarioInvalideError(f"liaison : noeud inconnu « {noeud} »")
+        if liaison["de"] == liaison["vers"]:
+            raise ScenarioInvalideError(f"liaison de « {liaison['de']} » vers lui-meme")
+    lat, lon = reseau.get("centre_lat_deg"), reseau.get("centre_lon_deg")
+    if lat is None or lon is None:
+        lat, lon = theatre["origine_lat_deg"], theatre["origine_lon_deg"]
+    return {
+        "mode": mode,
+        "centre": _vers_geo([{"lat_deg": lat, "lon_deg": lon}], 0)[0],
+        "liaisons": [
+            {"de": li["de"], "vers": li["vers"], "moyen": unite_si(li["moyen"], fichiers, None)} for li in liaisons
+        ],
+    }
 
 
 def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
@@ -131,6 +175,7 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
             "sol": {**sol, "nombre": bleu["sol"]["nombre"], "munitions": bleu["sol"]["munitions"]},
             "radar": _resoudre_radar(bleu["radar"], fichiers),
             "conduite": convertir_objet(bleu["conduite"]),
+            "reseau": _resoudre_reseau(bleu.get("reseau"), theatre, len(bleu["avions"]), fichiers),
             # Ordres tries par instant : le moteur les applique dans l'ordre, sans revenir en arriere.
             "ordres": sorted(
                 ({"t": o["t_s"], "avions": o["avions"], "point": _vers_geo([o], 0)[0]} for o in bleu.get("ordres", [])),
