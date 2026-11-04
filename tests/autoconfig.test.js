@@ -52,8 +52,13 @@ test("construire : théâtre sur la zone, zone protégée, cibles dedans, radars
 
 test("optimiser : essais suivis, meilleure répartition au moins aussi bonne que le départ, comparaison appariée", () => {
   const suivi = [];
-  const r = optimiser(REFERENCE, DEMANDE, {tirages: 1, fichiers: FICHIERS, registre: REGISTRE, progression: (fait, total) => suivi.push([fait, total])});
+  const raids = [];
+  const r = optimiser(REFERENCE, DEMANDE, {tirages: 1, fichiers: FICHIERS, registre: REGISTRE, progression: (fait, total) => suivi.push([fait, total]),
+    avancement: (fait, total) => raids.push([fait, total])});
   assert.equal(suivi.at(-1)[0], suivi.at(-1)[1], "tous les essais prévus faits");
+  assert.deepEqual(raids.map(([f]) => f), raids.map((_, i) => i + 1), "un avancement par raid, sans trou");
+  assert.equal(raids.at(-1)[0], raids.at(-1)[1], "la barre finit pleine");
+  assert.equal(raids.at(-1)[1], suivi.at(-1)[1] * DEMANDE.menaces.length, "total des raids annoncé dès le départ");
   assert.ok(r.meilleur <= r.essais[1].frappes, "jamais pire que le départ");
   assert.ok(Number.isFinite(r.comparaison.difference.moyenne));
   assert.equal(r.brut.nom, "Auto-configuration — Hexagone");

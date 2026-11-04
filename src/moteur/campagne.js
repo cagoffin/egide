@@ -10,12 +10,14 @@ export const GRANDEURS = ["fuites", "fuites_max_cible", "detruits_air", "detruit
  * campagne et le tirage i d'une autre partent de la même graine (nombres aléatoires communs, MODELE § 14.3).
  * `fichiers` : catalogue d'unités chargé ; `registre` : algorithmes chargés (voir ids_algos).
  */
-export function bilans_campagne(brut, tirages, fichiers, registre) {
+export function bilans_campagne(brut, tirages, fichiers, registre, apres_raid = () => {}) {
   const v2 = en_v2(brut);
   const graine = lire_chemin(v2, "simulation.graine");
   return Array.from({length: tirages}, (_, i) => {
     const scenario = resoudre_scenario(modifier_scenario(v2, {"simulation.graine": graine + i}), fichiers);
-    return bilan(simuler(scenario, {registre, journal: false}));
+    const resultat = bilan(simuler(scenario, {registre, journal: false}));
+    apres_raid();
+    return resultat;
   });
 }
 

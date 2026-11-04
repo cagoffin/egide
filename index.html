@@ -129,6 +129,11 @@
       <button data-action="autoconfig" class="principal">Lancer</button>
     </div>
     <p data-champ="autoconfig_etat" role="status"></p>
+    <div class="progression-autoconfig" hidden>
+      <progress data-champ="autoconfig_barre" aria-label="Avancement de la recherche"></progress>
+      <span data-champ="autoconfig_reste"></span>
+      <button data-action="autoconfig_arreter" title="Interrompre la recherche">Arrêter</button>
+    </div>
     <ol class="essais" data-zone="essais"></ol>
     <div class="resultat-autoconfig" hidden>
       <div data-zone="resultat"></div>

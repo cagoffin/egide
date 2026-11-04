@@ -97,8 +97,8 @@ export function construire(base, demande, strategie, portee) {
 }
 
 /** Rendre les bilans d'un scénario sur toutes les menaces, mêmes graines (nombres aléatoires communs). */
-function evaluer(brut, menaces, tirages, fichiers, registre) {
-  const bilans = menaces.flatMap((m) => bilans_campagne(modifier_scenario(brut, {"rouge.tactique": m.tactique, "rouge.nombre": m.nombre}), tirages, fichiers, registre));
+function evaluer(brut, menaces, tirages, fichiers, registre, apres_raid) {
+  const bilans = menaces.flatMap((m) => bilans_campagne(modifier_scenario(brut, {"rouge.tactique": m.tactique, "rouge.nombre": m.nombre}), tirages, fichiers, registre, apres_raid));
   return {bilans, frappes: bilans.reduce((s, b) => s + b.fuites, 0) / bilans.length};
 }
 
@@ -106,15 +106,18 @@ function evaluer(brut, menaces, tirages, fichiers, registre) {
  * Chercher la meilleure répartition (MODELE § 20.2) : partir de DEPART, essayer tour à tour les valeurs de chaque
  * paramètre (avions, drones s'il y en a, radars) et garder ce qui baisse les frappes moyennes, toutes menaces et
  * graines confondues ; comparer enfin, tirage par tirage, à la répartition uniforme. `progression(fait, total,
- * essai)` suit l'avancement.
+ * essai)` suit les essais, `avancement(raids_faits, raids_total)` chaque raid simulé (barre de progression).
  */
-export function optimiser(base, demande, {tirages = 4, fichiers, registre, progression = () => {}}) {
+export function optimiser(base, demande, {tirages = 4, fichiers, registre, progression = () => {}, avancement = () => {}}) {
   const portee = portee_radar(resoudre_scenario(en_v2(base), fichiers));
   const avecDrones = demande.moyens.avions.slice(2).some((n) => n > 0);
   const essaisPrevus = [UNIFORME, DEPART, ...Object.entries(PARAMETRES).flatMap(([p, valeurs]) => (p === "drones" && !avecDrones ? [] : valeurs.filter((v) => v !== DEPART[p]).map(() => p)))];
   const essais = [];
+  const raidsTotal = essaisPrevus.length * demande.menaces.length * tirages;
+  let raidsFaits = 0;
+  const apres_raid = () => avancement(++raidsFaits, raidsTotal);
   const essayer = (strategie) => {
-    const r = {strategie, ...evaluer(construire(base, demande, strategie, portee), demande.menaces, tirages, fichiers, registre)};
+    const r = {strategie, ...evaluer(construire(base, demande, strategie, portee), demande.menaces, tirages, fichiers, registre, apres_raid)};
     essais.push({strategie, frappes: r.frappes});
     progression(essais.length, essaisPrevus.length, essais.at(-1));
     return r;

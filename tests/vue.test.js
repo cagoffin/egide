@@ -429,7 +429,7 @@ test("CDC dans l'éditeur : ajouter, déplacer, relier aux postes d'une cible, s
 });
 
 import {enregistrer_dans_bibliotheque, lire_bibliotheque_locale} from "../src/vue/bibliotheque.js";
-import {decrire_strategie} from "../src/vue/autoconfig_panneau.js";
+import {decrire_strategie, duree_lisible} from "../src/vue/autoconfig_panneau.js";
 
 test("bibliothèque du navigateur : protégée si la mémoire manque ; stratégies décrites en clair", () => {
   const casse = {getItem: () => { throw new Error("refus"); }, setItem: () => { throw new Error("refus"); }};
@@ -441,4 +441,5 @@ test("bibliothèque du navigateur : protégée si la mémoire manque ; stratégi
   assert.deepEqual(Object.keys(lire_bibliotheque_locale(stockage)), ["Auto — France"]);
   assert.match(decrire_strategie({uniforme: true}), /hasard/);
   assert.match(decrire_strategie({avions: 0.6, drones: 0.1, radars: 0.5}), /60 % .* 5 % .* poussés de 50 %/);
+  assert.deepEqual([duree_lisible(44.6), duree_lisible(60), duree_lisible(190), duree_lisible(-3)], ["45 s", "1 min", "3 min 10 s", "0 s"]);
 });

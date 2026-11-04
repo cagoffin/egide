@@ -41,6 +41,7 @@ export function brancher_autoconfig(racine, ctx) {
     for (const [id, valeur] of Object.entries(moyens_courants(brut))) $(`[name='moyen_${id}']`).value = valeur;
     const zones = brut.theatre.zones ?? [];
     $("[name='zone_dessinee']").innerHTML = zones.length ? zones.map((z, i) => `<option value="${i}">${z.nom}</option>`).join("") : `<option value="">Aucune : outil Zone de l'éditeur</option>`;
+    if (racine.querySelector("[name='source_zone']:checked").value === "pays") charger_pays();
   };
   const charger_pays = async () => {
     if (pays) return;
@@ -56,6 +57,49 @@ export function brancher_autoconfig(racine, ctx) {
   $("[data-action='autoconfig_appliquer']").addEventListener("click", () => resultat && ctx.appliquer(resultat.brut));
   $("[data-action='autoconfig_enregistrer']").addEventListener("click", () => resultat && ctx.enregistrer(resultat.brut.nom, resultat.brut));
   $("[data-action='autoconfig_exporter']").addEventListener("click", () => resultat && ctx.exporter(resultat.brut));
+  $("[data-action='autoconfig_arreter']").addEventListener("click", () => arreter("Recherche interrompue."));
+  const bouton_rail = document.querySelector(".rail [data-panneau='autoconfig']");
+  let debut = 0;
+
+  /** Montrer l'avancement : barre (indéterminée tant que `fait` est nul), pourcentage et temps restant estimé ; aussi sur le bouton du rail. */
+  function avancer(fait, total) {
+    const barre = $("[data-champ='autoconfig_barre']");
+    racine.querySelector(".progression-autoconfig").hidden = false;
+    bouton_rail?.classList.add("en-cours");
+    if (!total) return void (barre.removeAttribute("value"), ($("[data-champ='autoconfig_reste']").textContent = "préparation…"));
+    barre.max = total;
+    barre.value = fait;
+    bouton_rail?.style.setProperty("--avancement", String(fait / total));
+    const ecoule = (performance.now() - debut) / 1000;
+    const reste = fait > 0 ? (ecoule * (total - fait)) / fait : null;
+    $("[data-champ='autoconfig_reste']").textContent = `${Math.floor((100 * fait) / total)} %${reste === null ? "" : ` · reste ${duree_lisible(reste)}`}`;
+    bouton_rail?.setAttribute("title", `Auto-configuration : ${Math.floor((100 * fait) / total)} %`);
+  }
+
+  /** Arrêter le Worker et ranger la barre ; `message` remplace l'état affiché s'il est donné. */
+  function arreter(message) {
+    travailleur?.terminate();
+    travailleur = null;
+    racine.querySelector(".progression-autoconfig").hidden = true;
+    bouton_rail?.classList.remove("en-cours");
+    bouton_rail?.setAttribute("title", "Auto-configuration : menaces, moyens, zone, répartition optimisée (6)");
+    if (message) $("[data-champ='autoconfig_etat']").textContent = message;
+  }
+
+  /** Traiter un message du Worker. */
+  function recevoir(data) {
+    const etat = $("[data-champ='autoconfig_etat']");
+    if (data.type === "erreur") arreter(`Échec : ${data.message}`);
+    if (data.type === "avancement") avancer(data.fait, data.total);
+    if (data.type === "essai") {
+      etat.textContent = `Essai ${data.fait} sur ${data.total}…`;
+      $("[data-zone='essais']").insertAdjacentHTML("beforeend", `<li><b>${format_decimal(data.essai.frappes)}</b> frappes — ${decrire_strategie(data.essai.strategie)}</li>`);
+    }
+    if (data.type === "fin") {
+      arreter();
+      montrer_resultat(data.resultat);
+    }
+  }
 
   function zone_demandee() {
     const brut = ctx.brut();
@@ -69,7 +113,8 @@ export function brancher_autoconfig(racine, ctx) {
     return {nom: p.nom, points: anneau.slice(0, -1).map(([lon, lat]) => ({lat_deg: lat, lon_deg: lon}))};
   }
 
-  function lancer() {
+  async function lancer() {
+    if (racine.querySelector("[name='source_zone']:checked").value === "pays") await charger_pays();
     const zone = zone_demandee();
     const etat = $("[data-champ='autoconfig_etat']");
     if (!zone) return void (etat.textContent = "Choisissez une zone : un pays, ou une zone dessinée dans l'éditeur.");
@@ -78,21 +123,16 @@ export function brancher_autoconfig(racine, ctx) {
     const v = (id) => Number($(`[name='moyen_${id}']`).value);
     const demande = {zone, menaces, moyens: {radars: v("radars"), centres: v("centres"), cibles: v("cibles"), postes: v("postes"),
       munitions_sol: v("munitions_sol"), avions: [0, 1, 2, 3, 4].map((i) => v(`avions_${i}`))}};
-    travailleur?.terminate();
+    arreter();
     resultat = null;
     racine.querySelector(".resultat-autoconfig").hidden = true;
     const liste = $("[data-zone='essais']");
     liste.innerHTML = "";
     etat.textContent = "Recherche en cours…";
+    debut = performance.now();
+    avancer(0, 0);
     travailleur = new Worker(new URL("./autoconfig_travailleur.js", import.meta.url), {type: "module"});
-    travailleur.addEventListener("message", ({data}) => {
-      if (data.type === "erreur") etat.textContent = `Échec : ${data.message}`;
-      if (data.type === "essai") {
-        etat.textContent = `Essai ${data.fait} sur ${data.total}…`;
-        liste.insertAdjacentHTML("beforeend", `<li><b>${format_decimal(data.essai.frappes)}</b> frappes — ${decrire_strategie(data.essai.strategie)}</li>`);
-      }
-      if (data.type === "fin") montrer_resultat(data.resultat);
-    });
+    travailleur.addEventListener("message", ({data}) => recevoir(data));
     travailleur.postMessage({base: ctx.brut(), demande, fichiers: ctx.fichiers(), tirages: Number($("[name='tirages_autoconfig']").value)});
   }
 
@@ -108,6 +148,13 @@ export function brancher_autoconfig(racine, ctx) {
     racine.querySelector(".resultat-autoconfig").hidden = false;
   }  return {remplir};
 
+}
+
+/** Rendre une durée en secondes lisible : « 45 s », « 3 min 10 s ». */
+export function duree_lisible(secondes) {
+  const s = Math.max(0, Math.round(secondes));
+  if (s < 60) return `${s} s`;
+  return `${Math.floor(s / 60)} min${s % 60 ? ` ${s % 60} s` : ""}`;
 }
 
 /** Aire approchée d'un anneau [lon, lat] : pour retenir le plus étendu d'un pays. */

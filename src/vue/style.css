@@ -196,6 +196,12 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 #autoconfig .zone-choix label { display: flex; gap: 8px; align-items: center; color: var(--texte); font-size: 13px; }
 .essais { font-size: 12px; padding-inline-start: 20px; color: var(--texte-secondaire); }
 .essais b { color: var(--texte); }
+.progression-autoconfig:not([hidden]) { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; margin-block-end: 8px; }
+.progression-autoconfig progress { inline-size: 100%; block-size: 8px; accent-color: var(--ami, #4aa3ff); }
+.progression-autoconfig span { font-size: 12px; color: var(--texte-secondaire); font-variant-numeric: tabular-nums; }
+.rail [data-panneau="autoconfig"].en-cours { position: relative; }
+.rail [data-panneau="autoconfig"].en-cours::after { content: ""; position: absolute; inset-inline-start: 6px; inset-block-end: 3px; block-size: 3px;
+  inline-size: calc((100% - 12px) * var(--avancement, 0)); background: var(--ami, #4aa3ff); border-radius: 2px; }
 .resultat-autoconfig { border-block-start: 1px solid var(--trait); padding-block-start: 8px; }
 
 /* Balayage (dans son panneau). */
