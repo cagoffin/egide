@@ -26,6 +26,9 @@
         "vecteurs/drones/_drone",
         "vecteurs/drones/drone_reaction_notionnel"
       ],
+      "algos": {
+        "mouvement": "global/mouvement/croisiere_geodesique"
+      },
       "vitesse": 222.22222222222223,
       "altitude_croisiere": 100,
       "altitude": 100,
@@ -34,7 +37,8 @@
       "concentration_max": 300,
       "etalement": 120,
       "fourmi_eclatement_rayon": 60000,
-      "fourmi_largeur_couloir": 6000
+      "fourmi_largeur_couloir": 6000,
+      "comportement": "global/comportement/essaim_fourmi"
     },
     "avions": [
       {
@@ -49,6 +53,9 @@
           "vecteurs/avions/_avion",
           "vecteurs/avions/turbopropulseur_ir_notionnel"
         ],
+        "algos": {
+          "mouvement": "global/mouvement/croisiere_geodesique"
+        },
         "vitesse_mise_a_poste": 138.88888888888889,
         "vitesse_engagement": 97.22222222222223,
         "facteur_charge_max": 5,
@@ -68,6 +75,9 @@
             "effecteurs/roquettes/_roquette_guidee",
             "effecteurs/roquettes/roquette_guidee_ir_notionnelle"
           ],
+          "algos": {
+            "tir": "global/tir/tire_et_oublie"
+          },
           "guidage": "ir",
           "portee": 8000,
           "pk": 0.7,
@@ -88,6 +98,9 @@
           "vecteurs/avions/_avion",
           "vecteurs/avions/turbopropulseur_laser_notionnel"
         ],
+        "algos": {
+          "mouvement": "global/mouvement/croisiere_geodesique"
+        },
         "vitesse_mise_a_poste": 138.88888888888889,
         "vitesse_engagement": 97.22222222222223,
         "facteur_charge_max": 5,
@@ -107,6 +120,9 @@
             "effecteurs/roquettes/_roquette_guidee",
             "effecteurs/roquettes/roquette_guidee_laser_notionnelle"
           ],
+          "algos": {
+            "tir": "global/tir/guidage_laser_semi_actif"
+          },
           "guidage": "laser",
           "portee": 8000,
           "pk": 0.7,
@@ -127,6 +143,9 @@
         "_unite",
         "sites/postes/poste_sol_air_notionnel"
       ],
+      "algos": {
+        "tir_sol": "global/tir_sol/cadence_par_passage"
+      },
       "portee": 8000,
       "pk": 0.7,
       "engagements_par_passage": 8,
@@ -144,13 +163,18 @@
         "_unite",
         "capteurs/radars/radar_basse_altitude_notionnel"
       ],
+      "algos": {
+        "detection": "global/detection/couverture_frontiere"
+      },
       "hauteur_antenne": 20,
       "portee_max": 250000
     },
     "conduite": {
       "delai_reaction": 90,
       "pas_decision": 5,
-      "interception_profondeur": 50000
+      "interception_profondeur": 50000,
+      "pistage": "global/pistage/cellules",
+      "allocation": "global/allocation/densite_pistes"
     },
     "simulation": {
       "pas": 0.5,

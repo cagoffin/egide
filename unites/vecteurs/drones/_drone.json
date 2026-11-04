@@ -6,5 +6,8 @@
   },
   "herite_de": "_unite",
   "vitesse_kmh": 185,
-  "altitude_croisiere_m": 100
+  "altitude_croisiere_m": 100,
+  "algos": {
+    "mouvement": "global/mouvement/croisiere_geodesique"
+  }
 }

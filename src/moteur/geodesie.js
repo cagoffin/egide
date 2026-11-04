@@ -150,6 +150,12 @@ export function decaler_lateralement(point, azimut, decalage) {
   return decalage >= 0 ? direct(point, azimut - Math.PI / 2, decalage) : direct(point, azimut + Math.PI / 2, -decalage);
 }
 
+/** Rendre le point à `distance` m de `origine` dans l'azimut `azimut`, décalé latéralement de `decalage` m. */
+export function point_radial(origine, azimut, distance, decalage) {
+  const {position, azimut: local} = direct_avec_azimut(origine, azimut, distance);
+  return decaler_lateralement(position, local, decalage);
+}
+
 /** Rendre une longitude ramenée dans ]−π, π]. */
 export function normaliser_longitude(lon) {
   return lon - 2 * Math.PI * Math.floor((lon + Math.PI) / (2 * Math.PI));

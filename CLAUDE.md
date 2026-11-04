@@ -24,6 +24,9 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
   identifié. Les modèles de systèmes réels vont dans `prive/` (ignoré par git), identifiants préfixés `prive/`.
 - Scénario v2 : unités citées par identifiant, valeurs modifiées par chemin (`bleu.avions.1.nombre`,
   `rouge.surcharges.vitesse_kmh`) partout : interface, balayage, `node src/campagne.js --chemin valeur`.
+- Algorithmes (MODELE § 10) : un module par algorithme sous `algos/global/<rôle>/` ou `prive/algos/…`, qui exporte
+  `meta` et les fonctions de son rôle, n'importe rien (outils et hasard en arguments), reste pur. Après tout ajout :
+  `node outils/indexer.js` ; la conformité (`tests/conformite.test.js`) s'applique d'elle-même.
 - Toute évolution de la résolution se fait dans `src/moteur/scenario.js` ET `analyse/scenario.py` ;
   `tests/resolution_reference.json` garde les deux d'accord.
 

@@ -170,3 +170,39 @@ le nord). Les graines étant fixées, ce test est déterministe.
 Le scope projette les positions en azimutale équidistante sphérique autour du centre (rayon moyen 6 371 008,8 m) :
 les distances au centre sont exactes à 0,5 % près jusqu'à 300 km, et les anneaux restent des cercles. Cette projection
 ne sert qu'à l'affichage ; aucun calcul du moteur ne l'utilise.
+
+## 10 · Registre d'algorithmes (jalon 1)
+### 10.1 Principe
+Le moteur orchestre (ordre des étapes, index spatial, tirage du Pk, journal) ; chaque décision est confiée à un
+algorithme désigné par une unité (`algos` du fichier d'unité, fusionné rôle par rôle avec ses ancêtres) ou par le
+scénario (`rouge.tactique`, `bleu.conduite.pistage`, `bleu.conduite.allocation`). Un algorithme est un module ES de
+`algos/global/<rôle>/` ou `algos/unites/…`, ou de `prive/algos/…` (identifiant préfixé `prive/`).
+
+### 10.2 Contrat d'un algorithme
+- Il exporte `meta` : rôle, nom, fidélité, description, équations, hypothèses, domaine de validité, références (au
+  moins une) et paramètres lus (clé SI, unité, aide).
+- Il exporte les fonctions de son rôle (`src/moteur/algos.js`, `ROLES`).
+- Il n'importe rien et n'appelle ni hasard global, ni horloge, ni réseau : géodésie et générateur à graine lui sont
+  passés en arguments. Il est donc pur, déterministe, et indépendant de son dossier.
+
+| Rôle | Porté par | Fonctions |
+|---|---|---|
+| comportement | scénario (`rouge.tactique`) | `planifier_drone(contexte, cible, hasard, outils)` |
+| mouvement | unité (drone, avion) | `avancer(mobile, route, distance, outils)` |
+| detection | unité (radar) | `preparer(scenario, radar, outils)`, `detecte(etat, drone, outils)` |
+| pistage | scénario (`bleu.conduite.pistage`) | `pister(drones, outils)` |
+| allocation | scénario (`bleu.conduite.allocation`) | `allouer(avions, pistes, outils)` |
+| tir | unité (arme) | `planifier_tir(arme, distance)` |
+| tir_sol | unité (poste) | `cadence(poste, vitesse_cible)` |
+
+### 10.3 Preuve du portage
+Les huit algorithmes de `algos/global/` sont le comportement du jalon 0 sorti du moteur. Quatre raids de référence
+(trois tactiques, plus un petit raid à cheval sur l'antiméridien) rendent exactement les bilans du jalon 0
+(`tests/portage_j0.test.js`).
+
+### 10.4 Conformité automatique
+`tests/conformite.test.js` s'applique à tout fichier déposé, public ou privé, sans test écrit à la main : fiche
+complète, rangement sous le bon rôle, aucune dépendance cachée, algorithmes cités existants et du bon rôle,
+paramètres lus présents dans l'unité, déterminisme et invariants par rôle (un mouvement ne va jamais plus loin que
+demandé ni ne change d'altitude ; un pistage compte chaque drone dans une seule piste ; un comportement mène chaque
+drone sur sa cible). Les index `unites/index.json` et `algos/index.json` sont régénérés par `node outils/indexer.js`.

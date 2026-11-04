@@ -1,4 +1,5 @@
-// Postes sol-air : co-localisés avec les cibles, munitions partagées, cadence tirée du MODELE § 5.
+// Postes sol-air : co-localisés avec les cibles, munitions partagées ; cadence donnée par l'algorithme tir_sol.
+import {algo} from "./algos.js";
 import {plus_proche, resoudre_tir} from "./tir.js";
 
 /** Rendre les postes sol, répartis à parts égales sur les cibles (`cibles` : {geo, ecef}), chacun avec sa part du stock. */
@@ -14,16 +15,10 @@ export function creer_postes(scenario, cibles) {
   }));
 }
 
-/**
- * Rendre l'intervalle entre deux tirs d'un poste, en s (MODELE § 5) : un drone traverse la bulle en portée / vitesse
- * secondes, pendant lesquelles le poste doit réaliser ses `engagements_par_passage` tirs.
- */
-export const cadence_sol = (scenario) => scenario.sol.portee / scenario.rouge.vitesse / scenario.sol.engagements_par_passage;
-
 /** Faire tirer chaque poste prêt sur le drone le plus proche dans sa bulle ; le résultat est immédiat. */
 export function tirer_sol(monde) {
-  const {sol} = monde.scenario;
-  const cadence = cadence_sol(monde.scenario);
+  const {sol, rouge} = monde.scenario;
+  const cadence = algo(monde.registre, sol.algos.tir_sol, "tir_sol").cadence(sol, rouge.vitesse);
   for (const poste of monde.postes) {
     if (poste.munitions === 0 || monde.t < poste.prochain_tir) continue;
     const drone = plus_proche(monde, poste.ecef, sol.portee, false);

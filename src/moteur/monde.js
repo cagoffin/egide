@@ -1,11 +1,12 @@
 // La simulation : état du monde, boucle à pas fixe, bilan (MODELE § 8 et § 9). Pur : ni DOM, ni réseau, ni horloge.
 import {avancer_avions, creer_avions, planifier_avions, resoudre_tirs_en_vol, tirer_air} from "./defense_air.js";
 import {creer_postes, tirer_sol} from "./defense_sol.js";
+import {algo} from "./algos.js";
 import {direct, inverse, vers_ecef} from "./geodesie.js";
-import {horizon_radar} from "./geometrie.js";
 import {indexer_drones} from "./grille.js";
 import {creer_hasard} from "./hasard.js";
 import {avancer_drones, creer_drones, detecter_drones} from "./menace.js";
+import {OUTILS} from "./outils.js";
 
 // Les drones naissent 20 km avant la couverture radar : ils ne sont pas vus dès leur apparition.
 const MARGE_APPARITION = 20_000;
@@ -30,15 +31,18 @@ export function placer_cibles(scenario, hasard) {
   return cibles;
 }
 
-/** Rendre un monde neuf pour un scénario résolu. `journal` : tenir la liste des évènements (rejeu), inutile en campagne. */
-export function creer_monde(scenario, {journal = true} = {}) {
+/**
+ * Rendre un monde neuf pour un scénario résolu et le registre de ses algorithmes (voir ids_algos).
+ * `journal` : tenir la liste des évènements (rejeu), inutile en campagne.
+ */
+export function creer_monde(scenario, {registre, journal = true}) {
   const hasard = creer_hasard(scenario.simulation.graine);
   const cibles = placer_cibles(scenario, hasard);
-  const detection = Math.min(horizon_radar(scenario.radar.hauteur_antenne, scenario.rouge.altitude), scenario.radar.portee_max);
-  const rayonDetection = scenario.theatre.zone_rayon + detection;
+  const couverture = algo(registre, scenario.radar.algos.detection, "detection").preparer(scenario, scenario.radar, OUTILS);
+  const rayonDetection = couverture.rayon_couverture;
   return {
-    scenario, hasard, t: 0, cibles, rayonDetection,
-    drones: creer_drones(scenario, cibles.map((cible) => cible.geo), hasard, rayonDetection + MARGE_APPARITION),
+    scenario, registre, hasard, t: 0, cibles, couverture, rayonDetection,
+    drones: creer_drones(scenario, registre, cibles.map((cible) => cible.geo), hasard, rayonDetection + MARGE_APPARITION),
     avions: creer_avions(scenario, hasard),
     postes: creer_postes(scenario, cibles),
     tirs_en_vol: [],
@@ -70,7 +74,7 @@ export function avancer_monde(monde) {
 /** Rendre vrai quand plus aucun drone ne vole et qu'aucun tir n'est en vol. */
 export const est_termine = (monde) => monde.tirs_en_vol.length === 0 && monde.drones.every((drone) => !drone.vivant || drone.arrive);
 
-/** Rendre le monde au terme du raid. */
+/** Rendre le monde au terme du raid (`options` : voir creer_monde). */
 export function simuler(scenario, options) {
   const monde = creer_monde(scenario, options);
   while (!est_termine(monde)) {

@@ -1,0 +1,75 @@
+{
+  "_aide": {
+    "_": "Bilans exacts du moteur au jalon 0 (commit 39137da), graine 42 : le portage du comportement dans algos/global/ doit les reproduire à l’identique (tests/portage_j0.test.js).",
+    "cas": "Modifications du scénario de référence et bilan attendu."
+  },
+  "cas": {
+    "direct": {
+      "modifications": {
+        "rouge.tactique": "direct"
+      },
+      "bilan": {
+        "fuites": 477,
+        "fuites_max_cible": 132,
+        "tirs_air": 318,
+        "tirs_sol": 408,
+        "detruits_air": 227,
+        "detruits_sol": 296,
+        "munitions_air_restantes": 282,
+        "munitions_sol_restantes": 612,
+        "duree": 1230.5
+      }
+    },
+    "disperse": {
+      "modifications": {
+        "rouge.tactique": "disperse"
+      },
+      "bilan": {
+        "fuites": 173,
+        "fuites_max_cible": 82,
+        "tirs_air": 594,
+        "tirs_sol": 581,
+        "detruits_air": 425,
+        "detruits_sol": 402,
+        "munitions_air_restantes": 6,
+        "munitions_sol_restantes": 439,
+        "duree": 1559
+      }
+    },
+    "fourmi": {
+      "modifications": {
+        "rouge.tactique": "fourmi"
+      },
+      "bilan": {
+        "fuites": 469,
+        "fuites_max_cible": 211,
+        "tirs_air": 414,
+        "tirs_sol": 365,
+        "detruits_air": 271,
+        "detruits_sol": 260,
+        "munitions_air_restantes": 186,
+        "munitions_sol_restantes": 655,
+        "duree": 1214.5
+      }
+    },
+    "petit_ailleurs": {
+      "modifications": {
+        "rouge.nombre": 200,
+        "rouge.concentration_max": 50,
+        "theatre.origine_lat_deg": -40,
+        "theatre.origine_lon_deg": 179.5
+      },
+      "bilan": {
+        "fuites": 0,
+        "fuites_max_cible": 0,
+        "tirs_air": 175,
+        "tirs_sol": 109,
+        "detruits_air": 118,
+        "detruits_sol": 82,
+        "munitions_air_restantes": 425,
+        "munitions_sol_restantes": 911,
+        "duree": 906.5
+      }
+    }
+  }
+}

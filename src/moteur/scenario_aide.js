@@ -20,7 +20,7 @@ export const AIDE = {
   rouge: {
     unite: "Identifiant du drone dans le catalogue.",
     nombre: "Taille de l'essaim.",
-    tactique: "'direct' (groupes venant chacun d'un cap), 'disperse' (drones isoles, departs etales), 'fourmi' (couloir compact puis eclatement) — MODELE § 8.2.",
+    tactique: "Comportement de l'essaim : 'direct', 'disperse', 'fourmi' (algos/global/comportement/essaim_…) ou l'identifiant complet d'un algorithme de comportement (MODELE § 8.2).",
     concentration_max: "Nombre maximal de drones portes sur une meme cible ; fixe le nombre de groupes (MODELE § 6.1).",
     etalement_s: "Tactique 'disperse' : duree sur laquelle les departs sont etales.",
     fourmi_eclatement_rayon_km: "Tactique 'fourmi' : distance au centre ou le couloir eclate vers les cibles.",
@@ -52,6 +52,8 @@ export const AIDE = {
     delai_reaction_s: "Duree detection -> decision -> ordre de mise a poste.",
     pas_decision_s: "Periode de replanification des mises a poste (MODELE § 8.3).",
     interception_profondeur_km: "Profondeur dans la zone ou l'on veut intercepter ; sert aux abaques (MODELE § 3.2).",
+    pistage: "Algorithme qui regroupe les detections en pistes (algos/global/pistage/…).",
+    allocation: "Algorithme qui affecte les avions libres aux pistes (algos/global/allocation/…).",
   },
   simulation: {
     pas_s: "Pas de temps ; 0,5 s = 111 m parcourus par un drone a 800 km/h.",

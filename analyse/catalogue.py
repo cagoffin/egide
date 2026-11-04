@@ -55,11 +55,13 @@ def _fusionner(identifiant: str, fichiers: dict, lignee: tuple) -> dict:
     if fichier is None:
         raise CatalogueInvalideError(f"unite non chargee : {identifiant}")
     if "herite_de" not in fichier:
-        return {**fichier, "_aide": dict(fichier.get("_aide", {})), "_lignee": [identifiant]}
+        return {**fichier, "_aide": dict(fichier.get("_aide", {})), "_lignee": [identifiant]}  # racine : pas d'heritage
     parent = _fusionner(fichier["herite_de"], fichiers, (*lignee, identifiant))
     propre = {cle: valeur for cle, valeur in fichier.items() if cle != "herite_de"}
     aide = {**parent["_aide"], **fichier.get("_aide", {})}
-    return {**parent, **propre, "_aide": aide, "_lignee": [*parent["_lignee"], identifiant]}
+    # Les algorithmes se fusionnent role par role : une unite fille ne remplace que les roles qu'elle cite.
+    algos = {**parent.get("algos", {}), **fichier.get("algos", {})}
+    return {**parent, **propre, "algos": algos, "_aide": aide, "_lignee": [*parent["_lignee"], identifiant]}
 
 
 def unite_brute(identifiant: str, fichiers: dict) -> dict:

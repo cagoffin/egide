@@ -6,7 +6,15 @@ import {AIDE} from "./scenario_aide.js";
 import {convertir_objet} from "./unites.js";
 
 export const FORMAT = 2;
-export const TACTIQUES = ["direct", "disperse", "fourmi"];
+// Noms courts des comportements publics ; toute autre tactique est l'identifiant complet d'un algorithme.
+export const TACTIQUES = {
+  direct: "global/comportement/essaim_direct",
+  disperse: "global/comportement/essaim_disperse",
+  fourmi: "global/comportement/essaim_fourmi",
+};
+
+/** Rendre l'identifiant de l'algorithme de comportement d'une tactique (nom court ou identifiant complet). */
+export const algo_tactique = (tactique) => TACTIQUES[tactique] ?? tactique;
 
 export class ScenarioInvalide extends Error {}
 
@@ -55,7 +63,6 @@ function resoudre_avions(groupes, fichiers) {
   return groupes.map((groupe) => {
     const avion = unite_si(groupe.unite, fichiers, groupe.surcharges);
     const arme = unite_si(avion.emport, fichiers, groupe.surcharges_emport);
-    if (!["laser", "ir"].includes(arme.guidage)) throw new ScenarioInvalide(`${arme.id} : guidage inconnu « ${arme.guidage} »`);
     return {...avion, nombre: groupe.nombre, altitude: groupe.altitude_m, arme};
   });
 }
@@ -68,7 +75,9 @@ export function resoudre_scenario(brutDonne, fichiers) {
   const brut = en_v2(brutDonne);
   valider_aide(brut, "");
   const {theatre, rouge, bleu, simulation} = brut;
-  if (!TACTIQUES.includes(rouge.tactique)) throw new ScenarioInvalide(`tactique inconnue « ${rouge.tactique} » (${TACTIQUES.join(", ")})`);
+  if (!(rouge.tactique in TACTIQUES) && !rouge.tactique.includes("/")) {
+    throw new ScenarioInvalide(`tactique inconnue « ${rouge.tactique} » (${Object.keys(TACTIQUES).join(", ")}, ou identifiant d'algorithme)`);
+  }
   try {
     const drone = unite_si(rouge.unite, fichiers, rouge.surcharges);
     const {unite: _u, surcharges: _s, ...reglagesRouge} = rouge;
@@ -78,7 +87,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
         origine: geo_deg(theatre.origine_lat_deg, theatre.origine_lon_deg, 0),
         ...convertir_objet({zone_rayon_km: theatre.zone_rayon_km, cibles_nombre: theatre.cibles_nombre}),
       },
-      rouge: {...drone, altitude: drone.altitude_croisiere, ...convertir_objet(reglagesRouge)},
+      rouge: {...drone, altitude: drone.altitude_croisiere, ...convertir_objet(reglagesRouge), comportement: algo_tactique(rouge.tactique)},
       avions: resoudre_avions(bleu.avions, fichiers),
       sol: {...unite_si(bleu.sol.unite, fichiers, bleu.sol.surcharges), nombre: bleu.sol.nombre, munitions: bleu.sol.munitions},
       radar: unite_si(bleu.radar.unite, fichiers, bleu.radar.surcharges),
@@ -145,7 +154,10 @@ export function migrer_v1(v1) {
       sol: {_aide: AIDE.sol, unite: UNITES_V1.poste, nombre: v1.sol_postes_nombre, munitions: v1.sol_roquettes_nombre + v1.sol_missiles_nombre,
         surcharges: {portee_km: v1.sol_portee_km, pk: v1.sol_pk, engagements_par_passage: v1.sol_engagements_par_passage}},
       radar: {_aide: AIDE.radar, unite: UNITES_V1.radar, surcharges: {hauteur_antenne_m: v1.radar_hauteur_antenne_m, portee_max_km: v1.radar_portee_max_km}},
-      conduite: {_aide: AIDE.conduite, delai_reaction_s: v1.delai_reaction_s, pas_decision_s: v1.avions_pas_decision_s, interception_profondeur_km: v1.interception_profondeur_km},
+      conduite: {
+        _aide: AIDE.conduite, delai_reaction_s: v1.delai_reaction_s, pas_decision_s: v1.avions_pas_decision_s,
+        interception_profondeur_km: v1.interception_profondeur_km, pistage: "global/pistage/cellules", allocation: "global/allocation/densite_pistes",
+      },
     },
     simulation: {_aide: AIDE.simulation, pas_s: v1.simulation_pas_s, graine: v1.graine},
   };

@@ -1,0 +1,79 @@
+[
+  {
+    "id": "_unite",
+    "nom": "Unite",
+    "famille": "_unite",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "capteurs/radars/radar_basse_altitude_notionnel",
+    "nom": "Radar de surveillance basse altitude (notionnel)",
+    "famille": "capteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "effecteurs/roquettes/_roquette_guidee",
+    "nom": "Unite",
+    "famille": "effecteurs",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+    "nom": "Roquette guidee infrarouge (notionnelle)",
+    "famille": "effecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+    "nom": "Roquette guidee laser de 70 mm (notionnelle)",
+    "famille": "effecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "sites/postes/poste_sol_air_notionnel",
+    "nom": "Poste sol-air de courte portee (notionnel)",
+    "famille": "sites",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "vecteurs/avions/_avion",
+    "nom": "Unite",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "vecteurs/avions/turbopropulseur_ir_notionnel",
+    "nom": "Turbopropulseur d'appui, roquettes IR (notionnel)",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "vecteurs/avions/turbopropulseur_laser_notionnel",
+    "nom": "Turbopropulseur d'appui, roquettes laser (notionnel)",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
+    "id": "vecteurs/drones/_drone",
+    "nom": "Unite",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "vecteurs/drones/drone_reaction_notionnel",
+    "nom": "Drone d'attaque a reaction (notionnel)",
+    "famille": "vecteurs",
+    "fidelite": "notionnel",
+    "base": false
+  }
+]

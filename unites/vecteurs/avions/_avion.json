@@ -12,5 +12,8 @@
   "vitesse_engagement_kmh": 350,
   "facteur_charge_max_g": 5,
   "emport": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
-  "emport_nombre": 12
+  "emport_nombre": 12,
+  "algos": {
+    "mouvement": "global/mouvement/croisiere_geodesique"
+  }
 }

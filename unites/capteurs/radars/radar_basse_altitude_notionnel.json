@@ -5,7 +5,12 @@
   },
   "herite_de": "_unite",
   "nom": "Radar de surveillance basse altitude (notionnel)",
-  "sources": ["Ordre de grandeur notionnel : radar de surveillance terrestre, antenne sur mat"],
+  "sources": [
+    "Ordre de grandeur notionnel : radar de surveillance terrestre, antenne sur mat"
+  ],
   "hauteur_antenne_m": 20,
-  "portee_max_km": 250
+  "portee_max_km": 250,
+  "algos": {
+    "detection": "global/detection/couverture_frontiere"
+  }
 }

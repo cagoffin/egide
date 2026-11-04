@@ -38,7 +38,9 @@ function fusionner(id, fichiers, lignee) {
   if (!fichier.herite_de) return {...fichier, _aide: {...fichier._aide}, _lignee: [id]};
   const parent = fusionner(fichier.herite_de, fichiers, [...lignee, id]);
   const {herite_de: _, ...propre} = fichier;
-  return {...parent, ...propre, _aide: {...parent._aide, ...fichier._aide}, _lignee: [...parent._lignee, id]};
+  // Les algorithmes se fusionnent rôle par rôle : une unité fille ne remplace que les rôles qu'elle cite.
+  const algos = {...parent.algos, ...fichier.algos};
+  return {...parent, ...propre, algos, _aide: {...parent._aide, ...fichier._aide}, _lignee: [...parent._lignee, id]};
 }
 
 function valider(id, unite) {

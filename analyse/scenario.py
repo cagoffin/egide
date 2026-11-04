@@ -12,7 +12,12 @@ from analyse.catalogue import RACINE, CatalogueInvalideError, charger_unites, un
 from analyse.unites import convertir_objet
 
 FORMAT = 2
-TACTIQUES = ("direct", "disperse", "fourmi")
+# Noms courts des comportements publics ; toute autre tactique est l'identifiant complet d'un algorithme.
+TACTIQUES = {
+    "direct": "global/comportement/essaim_direct",
+    "disperse": "global/comportement/essaim_disperse",
+    "fourmi": "global/comportement/essaim_fourmi",
+}
 
 
 class ScenarioInvalideError(ValueError):
@@ -60,7 +65,7 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
         raise ScenarioInvalideError("seul le format 2 est lu ici ; un scenario v1 se migre cote JavaScript")
     _valider_aide(brut, "")
     theatre, rouge, bleu = brut["theatre"], brut["rouge"], brut["bleu"]
-    if rouge["tactique"] not in TACTIQUES:
+    if rouge["tactique"] not in TACTIQUES and "/" not in rouge["tactique"]:
         raise ScenarioInvalideError(f"tactique inconnue « {rouge['tactique']} »")
     try:
         drone = unite_si(rouge["unite"], fichiers, rouge.get("surcharges"))
@@ -78,7 +83,12 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                     {"zone_rayon_km": theatre["zone_rayon_km"], "cibles_nombre": theatre["cibles_nombre"]}
                 ),
             },
-            "rouge": {**drone, "altitude": drone["altitude_croisiere"], **convertir_objet(reglages_rouge)},
+            "rouge": {
+                **drone,
+                "altitude": drone["altitude_croisiere"],
+                **convertir_objet(reglages_rouge),
+                "comportement": TACTIQUES.get(rouge["tactique"], rouge["tactique"]),
+            },
             "avions": _resoudre_avions(bleu["avions"], fichiers),
             "sol": {**sol, "nombre": bleu["sol"]["nombre"], "munitions": bleu["sol"]["munitions"]},
             "radar": unite_si(bleu["radar"]["unite"], fichiers, bleu["radar"].get("surcharges")),

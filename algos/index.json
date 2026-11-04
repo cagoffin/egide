@@ -1,0 +1,62 @@
+[
+  {
+    "id": "global/allocation/densite_pistes",
+    "nom": "Densité des pistes, interception analytique",
+    "role": "allocation",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/comportement/essaim_direct",
+    "nom": "Essaim en groupes directs",
+    "role": "comportement",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/comportement/essaim_disperse",
+    "nom": "Essaim dispersé",
+    "role": "comportement",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/comportement/essaim_fourmi",
+    "nom": "Essaim fourmi (couloir puis éclatement)",
+    "role": "comportement",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/detection/couverture_frontiere",
+    "nom": "Couverture continue à la frontière",
+    "role": "detection",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/mouvement/croisiere_geodesique",
+    "nom": "Croisière géodésique",
+    "role": "mouvement",
+    "fidelite": "cinematique"
+  },
+  {
+    "id": "global/pistage/cellules",
+    "nom": "Pistes par cellules",
+    "role": "pistage",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/tir/guidage_laser_semi_actif",
+    "nom": "Guidage laser semi-actif",
+    "role": "tir",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/tir/tire_et_oublie",
+    "nom": "Tire et oublie",
+    "role": "tir",
+    "fidelite": "notionnel"
+  },
+  {
+    "id": "global/tir_sol/cadence_par_passage",
+    "nom": "Cadence par passage",
+    "role": "tir_sol",
+    "fidelite": "notionnel"
+  }
+]

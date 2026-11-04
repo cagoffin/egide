@@ -1,13 +1,11 @@
-// Avions en orbite : planification des mises à poste, déplacement, tirs guidés (MODELE § 3, § 8.3 à § 8.5, § 9.4).
+// Avions en orbite : orchestration des mises à poste, déplacements et tirs ; les décisions (pistage, allocation,
+// mouvement, tir) sont déléguées aux algorithmes du scénario et des unités (MODELE § 8.3 à § 8.5, § 10).
 // Chaque avion porte les paramètres de son groupe (type d'avion, arme, altitude) : la flotte peut être hétérogène.
-import {ajouter, depuis_ecef, direct, distance_oblique, pas_vers, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
+import {algo} from "./algos.js";
+import {direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
+import {OUTILS} from "./outils.js";
 import {est_actif, plus_proche, resoudre_tir} from "./tir.js";
-
-// Taille des cellules qui regroupent les drones en pistes : 5 km, soit 22 s de vol d'un drone à 800 km/h.
-const CELLULE = 5_000;
-// Au-delà de 15 min, l'extrapolation rectiligne d'une piste ne vaut plus rien.
-const HORIZON_INTERCEPTION = 900;
 // Un drone qui se rapproche à moins de 3 portées d'arme fait passer l'avion de la mise à poste à l'engagement.
 const PORTEES_ENGAGEMENT = 3;
 
@@ -28,42 +26,6 @@ export function creer_avions(scenario, hasard) {
   return avions;
 }
 
-/**
- * Rendre le plus petit délai t ≥ 0 (s) tel qu'un avion parti de `position` à `vitesseAvion` soit à moins de `portee`
- * de la position extrapolée en ligne droite de `cible` ({position, vitesse} en ECEF), ou null (MODELE § 8.3).
- * Racine de |D + V t|² = (v t + r)², D = cible − avion, en trois dimensions.
- */
-export function delai_interception(position, cible, vitesseAvion, portee) {
-  const D = soustraire(cible.position, position);
-  const V = cible.vitesse;
-  const c = produit_scalaire(D, D) - portee * portee;
-  if (c <= 0) return 0;
-  const a = produit_scalaire(V, V) - vitesseAvion ** 2;
-  const b = 2 * (produit_scalaire(D, V) - vitesseAvion * portee);
-  if (Math.abs(a) < 1e-9) return b < 0 ? -c / b : null;
-  const discriminant = b * b - 4 * a * c;
-  if (discriminant < 0) return null;
-  const racines = [(-b - Math.sqrt(discriminant)) / (2 * a), (-b + Math.sqrt(discriminant)) / (2 * a)];
-  // a > 0 (drone plus rapide) : la condition tient entre les racines ; a < 0 : au-delà de la plus grande.
-  const delai = a > 0 ? Math.min(...racines) : Math.max(...racines);
-  return delai >= 0 ? delai : null;
-}
-
-const cle_cellule = (p) => `${Math.floor(p.x / CELLULE)},${Math.floor(p.y / CELLULE)},${Math.floor(p.z / CELLULE)}`;
-
-function regrouper_pistes(monde) {
-  const pistes = new Map();
-  for (const drone of monde.drones) {
-    const connu = drone.detection !== null && monde.t - drone.detection >= monde.scenario.conduite.delai_reaction;
-    if (!est_actif(drone, monde.t) || !connu) continue;
-    const cle = cle_cellule(drone.ecef);
-    const piste = pistes.get(cle);
-    if (piste) piste.effectif++;
-    else pistes.set(cle, {drone, effectif: 1});
-  }
-  return [...pistes.values()];
-}
-
 /** Rendre le drone actif le plus proche qui se rapproche de l'avion à moins de 3 portées d'arme, ou null. */
 export function drone_approchant(monde, avion) {
   let retenu = null;
@@ -80,35 +42,18 @@ export function drone_approchant(monde, avion) {
   return retenu;
 }
 
-function meilleure_interception(avion, pistes, affectes) {
-  const {vitesse_mise_a_poste: vitesse, arme, altitude} = avion.groupe;
-  let meilleur = null;
-  for (const piste of pistes) {
-    const cible = {position: piste.drone.ecef, vitesse: piste.drone.vitesse};
-    const delai = delai_interception(avion.ecef, cible, vitesse, arme.portee);
-    if (delai === null || delai > HORIZON_INTERCEPTION) continue;
-    const extrapole = ajouter(piste.drone.ecef, piste.drone.vitesse, delai);
-    // Densité de la piste, divisée par les avions déjà envoyés au même endroit : on étale la flotte.
-    const score = piste.effectif / (1 + (affectes.get(cle_cellule(extrapole)) ?? 0));
-    if (!meilleur || score > meilleur.score || (score === meilleur.score && delai < meilleur.delai)) {
-      // La droite ECEF passe sous la surface (≈ d²/8R) : seul le point au sol compte, l'avion garde son altitude.
-      meilleur = {point: {...depuis_ecef(extrapole), alt: altitude}, cle: cle_cellule(extrapole), delai, score};
-    }
-  }
-  return meilleur;
-}
-
-/** Réaffecter chaque avion libre (armé, sans drone en approche) au point d'interception le plus rentable. */
+/** Réaffecter les avions libres (armés, sans drone en approche) par les algorithmes de pistage et d'allocation. */
 export function planifier_avions(monde) {
-  const pistes = regrouper_pistes(monde);
-  const affectes = new Map();
-  for (const avion of monde.avions) {
-    if (avion.munitions === 0 || drone_approchant(monde, avion)) continue;
-    const choix = meilleure_interception(avion, pistes, affectes);
-    if (choix) {
+  const {conduite} = monde.scenario;
+  const connus = monde.drones.filter(
+    (drone) => est_actif(drone, monde.t) && drone.detection !== null && monde.t - drone.detection >= conduite.delai_reaction,
+  );
+  const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
+  const libres = monde.avions.filter((avion) => avion.munitions > 0 && !drone_approchant(monde, avion));
+  for (const {avion, point} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
+    if (point) {
       avion.etat = "ralliement";
-      avion.point = choix.point;
-      affectes.set(choix.cle, (affectes.get(choix.cle) ?? 0) + 1);
+      avion.point = point;
     } else if (avion.etat !== "orbite") {
       avion.etat = "retour";
       avion.point = avion.orbite;
@@ -116,11 +61,13 @@ export function planifier_avions(monde) {
   }
 }
 
-function deplacer(avion, but, pas) {
-  const {atteint, ...suivant} = pas_vers(avion.geo, but, pas);
-  avion.geo = suivant;
-  avion.ecef = vers_ecef(suivant);
-  return atteint;
+function deplacer(monde, avion, but, pas) {
+  const mouvement = algo(monde.registre, avion.groupe.algos.mouvement, "mouvement");
+  const route = [{geo: but, ecef: vers_ecef({...but, alt: avion.geo.alt})}];
+  const suivant = mouvement.avancer(avion, route, pas, OUTILS);
+  avion.geo = suivant.geo;
+  avion.ecef = suivant.ecef;
+  return suivant.atteints === 1;
 }
 
 /** Déplacer les avions de `dt` s : vers le drone en approche à la vitesse d'engagement, sinon vers leur point. */
@@ -130,18 +77,18 @@ export function avancer_avions(monde, dt) {
     const menace = avion.munitions > 0 ? drone_approchant(monde, avion) : null;
     if (menace) {
       avion.etat = "engagement";
-      deplacer(avion, menace.geo, vitesseEngagement * dt);
+      deplacer(monde, avion, menace.geo, vitesseEngagement * dt);
       continue;
     }
     if (avion.etat === "engagement") avion.etat = "poste";
     if (avion.etat !== "ralliement" && avion.etat !== "retour") continue;
-    if (deplacer(avion, avion.point, vitesse * dt)) avion.etat = avion.etat === "retour" ? "orbite" : "poste";
+    if (deplacer(monde, avion, avion.point, vitesse * dt)) avion.etat = avion.etat === "retour" ? "orbite" : "poste";
   }
 }
 
 /**
- * Faire tirer chaque avion prêt sur le drone non visé le plus proche à portée (MODELE § 4.2) :
- * un tir laser occupe l'avion pendant la désignation ; un tir IR le libère après la cadence.
+ * Faire tirer chaque avion prêt sur le drone non visé le plus proche à portée (MODELE § 4.2) ; l'algorithme de tir
+ * de l'arme donne le temps de vol et la durée pendant laquelle l'avion ne peut plus tirer.
  */
 export function tirer_air(monde) {
   for (const avion of monde.avions) {
@@ -149,10 +96,10 @@ export function tirer_air(monde) {
     if (avion.munitions === 0 || monde.t < avion.prochain_tir) continue;
     const drone = plus_proche(monde, avion.ecef, arme.portee, true);
     if (!drone) continue;
-    const laser = avion.guidage === "laser";
-    const vol = laser ? arme.duree_designation : distance_oblique(avion.ecef, drone.ecef) / arme.vitesse;
+    const tir = algo(monde.registre, arme.algos.tir, "tir");
+    const {vol, occupation} = tir.planifier_tir(arme, distance_oblique(avion.ecef, drone.ecef));
     avion.munitions--;
-    avion.prochain_tir = monde.t + (laser ? arme.duree_designation : arme.cadence);
+    avion.prochain_tir = monde.t + occupation;
     drone.vise = true;
     monde.compteurs.tirs_air++;
     monde.tirs_en_vol.push({drone, impact: monde.t + vol, pk: arme.pk, origine: {...avion.geo}});

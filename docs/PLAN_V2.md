@@ -26,7 +26,7 @@ scenarios/                                  placements, plans de vol, zones, mé
 | Jalon | Contenu | Critère de preuve | État |
 |---|---|---|---|
 | 0 | Socle géodésique 3D, catalogue minimal, scénario v2 par chemins, migration v1 | Statistiques de la v0.1 retrouvées à moins de 3 σ ; géodésie sur exemples GeographicLib | **fait** |
-| 1 | Registre d'algorithmes par rôle, portage du comportement actuel dans `algos/global/`, bibliothèque publique la plus complète possible, fiches générées, explorateur du catalogue | Suite de conformité appliquée à tout algorithme déposé : pur, déterministe, unités cohérentes, invariants | à faire |
+| 1 | Registre d'algorithmes par rôle, portage du comportement actuel dans `algos/global/`, suite de conformité, index du catalogue | Bilans du jalon 0 rendus à l'identique ; conformité appliquée à tout fichier déposé | **socle fait** — pas de bibliothèque publique de modèles d'armes : ces modèles relèvent de `prive/` |
 | 2 | Globe et carte 2,5D (MapLibre), sources configurables, relief dans le moteur (masquage radar), couverture réelle, tuiles hors ligne (PMTiles) | Sur relief plat, l'horizon calculé retrouve le § 2 | à faire |
 | 3 | Éditeur façon jeu de stratégie : palette, glisser-déposer, sélection, groupes Ctrl+1–9, ordres enchaînés, plans de vol, vue en profil, zones dessinées, ordres en direct rejoués | Un raid avec ordres en direct se rejoue à l'identique | à faire |
 | 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | à faire |
@@ -72,5 +72,7 @@ Nouvelles idées proposées pendant le développement, à trier avec l'utilisate
   référence (`bleu.avions.1.nombre : 30 → 50`), pour qu'un chiffre se lise toujours avec ce qui l'a produit.
 - *Jalon 0* — **Explorateur du catalogue** : une page qui liste les unités, montre leur arbre d'héritage, leurs
   sources, leur niveau de fidélité et leur état de validation (à faire avec le jalon 1).
+- *Jalon 1* — **Fiche de dépôt** : quand la conformité refuse un fichier privé, afficher dans l'interface la règle
+  violée et la ligne fautive, pour corriger sans lire les tests.
 - *Jalon 0* — **Théâtres prédéfinis** : choisir le centre du théâtre par un nom de lieu plutôt que par latitude et
   longitude, avec une liste de théâtres d'exemple.

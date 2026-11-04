@@ -14,5 +14,8 @@
   "pk": 0.7,
   "duree_designation_s": 10,
   "cadence_s": 3,
-  "vitesse_ms": 700
+  "vitesse_ms": 700,
+  "algos": {
+    "tir": "global/tir/guidage_laser_semi_actif"
+  }
 }

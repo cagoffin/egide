@@ -4,9 +4,13 @@
     "nom": "Nom affiche de l'unite.",
     "fidelite": "Niveau de fidelite du modele : notionnel (ordres de grandeur), cinematique, point_masse (3 degres de liberte) ou 6ddl.",
     "sources": "Origine des valeurs : documents publics, ouvrages, ou 'ordre de grandeur notionnel'. Au moins une entree.",
-    "herite_de": "Identifiant de l'unite parente, dont on reprend les cles avant d'appliquer celles-ci."
+    "herite_de": "Identifiant de l'unite parente, dont on reprend les cles avant d'appliquer celles-ci.",
+    "algos": "Algorithmes de l'unite, par role : identifiant dans algos/ (ou prive/algos/). Une unite fille ne remplace que les roles qu'elle cite."
   },
   "nom": "Unite",
   "fidelite": "notionnel",
-  "sources": ["Ordre de grandeur notionnel"]
+  "sources": [
+    "Ordre de grandeur notionnel"
+  ],
+  "algos": {}
 }

@@ -11,7 +11,7 @@ import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {GRANDEURS, mener_campagne} from "./moteur/campagne.js";
-import {charger_unites_scenario} from "./moteur/catalogue_node.js";
+import {charger_tous_algos, charger_unites_scenario} from "./moteur/catalogue_node.js";
 import {en_v2, modifier_scenario} from "./moteur/scenario.js";
 
 function lire_arguments(liste) {
@@ -44,11 +44,12 @@ async function principal() {
   const {options, modifications} = lire_arguments(process.argv.slice(2));
   const brut = modifier_scenario(en_v2(JSON.parse(readFileSync(options.scenario, "utf-8"))), modifications);
   const fichiers = await charger_unites_scenario(brut);
+  const registre = await charger_tous_algos();
   const [cheminBalaye, liste] = options.balayer ? options.balayer.split("=") : [null, null];
   const valeurs = cheminBalaye ? liste.split(",").map(Number) : [null];
   const resultats = valeurs.map((valeur) => {
     const variante = cheminBalaye ? modifier_scenario(brut, {[cheminBalaye]: valeur}) : brut;
-    const resume = mener_campagne(variante, options.tirages, fichiers);
+    const resume = mener_campagne(variante, options.tirages, fichiers, registre);
     afficher(cheminBalaye ? `${cheminBalaye} = ${valeur}` : "scénario", resume);
     return {valeur, resume};
   });
