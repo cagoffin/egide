@@ -1,0 +1,23 @@
+{
+  "_aide": {
+    "_": "Base des terrains : grille reguliere d'altitudes du sol en latitude et longitude, que le moteur lit pour masquer radars et liaisons (MODELE § 16). Fabriquee par node outils/terrain.js.",
+    "lat_sud_deg": "Latitude de la premiere ligne de la grille (bord sud).",
+    "lon_ouest_deg": "Longitude de la premiere colonne de la grille (bord ouest).",
+    "pas_lat_deg": "Ecart en latitude entre deux lignes.",
+    "pas_lon_deg": "Ecart en longitude entre deux colonnes.",
+    "pas_km": "Pas nominal de la grille au sol ; fixe le pas d'echantillonnage des masques d'horizon.",
+    "lignes": "Nombre de lignes (du sud au nord).",
+    "colonnes": "Nombre de colonnes (d'ouest en est).",
+    "altitudes_b64": "Altitudes du sol en m, entiers signes 16 bits petit-boutistes, ligne par ligne du sud au nord, encodes en base64."
+  },
+  "herite_de": "_unite",
+  "nom": "Terrain",
+  "lat_sud_deg": 0,
+  "lon_ouest_deg": 0,
+  "pas_lat_deg": 0.01,
+  "pas_lon_deg": 0.01,
+  "pas_km": 1,
+  "lignes": 0,
+  "colonnes": 0,
+  "altitudes_b64": ""
+}

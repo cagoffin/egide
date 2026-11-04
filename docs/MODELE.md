@@ -390,3 +390,29 @@ C'est un filtre d'affichage : la simulation n'en dépend pas.
 - **Vue du PC** : l'écran ne montre que les drones que la conduite connaît, et les pistes de son algorithme de
   pistage ; la vérité terrain reste à un bouton (V). Les positions affichées sont les positions vraies des drones
   connus : le retard de mise à jour des pistes n'est pas encore représenté.
+
+## 16 · Relief dans le moteur (jalon 2)
+### 16.1 Terrain
+Un terrain est une unité du catalogue (`unites/terrains/`) : grille régulière en latitude et longitude, au pas de 1
+à 2 km, d'altitudes du sol en mètres (entiers 16 bits encodés en base64), avec ses sources. Le scénario le cite par
+`theatre.terrain` (null : Terre lisse, comportement d'avant). `node outils/terrain.js` le fabrique depuis les tuiles
+terrarium (décodeur PNG sans dépendance, `outils/png.js`), ou en relief synthétique pour les essais
+(`terrains/crete_notionnelle` : crête de 1 500 m à 170 km au nord du centre, juste au-delà de la frontière, et massif de 1 200 m au sud-est, qui aveuglent vers l'extérieur les radars voisins). Une fois
+fabriqué, le terrain est un fichier : le moteur travaille hors ligne. L'altitude en un point est interpolée entre
+les quatre nœuds voisins ; hors de la grille, elle vaut 0.
+
+### 16.2 Masque d'horizon des radars
+Pour chaque radar, d'altitude d'antenne z_a = z_sol + h_antenne, le moteur calcule une fois, dans 360 secteurs de
+1°, l'angle de site du relief à chaque pas de distance jusqu'à la portée d :
+θ(s) = (z_sol(s) − z_a) / s − s / (2 k R_T), k = 4/3, et son maximum courant M(s). Un drone à la distance s, volant à
+h_drone au-dessus du sol (suivi de terrain : l'altitude des drones est alors une hauteur sol), est vu si
+θ_drone(s) > M(s), c'est-à-dire s'il dépasse tout le relief qui le précède. Avec un terrain, chaque radar voit selon
+son masque (en disposition frontière, les radars matérialisés du § 15.1, chacun dans sa portée d) ; un drone est vu
+dès qu'un radar en état le voit. La couverture réelle (portée vue dans chaque secteur) remplace les cercles à l'écran.
+Le calcul passe par le repère ENU du radar (distance et azimut à mieux que 0,1 % jusqu'à 100 km).
+
+### 16.3 Vue directe des liaisons
+Une liaison à vue directe (radio, optique) entre deux antennes d'altitudes z₁ et z₂ distantes de D passe si, en
+chaque point à s du premier, z_sol(s) < z₁ + (z₂ − z₁) s / D − s (D − s) / (2 k R_T) (rayon droit, Terre de rayon
+effectif). Le test s'applique aux liaisons entre nœuds au sol et à l'accès de chaque avion (altitude de vol au-dessus
+de l'ellipsoïde).

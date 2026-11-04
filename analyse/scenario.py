@@ -59,6 +59,7 @@ def ids_unites(brut: dict) -> list[str]:
         bleu["sol"]["unite"],
         bleu["radar"]["unite"],
         *moyens,
+        *([brut["theatre"]["terrain"]] if brut["theatre"].get("terrain") else []),
     ]
     return list(dict.fromkeys(ids))
 
@@ -175,6 +176,7 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                 # Les cibles placees comptent toujours : le nombre de cibles ne descend pas sous leur nombre.
                 "cibles_nombre": max(theatre["cibles_nombre"], len(cibles_placees)),
                 "cibles_placees": cibles_placees,
+                "terrain": unite_si(theatre["terrain"], fichiers, None) if theatre.get("terrain") else None,
                 "zones": [
                     {"nom": z["nom"], "type": z["type"], "points": _vers_geo(z["points"], 0)}
                     for z in theatre.get("zones", [])

@@ -7,6 +7,7 @@ import {echapper, LIBELLES_FIDELITE} from "./fiches.js";
 import {format_decimal, format_duree, format_entier} from "./format.js";
 import {ms_vers_kmh} from "../moteur/unites.js";
 import {positions_radars} from "../moteur/radars.js";
+import {couverture_reelle} from "../moteur/terrain.js";
 import {libelle_noeud} from "./reseau_vue.js";
 
 const ETATS = {orbite: "en orbite", ralliement: "en route vers son point", engagement: "au contact d'un drone",
@@ -108,6 +109,12 @@ function inspection_cible(indice, monde) {
 }
 
 /** Rendre le HTML de l'inspection de `cible` ({type: avion|drone|cible, id}) dans le monde. */
+function portees_relief(monde, indice) {
+  const portees = couverture_reelle(monde.reseau.masques[indice], monde.reseau.grille, monde.reseau.hauteur_drones).map((c) => c.portee / 1000);
+  const masques = portees.filter((p) => p < 0.99 * Math.max(...portees)).length;
+  return `vue de ${format_entier(Math.min(...portees))} à ${format_entier(Math.max(...portees))} km selon l'azimut ; masquée par le relief sur ${masques}° de tour`;
+}
+
 function reseau_radar(monde, indice) {
   const latence = monde.reseau.latences_radars[indice];
   if (monde.reseau.radars_hs?.[indice]) return "<b>Hors service</b> : il ne voit plus rien.";
@@ -162,6 +169,7 @@ function inspection_radar(indice, monde) {
       ligne("Antenne", `${format_entier(radar.hauteur_antenne)} m`),
       ligne("Portée instrumentée", `${format_entier(radar.portee_max / 1000)} km`),
       site ? ligne("Portée contre l'essaim", `${format_entier(site.portee / 1000)} km (horizon radar)`) : "",
+      monde.reseau.masques ? ligne("Relief", portees_relief(monde, indice)) : "",
       ligne("Détection", lien_fiche("algo", radar.algos.detection, radar.algos.detection)),
     ].join("")}</table>
     <h4>Réseau</h4>

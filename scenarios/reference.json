@@ -22,12 +22,14 @@
       "zones": "Zones dessinees (editeur) : liste de {nom, type, points}. Une zone 'protegee' compte les drones qui y penetrent ; une zone 'annotation' ne sert qu'a l'affichage.",
       "zones[].nom": "Nom affiche de la zone.",
       "zones[].type": "'protegee' (incursions comptees au bilan) ou 'annotation'.",
-      "zones[].points": "Sommets du polygone, liste de {lat_deg, lon_deg}, au moins trois."
+      "zones[].points": "Sommets du polygone, liste de {lat_deg, lon_deg}, au moins trois.",
+      "terrain": "Terrain du catalogue (unites/terrains/…) : le relief masque radars et liaisons radio (MODELE § 16) ; null : Terre lisse."
     },
     "origine_lat_deg": 47,
     "origine_lon_deg": 2.5,
     "zone_rayon_km": 150,
-    "cibles_nombre": 10
+    "cibles_nombre": 10,
+    "terrain": null
   },
   "rouge": {
     "_aide": {

@@ -77,6 +77,20 @@
     "base": false
   },
   {
+    "id": "terrains/_terrain",
+    "nom": "Terrain",
+    "famille": "terrains",
+    "fidelite": "notionnel",
+    "base": true
+  },
+  {
+    "id": "terrains/crete_notionnelle",
+    "nom": "Terrain synthétique autour de 47° N, 2.5° E (notionnel)",
+    "famille": "terrains",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
     "id": "vecteurs/avions/_avion",
     "nom": "Unite",
     "famille": "vecteurs",

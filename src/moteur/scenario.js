@@ -61,7 +61,8 @@ export const en_v2 = (brut) => (brut.format === FORMAT ? brut : migrer_v1(brut))
 export function ids_unites(brut) {
   const v2 = en_v2(brut);
   const moyens = (v2.bleu.reseau?.liaisons ?? []).map((liaison) => liaison.moyen);
-  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens])];
+  const terrain = v2.theatre.terrain ? [v2.theatre.terrain] : [];
+  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens, ...terrain])];
 }
 
 function resoudre_avions(groupes, fichiers) {
@@ -127,7 +128,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
   try {
     const drone = unite_si(rouge.unite, fichiers, rouge.surcharges);
     const {unite: _u, surcharges: _s, plan_de_vol: plan, ...reglagesRouge} = rouge;
-    const {cibles_placees: placees, zones, ...reglagesTheatre} = theatre;
+    const {cibles_placees: placees, zones, terrain, ...reglagesTheatre} = theatre;
     const ciblesPlacees = vers_geo(placees, 0);
     return structuredClone({
       nom: brut.nom,
@@ -138,6 +139,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
         cibles_nombre: Math.max(reglagesTheatre.cibles_nombre, ciblesPlacees.length),
         cibles_placees: ciblesPlacees,
         zones: (zones ?? []).map((zone) => ({nom: zone.nom, type: zone.type, points: vers_geo(zone.points, 0)})),
+        terrain: terrain ? unite_si(terrain, fichiers) : null,
       },
       rouge: {
         ...drone, altitude: drone.altitude_croisiere, ...convertir_objet(reglagesRouge),

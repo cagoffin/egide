@@ -15,7 +15,8 @@
       "zone_rayon": 150000,
       "cibles_nombre": 10,
       "cibles_placees": [],
-      "zones": []
+      "zones": [],
+      "terrain": null
     },
     "rouge": {
       "id": "vecteurs/drones/drone_reaction_notionnel",
@@ -243,7 +244,8 @@
         "zone_rayon": 150000,
         "cibles_nombre": 10,
         "cibles_placees": [],
-        "zones": []
+        "zones": [],
+        "terrain": null
       },
       "rouge": {
         "id": "vecteurs/drones/drone_reaction_notionnel",

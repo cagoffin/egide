@@ -194,6 +194,7 @@ function basculer_vue_pc() {
 
 function brancher_transport() {
   $("[data-action='vue_pc']").addEventListener("click", basculer_vue_pc);
+  $("[name='terrain']").addEventListener("change", (e) => modifier({"theatre.terrain": e.target.value || null}));
   $("[name='conduite_ciblee']").addEventListener("change", (e) => modifier({"bleu.reseau.conduite_ciblee": e.target.checked}));
   $("[data-action='lire']").addEventListener("click", basculer_lecture);
   $("[data-action='debut']").addEventListener("click", () => sauter_a(0));
@@ -272,6 +273,7 @@ function brancher_scope() {
 function rafraichir_reglages() {
   etat.afficher_reglages(contexte_reglages());
   $("[name='conduite_ciblee']").checked = Boolean(brut_courant().bleu.reseau?.conduite_ciblee);
+  $("[name='terrain']").value = brut_courant().theatre.terrain ?? "";
   document.querySelector(`[name='tactique'][value='${brut_courant().rouge.tactique}']`).checked = true;
 }
 
@@ -435,6 +437,8 @@ async function remplir_moyens() {
   const choix = $("[name='moyen_liaison']");
   choix.innerHTML = moyens.map((u) => `<option value="${u.id}">${u.nom.replace(/ \(notionnelle?\)$/, "")}</option>`).join("");
   choix.value = MOYENS_PAR_DEFAUT.avions;
+  const terrains = index.filter((u) => u.famille === "terrains" && !u.base);
+  $("[name='terrain']").insertAdjacentHTML("beforeend", terrains.map((u) => `<option value="${u.id}">${u.nom}</option>`).join(""));
 }
 
 async function demarrer() {

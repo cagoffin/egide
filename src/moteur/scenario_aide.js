@@ -16,6 +16,7 @@ export const AIDE = {
     origine_lon_deg: "Longitude du centre de la zone defendue (WGS84).",
     zone_rayon_km: "Rayon du disque defendu, mesure le long de l'ellipsoide.",
     cibles_nombre: "Nombre de cibles a proteger : les cibles placees d'abord, puis des cibles tirees au hasard dans 70 % du rayon.",
+    terrain: "Terrain du catalogue (unites/terrains/…) : le relief masque radars et liaisons radio (MODELE § 16) ; null : Terre lisse.",
     cibles_placees: "Cibles placees a la main (editeur) : liste de {lat_deg, lon_deg}. Les autres cibles sont tirees au hasard.",
     "cibles_placees[].lat_deg": "Latitude de la cible placee (WGS84).",
     "cibles_placees[].lon_deg": "Longitude de la cible placee (WGS84).",

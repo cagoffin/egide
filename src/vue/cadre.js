@@ -5,6 +5,15 @@ import {longueur_ronde} from "./camera.js";
 import {COULEURS} from "./couleurs.js";
 import {chemin_cercle, ecran, metres_par_pixel} from "./ecran.js";
 import {format_distance} from "./format.js";
+import {couverture_reelle} from "../moteur/terrain.js";
+
+const couvertures = new WeakMap();
+
+/** Rendre (en mémoire par masque) la couverture réelle d'un radar contre un drone à sa hauteur au-dessus du sol. */
+function couverture_radar(masque, reseau) {
+  if (!couvertures.has(masque)) couvertures.set(masque, couverture_reelle(masque, reseau.grille, reseau.hauteur_drones));
+  return couvertures.get(masque);
+}
 
 const ESPACEMENT_ANNEAUX = 50_000;
 const POLICE_PETITE = "11px system-ui, sans-serif";
@@ -33,6 +42,7 @@ export function dessiner_anneaux(ctx, camera, monde, calques) {
 function dessiner_couverture(ctx, camera, monde) {
   const {origine} = monde.scenario.theatre;
   const sites = monde.couverture.sites;
+  if (monde.reseau.masques) return dessiner_couverture_reelle(ctx, camera, monde.reseau);
   ctx.setLineDash([6, 6]);
   ctx.strokeStyle = COULEURS.ami;
   ctx.lineWidth = 1;
@@ -54,6 +64,26 @@ function dessiner_couverture(ctx, camera, monde) {
   ctx.textAlign = "center";
   ctx.fillText("couverture radar", nord.x, nord.y - 8);
   ctx.textAlign = "start";
+}
+
+/** Tracer la couverture réelle de chaque radar sur le relief : la portée vue dans chaque degré d'azimut (MODELE § 16.2). */
+function dessiner_couverture_reelle(ctx, camera, reseau) {
+  ctx.setLineDash([]);
+  ctx.strokeStyle = COULEURS.ami;
+  ctx.fillStyle = "rgba(74, 152, 232, 0.07)";
+  ctx.lineWidth = 1;
+  reseau.masques.forEach((masque, i) => {
+    if (reseau.radars_hs[i]) return;
+    ctx.beginPath();
+    couverture_radar(masque, reseau).forEach(({azimut, portee}, k) => {
+      const p = ecran(camera, direct(masque.site, azimut, Math.max(portee, 500)));
+      if (k === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  });
 }
 
 /** Tracer le faisceau tournant : depuis le centre (couverture frontière) ou depuis chaque radar placé. */
