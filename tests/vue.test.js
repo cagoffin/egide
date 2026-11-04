@@ -167,8 +167,8 @@ test("édition : une zone s'ajoute, se sélectionne par son barycentre, se dépl
   assert.ok(deplacee.points.every((p, i) => p.lat_deg > ajout["theatre.zones"][0].points[i].lat_deg));
   assert.deepEqual(modifications_suppression(MONDE, brut, ["zone:0"])["theatre.zones"], []);
 });
-test("ordres : en mode ordres, seuls les avions sont éditables ; l'ordre porte l'instant et les numéros", () => {
-  assert.ok(elements_editables(MONDE, REFERENCE, "ordres").every((e) => e.type === "avion"));
+test("ordres : en mode ordres, avions et éléments du réseau seulement ; l'ordre porte l'instant et les numéros", () => {
+  assert.ok(elements_editables(MONDE, REFERENCE, "ordres").every((e) => ["avion", "radar", "conduite", "liaison"].includes(e.type)));
   const monde = {...MONDE, t: 412.5};
   const m = modifications_ordre(REFERENCE, monde, ["avion:3", "avion:7", "cible:1"], geo_deg(47.5, 2));
   assert.deepEqual(m["bleu.ordres"], [{t_s: 412.5, avions: [3, 7], lat_deg: 47.5, lon_deg: 2}]);
@@ -345,4 +345,32 @@ test("survol du centre de conduite : l'entité trouvée porte sa position, comme
   const touche = trouver_sous_curseur(camera, MONDE, ecran(camera, MONDE.scenario.reseau.centre), sans);
   assert.equal(touche.type, "conduite");
   assert.ok(touche.objet.geo && Number.isFinite(touche.objet.geo.lat));
+});
+
+import {modifications_panne} from "../src/vue/edition.js";
+import {connu_du_pc, pistes_connues, resume_situation} from "../src/vue/situation.js";
+import {avancer_monde, simuler as simuler_raid} from "../src/moteur/monde.js";
+
+test("en cours de raid : mettre hors service radars, PC et liaisons ; les avions ne se mettent pas en panne", () => {
+  const monde = creer_monde(scenario(), {registre: REGISTRE});
+  for (let i = 0; i < 600; i++) avancer_monde(monde);
+  assert.ok(elements_editables(monde, REFERENCE, "ordres").some((e) => e.type === "radar"));
+  const mods = modifications_panne(REFERENCE, monde, ["radar:3", "conduite", "avion:2", "cible:0"]);
+  assert.deepEqual(mods["bleu.reseau.pannes"], [{t_s: monde.t, element: "radar:3", duree_s: null}, {t_s: monde.t, element: "conduite", duree_s: null}]);
+  assert.deepEqual(modifications_panne(REFERENCE, monde, ["avion:2"]), {});
+  const rejoue = simuler_raid(scenario(mods), {registre: REGISTRE, journal: false});
+  assert.ok(rejoue.reseau.conduite_hs && rejoue.reseau.radars_hs[3]);
+});
+
+test("vue du PC : seuls les drones connus de la conduite, regroupés en pistes", () => {
+  const monde = creer_monde(scenario({"bleu.reseau.pannes": [{t_s: 0, element: "conduite", duree_s: null}]}), {registre: REGISTRE});
+  for (let i = 0; i < 1200; i++) avancer_monde(monde);
+  assert.ok(monde.drones.some((d) => d.detection !== null), "les radars voient");
+  assert.equal(resume_situation(monde).connus, 0, "mais le PC détruit ne sait rien");
+  const vivant = creer_monde(scenario(), {registre: REGISTRE});
+  for (let i = 0; i < 1200; i++) avancer_monde(vivant);
+  const s = resume_situation(vivant);
+  assert.ok(s.connus > 0 && s.pistes > 0 && s.pistes <= s.connus);
+  assert.equal(pistes_connues(vivant).reduce((n, p) => n + p.effectif, 0), s.connus);
+  assert.ok(vivant.drones.filter((d) => connu_du_pc(vivant, d)).every((d) => d.connu <= vivant.t));
 });

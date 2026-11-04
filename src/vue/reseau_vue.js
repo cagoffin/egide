@@ -6,6 +6,25 @@ import {format_decimal} from "./format.js";
 import {portee_liaison} from "../moteur/reseau.js";
 import {positions_radars} from "../moteur/radars.js";
 
+/** Tracer une croix rouge sur chaque élément hors service : radars en panne, PC en panne ou détruit. */
+export function dessiner_pannes(ctx, camera, monde) {
+  const {reseau} = monde;
+  const points = reseau.radars.filter((_, i) => reseau.radars_hs[i]);
+  if (reseau.conduite_hs) points.push(reseau.centre);
+  ctx.strokeStyle = COULEURS.hostile;
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([]);
+  for (const geo of points) {
+    const p = ecran(camera, geo);
+    ctx.beginPath();
+    ctx.moveTo(p.x - 11, p.y - 11);
+    ctx.lineTo(p.x + 11, p.y + 11);
+    ctx.moveTo(p.x + 11, p.y - 11);
+    ctx.lineTo(p.x - 11, p.y + 11);
+    ctx.stroke();
+  }
+}
+
 /** Moyens proposés par défaut quand le réseau passe en liaisons : radars → conduite au fil, conduite → avions par radio. */
 export const MOYENS_PAR_DEFAUT = {radars: "liaisons/filaire_notionnelle", avions: "liaisons/radio_vhf_uhf_notionnelle"};
 
@@ -34,7 +53,7 @@ export function position_noeud(monde, noeud) {
 
 /** Rendre le nom lisible d'un nœud : « conduite », « R3 », « avions IR »… */
 export function libelle_noeud(monde, noeud) {
-  if (noeud === "conduite") return "conduite";
+  if (noeud === "conduite") return "PC";
   if (noeud.startsWith("radar:")) return `R${Number(noeud.slice(6)) + 1}`;
   const groupe = monde.scenario.avions[Number(noeud.slice(7))];
   return groupe ? `avions ${groupe.nom}` : noeud;
@@ -55,7 +74,7 @@ function trait(ctx, type, actif) {
   ctx.lineWidth = actif ? 1.6 : 1.2;
 }
 
-/** Tracer le centre de conduite : cadre ami et hampe, à la manière d'un poste de commandement APP-6. */
+/** Tracer le centre de conduite (PC) : cadre ami et hampe, à la manière d'un poste de commandement APP-6. */
 function dessiner_conduite(ctx, camera, monde) {
   const p = ecran(camera, monde.scenario.reseau.centre);
   ctx.setLineDash([]);
@@ -71,7 +90,7 @@ function dessiner_conduite(ctx, camera, monde) {
   ctx.fillStyle = COULEURS.ami;
   ctx.font = "bold 10px system-ui, sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("C2", p.x, p.y + 4);
+  ctx.fillText("PC", p.x, p.y + 4);
   ctx.textAlign = "start";
 }
 

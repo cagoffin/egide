@@ -24,6 +24,15 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
       ctx.stroke();
     }
     if (!calques.cibles) return;
+    // Le centre de conduite visé est tracé par le synoptique du réseau (PC) ; ici, seulement ses frappes.
+    if (cible.conduite) {
+      if (monde.fuites[indice]) {
+        ctx.fillStyle = COULEURS.hostile;
+        ctx.font = "12px system-ui, sans-serif";
+        ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 14, ecran.y + 14);
+      }
+      return;
+    }
     const frappe = effets.liste.some((effet) => effet.type === "impact" && effet.cible === indice);
     ctx.fillStyle = frappe ? COULEURS.hostile : COULEURS.fond;
     ctx.strokeStyle = COULEURS.texte;
@@ -54,9 +63,13 @@ function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
   }
 }
 
-/** Tracer les drones en vol : plots d'historique estompés, puis le symbole hostile (gris tant que non détecté). */
-export function dessiner_drones(ctx, camera, monde, traces, calques) {
-  for (const [, plots] of calques.plots ? traces.plots : []) {
+/**
+ * Tracer les drones en vol : plots d'historique estompés, puis le symbole hostile (gris tant que non détecté).
+ * `montre(drone)` : filtre facultatif (vue du PC : seulement les drones que la conduite connaît).
+ */
+export function dessiner_drones(ctx, camera, monde, traces, calques, montre = () => true) {
+  for (const [id, plots] of calques.plots ? traces.plots : []) {
+    if (!montre(monde.drones[id])) continue;
     plots.forEach((plot, rang) => {
       const ecran = projeter_ecran(camera, plot);
       ctx.fillStyle = `rgba(229, 87, 75, ${0.12 + (0.4 * rang) / plots.length})`;
@@ -65,7 +78,7 @@ export function dessiner_drones(ctx, camera, monde, traces, calques) {
   }
   for (const drone of monde.drones) {
     if (!drone.vivant || drone.arrive || monde.t < drone.depart) continue;
-    if (!calques[drone.detection === null ? "drones_inconnus" : "drones_detectes"]) continue;
+    if (!calques[drone.detection === null ? "drones_inconnus" : "drones_detectes"] || !montre(drone)) continue;
     const ecran = projeter_ecran(camera, drone.geo);
     ctx.fillStyle = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
     ctx.beginPath();

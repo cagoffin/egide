@@ -11,6 +11,7 @@ import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
 import {creer_editeur} from "./editeur.js";
 import {MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
+import {resume_situation} from "./situation.js";
 import {dessiner_inspection, inspection} from "./inspecteur.js";
 import {dessiner_profil} from "./profil.js";
 import {altitudes_relief, echantillonner_chemin} from "./relief.js";
@@ -34,7 +35,7 @@ const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 const etat = {base: null, modifications: {}, fichiers: {}, registre: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
   camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null,
   carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: [], inspection: null, derniereInspection: 0,
-  calques: lire_calques(), panneaux: null};
+  calques: lire_calques(), panneaux: null, vue_pc: false};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 
@@ -137,7 +138,7 @@ function image(maintenant, precedent) {
     const ctx = $("#scope").getContext("2d");
     ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);
     dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
-      angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques});
+      angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol, calques: etat.calques, percue: etat.vue_pc});
     etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
     dessiner_inspection(ctx, etat.camera, etat.inspection, lecteur.monde);
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
@@ -164,6 +165,10 @@ function rafraichir_commandes(maintenant) {
   mettre_a_jour_tableau($("#tableau"), lecteur.monde);
   $("[name='temps']").value = lecteur.monde.t;
   $("[data-champ='horloge']").textContent = `${format_duree(lecteur.monde.t)} sur ${format_duree(lecteur.duree)}`;
+  if (etat.vue_pc) {
+    const s = resume_situation(lecteur.monde);
+    $("[data-champ='bandeau_pc']").textContent = `Vue du PC : ${s.connus} drone${s.connus > 1 ? "s" : ""} connu${s.connus > 1 ? "s" : ""} sur ${s.en_vol} en vol, ${s.pistes} piste${s.pistes > 1 ? "s" : ""}`;
+  }
   $("[data-action='lire']").textContent = lecteur.enLecture ? "Pause" : lecteur.monde.t >= lecteur.duree ? "Rejouer" : "Lire";
 }
 
@@ -181,7 +186,15 @@ function basculer_lecture() {
   lecteur.enLecture = !lecteur.enLecture;
 }
 
+function basculer_vue_pc() {
+  etat.vue_pc = !etat.vue_pc;
+  $("[data-action='vue_pc']").setAttribute("aria-pressed", String(etat.vue_pc));
+  $("[data-champ='bandeau_pc']").hidden = !etat.vue_pc;
+}
+
 function brancher_transport() {
+  $("[data-action='vue_pc']").addEventListener("click", basculer_vue_pc);
+  $("[name='conduite_ciblee']").addEventListener("change", (e) => modifier({"bleu.reseau.conduite_ciblee": e.target.checked}));
   $("[data-action='lire']").addEventListener("click", basculer_lecture);
   $("[data-action='debut']").addEventListener("click", () => sauter_a(0));
   $("[name='temps']").addEventListener("input", (e) => sauter_a(Number(e.target.value)));
@@ -197,6 +210,7 @@ function brancher_transport() {
     const panneau = /^Digit([1-5])$/.exec(e.code)?.[1];
     if (panneau && !edition) etat.panneaux.basculer(etat.panneaux.ids()[Number(panneau) - 1]);
     if (e.key.toLowerCase() === "e" && !edition) etat.editeur.activer(true);
+    if (e.key.toLowerCase() === "v" && !edition) basculer_vue_pc();
     if (e.key === "Escape" && !edition && !etat.inspection) etat.panneaux.fermer();
     if (e.code === "Space") (e.preventDefault(), basculer_lecture());
     if (e.code === "ArrowRight") sauter_a(etat.lecteur.monde.t + 30);
@@ -236,7 +250,7 @@ function brancher_scope() {
     if (glisse || !etat.camera || !etat.lecteur) return;
     if (!sur_la_vue(e)) return void (etat.survol = null, montrer(infobulle, null));
     const cadre = vue.getBoundingClientRect();
-    etat.survol = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques);
+    etat.survol = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques, etat.vue_pc);
     montrer(infobulle, etat.survol && decrire(etat.survol, etat.lecteur.monde), e.clientX, e.clientY);
   });
   vue.addEventListener("pointerleave", () => (etat.survol = null, montrer(infobulle, null)));
@@ -247,7 +261,7 @@ function brancher_scope() {
     if (etat.editeur?.est_actif() || !sur_la_vue(e)) return;
     if (appui && Math.hypot(e.clientX - appui.x, e.clientY - appui.y) > 4) return;
     const cadre = vue.getBoundingClientRect();
-    const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques);
+    const touche = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top}, etat.calques, etat.vue_pc);
     if (touche) inspecter({type: touche.type, id: touche.type === "conduite" ? 0 : ["cible", "radar"].includes(touche.type) ? touche.indice : touche.objet.id});
   });
   $("[data-action='fermer_inspecteur']").addEventListener("click", () => inspecter(null));
@@ -257,6 +271,7 @@ function brancher_scope() {
 
 function rafraichir_reglages() {
   etat.afficher_reglages(contexte_reglages());
+  $("[name='conduite_ciblee']").checked = Boolean(brut_courant().bleu.reseau?.conduite_ciblee);
   document.querySelector(`[name='tactique'][value='${brut_courant().rouge.tactique}']`).checked = true;
 }
 

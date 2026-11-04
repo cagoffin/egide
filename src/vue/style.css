@@ -55,6 +55,10 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .tactiques input, .vitesses input { position: absolute; opacity: 0; pointer-events: none; }
 .tactiques label:has(input:checked) { background: var(--hostile); color: #1a0806; font-weight: 600; }
 .vitesses label:has(input:checked) { background: var(--trait); }
+.barre-haut [data-action="vue_pc"][aria-pressed="true"] { background: var(--hostile); color: #1a0806; border-color: var(--hostile); }
+.bandeau-pc { position: absolute; inset-block-end: 76px; inset-inline-start: 50%; translate: -50% 0; margin: 0; z-index: 3; padding: 4px 12px;
+  font-size: 13px; background: var(--verre); border: 1px solid var(--hostile); border-radius: 8px; }
+.bandeau-pc[hidden] { display: none; }
 .barre-haut [data-action="editer"][aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
 .lien-catalogue { color: var(--ami); font-size: 13px; padding-inline: 4px; }
 
@@ -82,6 +86,7 @@ label:has(input:focus-visible) { outline: 2px solid var(--texte); outline-offset
 .reglage input { grid-column: 1 / -1; }
 .reglage output { color: var(--texte); font-weight: 600; }
 .reglage .libelle { color: var(--texte-secondaire); }
+.interrupteur { display: flex; gap: 8px; align-items: center; padding-block: 8px 0; font-size: 13px; cursor: pointer; }
 .prereglages { display: grid; gap: 8px; padding-block: 12px 0; }
 .reglages-carte { display: grid; gap: 4px; font-size: 13px; }
 .reglages-carte h3 { margin-block-start: 4px; }
@@ -162,7 +167,7 @@ i.faisceau { background: conic-gradient(rgba(74, 152, 232, 0.6) 0 40deg, transpa
 .barre-edition [aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
 .vue[data-mode="ordres"] .barre-edition :is([data-outil]:not([data-outil="selection"]), [name="moyen_liaison"], [data-action="reseau_complet"]),
 .vue[data-mode="ordres"] .seulement-edition,
-.vue[data-mode="edition"] .seulement-ordres { display: none; }
+.vue[data-mode="edition"] .seulement-ordres, .vue:not([data-mode]) .seulement-ordres { display: none; }
 .aide-edition { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: var(--texte-secondaire); text-align: center; }
 
 /* Balayage (dans son panneau). */

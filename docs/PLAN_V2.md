@@ -32,7 +32,7 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | **fait** : explorateur `catalogue.html`, inspecteur au clic, renvois au modèle vérifiés |
 | 5 | Preuve : convergence en pas de temps, sensibilité (Morris, Sobol), duel A/B, empreinte de reproductibilité, dossier de preuve | Les résultats publiés portent leur empreinte et leur convergence | **outils faits** en ligne de commande (`src/preuve.js` : empreinte, convergence, duel apparié, Morris, dossier) ; Sobol et duel en écran partagé à faire |
 | 6 | Idées ci-dessous, par lots | Selon l'idée | **en cours** : interface centrée sur la carte, radars placés et déplaçables, calques par type d'unité |
-| 7 | Réseau d'information : liaisons paramétrables entre unités, synoptique de connectivité, situation perçue par unité | Avec un réseau entièrement connecté sans délai, bilans identiques à aujourd'hui | **lot 1 fait** : moyens filaire, radio, satellite, optique ; liaisons radar–conduite–avions avec latence et portée ; synoptique ; outil Liaison. Reste : latence des ordres, débit, brouillage, liaisons entre drones, postes sol en réseau |
+| 7 | Réseau d'information : liaisons paramétrables entre unités, synoptique de connectivité, situation perçue par unité | Avec un réseau entièrement connecté sans délai, bilans identiques à aujourd'hui | **lots 1 et 2 faits** : moyens filaire, radio, satellite, optique ; liaisons avec latence et portée ; synoptique ; outil Liaison ; latence des consignes ; pannes datées ; PC visé par l'essaim ; vue du PC. Reste : débit, brouillage, liaisons entre drones, postes sol en réseau |
 
 ## Idées retenues
 
@@ -84,8 +84,8 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Preuve | **Pas adaptatif vérifié** : choisir le plus grand pas qui passe le test de convergence et l'inscrire au dossier | 5 | à faire |
 | Preuve | **Tornade dans l'interface** : Morris en diagramme μ*–σ et en tornade ; cliquer un facteur lance son balayage | 5 | à faire |
 | Preuve | **Duel de réseaux** : comparer deux architectures de liaisons sur les mêmes graines | 7 | à faire |
-| Réseau | **Panne et attaque du réseau** : couper une liaison ou un nœud à un instant donné (comme un ordre) ; le centre de conduite devient une cible possible | 7 | à faire |
-| Réseau | **Situation perçue à l'écran** : basculer entre vérité terrain et ce que sait la conduite (pistes connues et leur retard) | 7 | à faire |
+| Réseau | **Panne et attaque du réseau** : couper une liaison ou un nœud à un instant donné (comme un ordre) ; le centre de conduite devient une cible possible | 7 | **fait** |
+| Réseau | **Situation perçue à l'écran** : basculer entre vérité terrain et ce que sait la conduite (pistes connues et leur retard) | 7 | **fait** (Vue du PC ; retard des pistes à représenter) |
 | Menace | **Autonomie et sites de lancement** : drones partis de sites réels, à des centaines de km, avec une autonomie qui contraint les couloirs crédibles | 6 | à faire |
 | Catalogue | **Explorateur du catalogue** : unités, héritage, sources, fidélité | 4 | **fait** (`catalogue.html`) |
 | Catalogue | **Équations mises en forme** : KaTeX embarqué dans `vendor/`, équations reliées aux paragraphes du modèle | 4 | à faire |

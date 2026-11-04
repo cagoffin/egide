@@ -116,11 +116,27 @@ def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers:
                 raise ScenarioInvalideError(f"liaison : noeud inconnu « {noeud} »")
         if liaison["de"] == liaison["vers"]:
             raise ScenarioInvalideError(f"liaison de « {liaison['de']} » vers lui-meme")
+    pannes = reseau.get("pannes", [])
+    for panne in pannes:
+        if not (panne["element"] == "conduite" or re.fullmatch(r"(radar|liaison):\d+", panne["element"])):
+            raise ScenarioInvalideError(f"panne : element inconnu « {panne['element']} »")
     lat, lon = reseau.get("centre_lat_deg"), reseau.get("centre_lon_deg")
     if lat is None or lon is None:
         lat, lon = theatre["origine_lat_deg"], theatre["origine_lon_deg"]
     return {
         "mode": mode,
+        "conduite_ciblee": reseau.get("conduite_ciblee", False),
+        "pannes": sorted(
+            (
+                {
+                    "t": p["t_s"],
+                    "element": p["element"],
+                    "fin": None if p.get("duree_s") is None else p["t_s"] + p["duree_s"],
+                }
+                for p in pannes
+            ),
+            key=lambda p: p["t"],
+        ),
         "centre": _vers_geo([{"lat_deg": lat, "lon_deg": lon}], 0)[0],
         "liaisons": [
             {"de": li["de"], "vers": li["vers"], "moyen": unite_si(li["moyen"], fichiers, None)} for li in liaisons

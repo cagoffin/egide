@@ -375,3 +375,18 @@ compact en haut à droite avec ses détails repliés, inspecteur dessous, lectur
 masquent chaque famille d'entités (avions IR, avions laser, radars, couverture, bulles sol, drones détectés ou non,
 plots, plan de vol, tirs, cibles, zones, anneaux) ; une entité masquée ne se survole, ne s'inspecte ni ne s'édite.
 C'est un filtre d'affichage : la simulation n'en dépend pas.
+
+### 15.4 Pannes, centre de conduite visé, vue du PC
+- **Latence des consignes** : une décision de la conduite, ou un ordre donné dans l'éditeur, part du centre de
+  conduite et n'atteint l'avion qu'après la latence de son accès (§ 15.2) ; un avion injoignable ne la reçoit pas.
+  Un ordre en route a priorité sur les décisions suivantes de la conduite.
+- **Pannes datées** (`bleu.reseau.pannes`) : à l'instant t, un radar cesse de voir, une liaison cesse de porter
+  l'information, ou le centre de conduite cesse de fonctionner (plus rien n'est connu, plus personne n'est affecté) ;
+  une durée la rend temporaire, sinon elle est définitive. Le réseau est recalculé à chaque changement. Dans
+  l'éditeur, en cours de raid, Suppr met hors service le radar, le PC ou la liaison sélectionnés, à cet instant.
+  Après la panne du PC, un drone vu pendant la panne n'est connu qu'à son retour, s'il est encore vu.
+- **Centre de conduite visé** (`bleu.reseau.conduite_ciblee`) : il devient une cible de plus de l'essaim, la
+  dernière, défendue par des postes sol comme les autres ; à la première frappe, il est détruit pour de bon.
+- **Vue du PC** : l'écran ne montre que les drones que la conduite connaît, et les pistes de son algorithme de
+  pistage ; la vérité terrain reste à un bouton (V). Les positions affichées sont les positions vraies des drones
+  connus : le retard de mise à jour des pistes n'est pas encore représenté.

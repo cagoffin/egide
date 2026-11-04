@@ -1,5 +1,5 @@
 // La simulation : état du monde, boucle à pas fixe, bilan (MODELE § 8 et § 9). Pur : ni DOM, ni réseau, ni horloge.
-import {avancer_avions, creer_avions, planifier_avions, resoudre_tirs_en_vol, tirer_air} from "./defense_air.js";
+import {avancer_avions, creer_avions, livrer_consignes, planifier_avions, resoudre_tirs_en_vol, tirer_air} from "./defense_air.js";
 import {creer_postes, tirer_sol} from "./defense_sol.js";
 import {algo} from "./algos.js";
 import {direct, inverse, vers_ecef} from "./geodesie.js";
@@ -7,7 +7,7 @@ import {indexer_drones} from "./grille.js";
 import {creer_hasard} from "./hasard.js";
 import {avancer_drones, creer_drones, detecter_drones} from "./menace.js";
 import {OUTILS} from "./outils.js";
-import {preparer_reseau} from "./reseau.js";
+import {acces_avion, preparer_reseau} from "./reseau.js";
 import {journaliser} from "./tir.js";
 import {compter_incursions, preparer_zone} from "./zones.js";
 
@@ -44,10 +44,13 @@ export function placer_cibles(scenario, hasard) {
 export function creer_monde(scenario, {registre, journal = true}) {
   const hasard = creer_hasard(scenario.simulation.graine);
   const cibles = placer_cibles(scenario, hasard);
+  // Le centre de conduite visé par l'essaim est une cible de plus, la dernière (MODELE § 15.4).
+  const cibleConduite = scenario.reseau.conduite_ciblee ? cibles.push({geo: scenario.reseau.centre, ecef: vers_ecef(scenario.reseau.centre), conduite: true}) - 1 : null;
   const couverture = algo(registre, scenario.radar.algos.detection, "detection").preparer(scenario, scenario.radar, OUTILS);
   const rayonDetection = couverture.rayon_couverture;
   return {
     scenario, registre, hasard, t: 0, cibles, couverture, rayonDetection, reseau: preparer_reseau(scenario),
+    cible_conduite: cibleConduite, conduite_detruite: null, hs_cle: "",
     drones: creer_drones(scenario, registre, cibles.map((cible) => cible.geo), hasard, rayonDetection + MARGE_APPARITION),
     avions: creer_avions(scenario, hasard),
     postes: creer_postes(scenario, cibles),
@@ -73,9 +76,39 @@ function appliquer_ordres(monde) {
   while (monde.ordres_appliques < ordres.length && ordres[monde.ordres_appliques].t <= monde.t) {
     const ordre = ordres[monde.ordres_appliques++];
     const concernes = ordre.avions.map((id) => monde.avions[id]).filter((avion) => avion && avion.munitions > 0);
-    for (const avion of concernes) Object.assign(avion, {etat: "ralliement", point: {...ordre.point, alt: avion.geo.alt}, ordre: true});
-    journaliser(monde, {type: "ordre", avions: concernes.map((avion) => avion.id), point: ordre.point});
+    const recus = [];
+    for (const avion of concernes) {
+      // Un ordre part du centre de conduite : il n'atteint que les avions joignables, après la latence (MODELE § 15.2).
+      const acces = monde.reseau.simple ? {latence: 0} : acces_avion(monde.reseau, avion, monde.scenario.avions.indexOf(avion.groupe));
+      if (!acces) continue;
+      recus.push(avion.id);
+      if (acces.latence > 0) avion.consigne = {t: monde.t + acces.latence, point: ordre.point, ordre: true};
+      else Object.assign(avion, {etat: "ralliement", point: {...ordre.point, alt: avion.geo.alt}, ordre: true});
+    }
+    journaliser(monde, {type: "ordre", avions: recus, point: ordre.point});
   }
+}
+
+/** Rendre les éléments en panne à l'instant du monde : pannes datées du scénario, centre de conduite détruit. */
+function elements_hs(monde) {
+  const hs = new Set(monde.scenario.reseau.pannes.filter((p) => p.t <= monde.t && (p.fin === null || monde.t < p.fin)).map((p) => p.element));
+  if (monde.conduite_detruite !== null) hs.add("conduite");
+  return hs;
+}
+
+/** Détruire le centre de conduite frappé, puis recalculer le réseau si l'ensemble des éléments en panne a changé. */
+function appliquer_pannes(monde) {
+  if (monde.cible_conduite !== null && monde.conduite_detruite === null && monde.fuites[monde.cible_conduite] > 0) {
+    monde.conduite_detruite = monde.t;
+    journaliser(monde, {type: "panne", element: "conduite", cause: "frappe"});
+  }
+  if (!monde.scenario.reseau.pannes.length && monde.conduite_detruite === null) return;
+  const hs = elements_hs(monde);
+  const cle = [...hs].sort().join(",");
+  if (cle === monde.hs_cle) return;
+  monde.hs_cle = cle;
+  monde.reseau = preparer_reseau(monde.scenario, hs);
+  journaliser(monde, {type: "reseau", hs: [...hs]});
 }
 
 /** Faire avancer le monde d'un pas de temps. L'ordre compte : on bouge, on voit, on obéit, on décide, on tire. */
@@ -84,9 +117,11 @@ export function avancer_monde(monde) {
   monde.t += simulation.pas;
   avancer_drones(monde, simulation.pas);
   monde.index = indexer_drones(monde.drones, monde.t);
+  appliquer_pannes(monde);
   detecter_drones(monde);
   compter_incursions(monde);
   appliquer_ordres(monde);
+  livrer_consignes(monde);
   if (monde.t >= monde.prochaine_decision) {
     planifier_avions(monde);
     monde.prochaine_decision = monde.t + conduite.pas_decision;

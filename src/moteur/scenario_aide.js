@@ -84,6 +84,11 @@ export const AIDE = {
     "liaisons[].de": "Extremite : 'conduite', 'radar:<i>' (R<i+1>) ou 'avions:<g>' (groupe g de bleu.avions).",
     "liaisons[].vers": "Autre extremite, memes noms ; une liaison porte l'information dans les deux sens.",
     "liaisons[].moyen": "Moyen de communication : identifiant d'une unite de unites/liaisons/.",
+    conduite_ciblee: "Vrai : le centre de conduite compte parmi les cibles de l'essaim ; frappe, il est detruit (MODELE § 15.4).",
+    pannes: "Pannes et destructions datees (editeur, mode ordres) : a l'instant t_s, l'element cesse de fonctionner.",
+    "pannes[].t_s": "Instant de la panne depuis le debut du raid.",
+    "pannes[].element": "Element en panne : 'conduite', 'radar:<i>' ou 'liaison:<k>' (k-ieme liaison de la liste).",
+    "pannes[].duree_s": "Duree de la panne ; null : definitive.",
   },
   simulation: {
     pas_s: "Pas de temps ; 0,5 s = 111 m parcourus par un drone a 800 km/h.",

@@ -5,7 +5,7 @@ import {COULEURS} from "./couleurs.js";
 import {ecran, geo_depuis_ecran} from "./ecran.js";
 import {
   barycentre, dans_rectangle, element_sous, elements_editables, modifications_ajout_cible, modifications_ajout_passage,
-  modifications_ajout_liaison, modifications_ajout_radar, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
+  modifications_ajout_liaison, modifications_ajout_radar, modifications_panne, modifications_ajout_zone, modifications_reseau_complet, noeud_element, modifications_deplacement, modifications_ordre, modifications_suppression, translater,
 } from "./edition.js";
 import {element_visible} from "./calques.js";
 import {format_duree} from "./format.js";
@@ -134,7 +134,11 @@ export function creer_editeur(env) {
     else if (e.key === "Escape" && etat.brouillon.length) etat.brouillon = [];
     else if (e.key === "Enter" && etat.outil === "zone") fermer_zone();
     else if (e.key === "Escape") etat.outil === "selection" ? (etat.selection = []) : choisir_outil("selection");
-    else if (e.key === "Delete" || e.key === "Backspace") {
+    else if ((e.key === "Delete" || e.key === "Backspace") && etat.mode === "ordres") {
+      // En cours de raid, on ne supprime rien : on met hors service, à cet instant.
+      env.appliquer(modifications_panne(env.brut(), env.monde(), etat.selection));
+      etat.selection = [];
+    } else if (e.key === "Delete" || e.key === "Backspace") {
       env.appliquer(modifications_suppression(env.monde(), env.brut(), etat.selection));
       etat.selection = [];
     } else if (commande && e.key.toLowerCase() === "z") env.annuler();
@@ -167,6 +171,10 @@ export function creer_editeur(env) {
     if (bouton?.dataset.action === "annuler_edition") env.annuler();
     if (bouton?.dataset.action === "terminer_edition") activer(false);
     if (bouton?.dataset.action === "reseau_complet") env.appliquer(modifications_reseau_complet());
+    if (bouton?.dataset.action === "mettre_hors_service") {
+      env.appliquer(modifications_panne(env.brut(), env.monde(), etat.selection));
+      etat.selection = [];
+    }
   });
 
   /** Dessiner zones, plan de vol et ordres (toujours) puis, en édition, la sélection, le glisser, le rectangle, le brouillon. */

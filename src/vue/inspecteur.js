@@ -110,6 +110,8 @@ function inspection_cible(indice, monde) {
 /** Rendre le HTML de l'inspection de `cible` ({type: avion|drone|cible, id}) dans le monde. */
 function reseau_radar(monde, indice) {
   const latence = monde.reseau.latences_radars[indice];
+  if (monde.reseau.radars_hs?.[indice]) return "<b>Hors service</b> : il ne voit plus rien.";
+  if (monde.reseau.conduite_hs) return "<b>Le PC est hors service</b> : ses détections ne servent à personne.";
   if (monde.reseau.mode === "complet") return "Relié à toute la défense : chaque détection profite aussitôt à tous (réseau complet, docs/MODELE.md § 15.2).";
   if (!Number.isFinite(latence)) return "<b>Non relié à la conduite</b> : ce qu'il voit ne sert à personne.";
   return `Relié à la conduite : ses détections y arrivent en <b>${format_decimal(latence)} s</b>.`;
@@ -130,10 +132,12 @@ function inspection_conduite(monde) {
   const joignables = monde.avions.filter((a) => a.acces).length;
   const groupes = reseau.acces.map((liste, g) => `<li>${libelle_noeud(monde, `avions:${g}`)} : ${liste.length
     ? liste.map((a) => `${echapper(a.moyen.nom)} depuis ${libelle_noeud(monde, a.sol)}`).join(", ") : "<b>aucun accès</b>"}</li>`).join("");
-  return `<h3>Centre de conduite (C2)</h3>
+  return `<h3>Centre de conduite (PC)</h3>
     <table>${[
       ligne("Position", position(reseau.centre)),
       ligne("Réseau", reseau.mode === "complet" ? "complet : tout le monde parle avec tout le monde, sans délai" : "liaisons listées"),
+      ligne("État", monde.conduite_detruite !== null ? `<b>détruit</b> par l'essaim à ${format_duree(monde.conduite_detruite)}`
+        : reseau.conduite_hs ? "<b>hors service</b>" : monde.cible_conduite !== null ? "en service, visé par l'essaim" : "en service"),
     ].join("")}</table>
     ${reseau.mode === "complet" ? "<p>Chaque détection est connue aussitôt ; chaque avion est joignable. Pour décrire le réseau, outil Liaison de l'éditeur (docs/MODELE.md § 15.2).</p>" : `
     <h4>Liaisons au sol</h4>${lignes ? `<ul>${lignes}</ul>` : "<p>Aucune.</p>"}

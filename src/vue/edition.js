@@ -29,9 +29,18 @@ const points_geo = (points) => (points ?? []).map((p) => geo_deg(p.lat_deg, p.lo
  * du plan de vol et zones (par leur barycentre) ; en mode « ordres », les seuls avions, là où ils sont à cet instant.
  */
 export function elements_editables(monde, brut, mode = "edition") {
-  if (mode === "ordres") return monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.geo}));
+  if (mode === "ordres") {
+    // En cours de raid : des avions à envoyer, et des éléments du réseau à mettre hors service.
+    return [
+      ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.geo, guidage: avion.guidage})),
+      ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
+      {cle: "conduite", type: "conduite", indice: 0, geo: monde.scenario.reseau.centre},
+      ...milieux_liaisons(monde),
+    ];
+  }
   return [
-    ...monde.cibles.map((cible, indice) => ({cle: `cible:${indice}`, type: "cible", indice, geo: cible.geo})),
+    // Le centre de conduite visé par l'essaim est une cible du monde, mais il se déplace comme centre de conduite.
+    ...monde.cibles.filter((cible) => !cible.conduite).map((cible, indice) => ({cle: `cible:${indice}`, type: "cible", indice, geo: cible.geo})),
     ...monde.avions.map((avion) => ({cle: `avion:${avion.id}`, type: "avion", indice: avion.id, geo: avion.orbite, guidage: avion.guidage})),
     ...positions_radars(monde.scenario).map((geo, indice) => ({cle: `radar:${indice}`, type: "radar", indice, geo})),
     {cle: "conduite", type: "conduite", indice: 0, geo: monde.scenario.reseau.centre},
@@ -41,7 +50,7 @@ export function elements_editables(monde, brut, mode = "edition") {
   ];
 }
 
-const cibles_en_degres = (monde, deplacer = () => null) => monde.cibles.map((cible, i) => en_degres(deplacer(i) ?? cible.geo));
+const cibles_en_degres = (monde, deplacer = () => null) => monde.cibles.filter((c) => !c.conduite).map((cible, i) => en_degres(deplacer(i) ?? cible.geo));
 
 /**
  * Rendre les modifications qui déplacent les éléments `cles` comme le point `de` l'est vers `vers`.
@@ -134,6 +143,17 @@ export function modifications_ordre(brut, monde, cles, geo) {
   if (!avions.length) return {};
   const ordre = {t_s: monde.t, avions, ...en_degres(geo)};
   return {"bleu.ordres": [...(brut.bleu.ordres ?? []), ordre]};
+}
+
+/**
+ * Rendre les modifications qui mettent hors service, à l'instant du monde et pour de bon, les radars, le centre de
+ * conduite et les liaisons `cles` (MODELE § 15.4). Les avions et les autres éléments sont ignorés.
+ */
+export function modifications_panne(brut, monde, cles) {
+  const elements = cles.map((c) => (c === "conduite" ? c : /^(radar|liaison):\d+$/.test(c) ? c : null)).filter(Boolean);
+  if (!elements.length) return {};
+  const pannes = elements.map((element) => ({t_s: monde.t, element, duree_s: null}));
+  return {"bleu.reseau.pannes": [...(brut.bleu.reseau.pannes ?? []), ...pannes]};
 }
 
 /** Rendre les modifications qui ajoutent une cible en `geo` (les cibles existantes sont figées). */

@@ -32,6 +32,7 @@
       <label title="L'essaim suit le plan de vol dessiné dans l'éditeur, puis rejoint ses cibles."><input type="radio" name="tactique" value="plan_de_vol">Plan de vol</label>
     </fieldset>
     <button data-action="editer" aria-pressed="false" title="Au début du raid : placer cibles, radars, avions, plan de vol et zones. En pause pendant le raid : donner des ordres aux avions. (E)">Éditer</button>
+    <button data-action="vue_pc" aria-pressed="false" title="Basculer entre la vérité terrain et ce que sait le centre de conduite : drones connus et pistes (V)">Vue du PC</button>
     <a class="lien-catalogue" href="catalogue.html" title="Fiches des unités et des algorithmes : équations, hypothèses, sources, code">Catalogue</a>
   </header>
 
@@ -46,6 +47,7 @@
   <section class="tiroir" data-tiroir="scenario" aria-label="Réglages du scénario" hidden>
     <header><h2>Scénario</h2><button data-action="fermer_tiroir" aria-label="Fermer le panneau">×</button></header>
     <div id="reglages"></div>
+    <label class="interrupteur" title="Le centre de conduite devient une cible de l'essaim ; à la première frappe, il est détruit (MODELE § 15.4)."><input type="checkbox" name="conduite_ciblee">Le PC est une cible de l'essaim</label>
     <div class="prereglages">
       <select name="prereglage" aria-label="Charger un réglage enregistré"></select>
       <div class="ligne">
@@ -100,7 +102,7 @@
       <li><i class="ami-plein"></i>Avion à roquettes IR</li>
       <li><i class="ami-creux"></i>Avion à roquettes laser</li>
       <li><i class="radar"></i>Radar (R1, R2…)</li>
-      <li><i class="reseau"></i>Centre de conduite (C2) et liaisons ; croix rouge : liaison coupée ou avion injoignable</li>
+      <li><i class="reseau"></i>Centre de conduite (PC) et liaisons ; croix rouge : liaison coupée ou avion injoignable</li>
       <li><i class="hostile"></i>Drone détecté</li>
       <li><i class="inconnu"></i>Drone non détecté</li>
       <li><i class="cible"></i>Cible (C1, C2…)</li>
@@ -111,6 +113,7 @@
       <dt>Espace</dt><dd>Lire ou suspendre</dd>
       <dt>← →</dt><dd>Reculer ou avancer de 30 s</dd>
       <dt>E</dt><dd>Éditer le scénario</dd>
+      <dt>V</dt><dd>Vue du PC : ce que sait la conduite</dd>
       <dt>L</dt><dd>Outil Liaison, dans l'éditeur</dd>
       <dt>1 à 5</dt><dd>Ouvrir un panneau (hors édition)</dd>
       <dt>Molette</dt><dd>Zoom</dd>
@@ -161,12 +164,14 @@
       <button data-action="reseau_complet" title="Revenir au réseau complet : tout le monde parle avec tout le monde, sans délai">Réseau complet</button>
       <button data-outil="plan" aria-pressed="false" title="Ajouter un point au plan de vol de l'essaim (P)">Plan de vol</button>
       <button data-outil="zone" aria-pressed="false" title="Dessiner une zone protégée : un clic par sommet, double-clic ou Entrée pour fermer (Z)">Zone</button>
+      <button data-action="mettre_hors_service" class="seulement-ordres" title="Mettre hors service, à cet instant, les radars, le PC ou les liaisons sélectionnés (Suppr)">Mettre hors service</button>
       <button data-action="annuler_edition" title="Annuler le dernier geste (Ctrl+Z)">Annuler</button>
       <button data-action="terminer_edition" class="principal">Terminer</button>
       <p class="aide-edition seulement-edition">Glisser pour déplacer, rectangle pour sélectionner, clic droit pour envoyer la sélection.
         Ctrl+1 à 9 forme un groupe, 1 à 9 le rappelle, Suppr efface. Molette : zoom ; bouton du milieu ou Alt+glisser : déplacer la vue.</p>
       <p class="aide-edition seulement-ordres">Ordres à <b data-champ="instant_ordres">0:00</b> : sélectionner des avions (clic, Maj+clic, rectangle),
-        puis clic droit pour les envoyer. L'ordre est enregistré dans le scénario et rejoué à l'identique.</p>
+        puis clic droit pour les envoyer depuis le PC ; sélectionner un radar, le PC ou une liaison, puis Suppr pour le mettre hors service.
+        Tout est enregistré dans le scénario et rejoué à l'identique.</p>
     </div>
     <div class="transport">
       <button data-action="lire" class="principal">Lire</button>
@@ -179,6 +184,7 @@
     </div>
   </div>
 
+  <p class="bandeau-pc" data-champ="bandeau_pc" hidden></p>
   <p data-champ="message" class="message" role="status"></p>
 </main>
 <div id="infobulle" role="tooltip" hidden></div>

@@ -59,19 +59,39 @@ export function planifier_avions(monde) {
     (drone) => est_actif(drone, monde.t) && drone.connu !== null && monde.t - drone.connu >= conduite.delai_reaction,
   );
   for (const avion of monde.avions) avion.acces = acces_avion(monde.reseau, avion, monde.scenario.avions.indexOf(avion.groupe));
+  // Un ordre de l'éditeur en route vers l'avion a priorité sur la conduite.
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
   // Un avion sous ordre n'est pas réaffecté par la conduite avant d'avoir rallié son point.
-  const libres = monde.avions.filter((avion) => avion.acces && avion.munitions > 0 && !avion.ordre && !drone_approchant(monde, avion));
+  const libres = monde.avions.filter((avion) => avion.acces && avion.munitions > 0 && !avion.ordre && !avion.consigne?.ordre && !drone_approchant(monde, avion));
   for (const {avion, point, explication} of algo(monde.registre, conduite.allocation, "allocation").allouer(libres, pistes, OUTILS)) {
     // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
-    avion.decision = {t: monde.t, point, explication};
-    if (point) {
-      avion.etat = "ralliement";
-      avion.point = point;
-    } else if (avion.etat !== "orbite") {
-      avion.etat = "retour";
-      avion.point = avion.orbite;
-    }
+    avion.decision = {t: monde.t, point, explication, arrivee: monde.t + avion.acces.latence};
+    // La consigne met la latence de la liaison à arriver (MODELE § 15.2) ; sans latence, elle s'applique aussitôt.
+    if (avion.acces.latence > 0) avion.consigne = {t: monde.t + avion.acces.latence, point, ordre: false};
+    else executer_consigne(avion, point);
+  }
+}
+
+/** Appliquer une consigne de la conduite : rallier `point`, ou revenir sur l'orbite s'il n'y en a pas. */
+function executer_consigne(avion, point) {
+  if (point) {
+    avion.etat = "ralliement";
+    avion.point = point;
+  } else if (avion.etat !== "orbite") {
+    avion.etat = "retour";
+    avion.point = avion.orbite;
+  }
+}
+
+/** Appliquer les consignes et ordres arrivés à leur avion (après la latence de la liaison). */
+export function livrer_consignes(monde) {
+  for (const avion of monde.avions) {
+    const consigne = avion.consigne;
+    if (!consigne || consigne.t > monde.t) continue;
+    avion.consigne = null;
+    if (avion.munitions === 0) continue;
+    if (consigne.ordre) Object.assign(avion, {etat: "ralliement", point: {...consigne.point, alt: avion.geo.alt}, ordre: true});
+    else executer_consigne(avion, consigne.point);
   }
 }
 

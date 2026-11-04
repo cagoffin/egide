@@ -196,3 +196,50 @@ test("réseau : un avion hors de l'horizon radio de la conduite n'est pas joigna
   const optique = preparer_reseau(scenario({...PETIT, ...liaisons_partout("liaisons/optique_notionnelle", "liaisons/satellite_notionnelle")}));
   assert.ok(optique.fixes.every((l) => !l.active) && optique.latences_radars.every((l) => l === Infinity));
 });
+
+test("réseau, latence des ordres : une consigne de la conduite arrive à l'avion après la latence de sa liaison", () => {
+  const s = scenario({...PETIT, ...liaisons_partout("liaisons/filaire_notionnelle", "liaisons/satellite_notionnelle")});
+  const monde = creer_monde(s, {registre: REGISTRE, journal: false});
+  let vu = null;
+  while (!vu && monde.t < 1500) {
+    avancer_monde(monde);
+    vu = monde.avions.find((a) => a.consigne && !a.consigne.ordre && a.consigne.point);
+  }
+  assert.ok(vu, "une consigne en route");
+  const {t: arrivee} = vu.consigne;
+  assert.equal(arrivee - vu.decision.t, 3);
+  while (monde.t + s.simulation.pas < arrivee) {
+    avancer_monde(monde);
+    if (vu.consigne?.t === arrivee) assert.notEqual(vu.point, vu.consigne.point, "pas encore reçue");
+  }
+  while (monde.t < arrivee) avancer_monde(monde);
+  assert.ok(!vu.consigne || vu.consigne.t !== arrivee, "reçue à l'heure");
+});
+
+test("réseau, pannes : radars hors service, rien n'est vu ; conduite en panne, personne n'est affecté jusqu'à son retour", () => {
+  const radars = Array.from({length: 10}, (_, i) => ({t_s: 0, element: `radar:${i}`, duree_s: null}));
+  const aveugle = simuler(scenario({...PETIT, "bleu.reseau.pannes": radars}), {registre: REGISTRE, journal: false});
+  assert.ok(aveugle.drones.every((d) => d.detection === null && d.connu === null));
+  const coupee = creer_monde(scenario({...PETIT, "bleu.reseau.pannes": [{t_s: 0, element: "conduite", duree_s: 400}]}), {registre: REGISTRE, journal: false});
+  while (coupee.t < 399) avancer_monde(coupee);
+  assert.ok(coupee.avions.every((a) => !a.decision), "aucune décision tant que la conduite est en panne");
+  assert.ok(coupee.drones.some((d) => d.detection !== null) && coupee.drones.every((d) => d.connu === null));
+  let affecte = null;
+  while (coupee.t < 700 && affecte === null) {
+    avancer_monde(coupee);
+    if (coupee.avions.some((a) => a.decision?.point)) affecte = coupee.t;
+  }
+  assert.ok(affecte >= 400 + coupee.scenario.conduite.delai_reaction, "la conduite revenue affecte de nouveau, après son délai de réaction");
+  assert.ok(coupee.drones.filter((d) => d.connu !== null).every((d) => d.connu >= 400));
+});
+
+test("réseau : le centre de conduite visé par l'essaim est détruit à la première frappe", () => {
+  // Dix drones au plus par cible : les onze cibles, PC compris, sont visées.
+  const monde = simuler(scenario({...PETIT, ...SANS_DEFENSE, "rouge.concentration_max": 10, "bleu.reseau.conduite_ciblee": true}), {registre: REGISTRE});
+  assert.equal(monde.cibles.length, scenario(PETIT).theatre.cibles_nombre + 1);
+  assert.ok(monde.cibles.at(-1).conduite);
+  assert.ok(monde.fuites.at(-1) > 0, "l'essaim frappe aussi le PC");
+  assert.notEqual(monde.conduite_detruite, null);
+  assert.ok(monde.reseau.conduite_hs);
+  assert.ok(monde.evenements.some((e) => e.type === "panne" && e.element === "conduite"));
+});

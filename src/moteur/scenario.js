@@ -92,14 +92,21 @@ export const MODES_RESEAU = ["complet", "liaisons"];
 const noeud_valide = (noeud, groupes) => noeud === "conduite" || /^radar:\d+$/.test(noeud) || (/^avions:\d+$/.test(noeud) && Number(noeud.slice(7)) < groupes);
 
 function resoudre_reseau(reseau, theatre, groupes, fichiers) {
-  const {mode = "complet", centre_lat_deg: lat = null, centre_lon_deg: lon = null, liaisons = []} = reseau ?? {};
+  const {mode = "complet", centre_lat_deg: lat = null, centre_lon_deg: lon = null, liaisons = [], pannes = [], conduite_ciblee = false} = reseau ?? {};
   if (!MODES_RESEAU.includes(mode)) throw new ScenarioInvalide(`mode de réseau inconnu « ${mode} » (${MODES_RESEAU.join(", ")})`);
   for (const {de, vers} of liaisons) {
     for (const noeud of [de, vers]) if (!noeud_valide(noeud, groupes)) throw new ScenarioInvalide(`liaison : nœud inconnu « ${noeud} »`);
     if (de === vers) throw new ScenarioInvalide(`liaison de « ${de} » vers lui-même`);
   }
+  for (const {element} of pannes) {
+    if (!(element === "conduite" || /^(radar|liaison):\d+$/.test(element))) throw new ScenarioInvalide(`panne : élément inconnu « ${element} »`);
+  }
   const centre = lat === null || lon === null ? geo_deg(theatre.origine_lat_deg, theatre.origine_lon_deg, 0) : geo_deg(lat, lon, 0);
-  return {mode, centre, liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)}))};
+  return {
+    mode, centre, conduite_ciblee, liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)})),
+    // Pannes triées par instant ; fin null : définitive.
+    pannes: pannes.map((p) => ({t: p.t_s, element: p.element, fin: p.duree_s === null || p.duree_s === undefined ? null : p.t_s + p.duree_s})).sort((a, b) => a.t - b.t),
+  };
 }
 
 /**
@@ -209,7 +216,7 @@ export function migrer_v1(v1) {
         _aide: AIDE.conduite, delai_reaction_s: v1.delai_reaction_s, pas_decision_s: v1.avions_pas_decision_s,
         interception_profondeur_km: v1.interception_profondeur_km, pistage: "global/pistage/cellules", allocation: "global/allocation/densite_pistes",
       },
-      reseau: {_aide: AIDE.reseau, mode: "complet", centre_lat_deg: null, centre_lon_deg: null, liaisons: []},
+      reseau: {_aide: AIDE.reseau, mode: "complet", centre_lat_deg: null, centre_lon_deg: null, liaisons: [], conduite_ciblee: false, pannes: []},
     },
     simulation: {_aide: AIDE.simulation, pas_s: v1.simulation_pas_s, graine: v1.graine},
   };

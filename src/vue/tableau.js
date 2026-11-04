@@ -19,7 +19,7 @@ function jauge(racine, champ, restant, total) {
 function frappes_par_cible(racine, monde) {
   const liste = racine.querySelector("[data-liste='cibles']");
   if (liste.children.length !== monde.cibles.length) {
-    liste.innerHTML = monde.cibles.map((_, i) => `<li><span>C${i + 1}</span><span class="barre"><i></i></span><b>0</b></li>`).join("");
+    liste.innerHTML = monde.cibles.map((c, i) => `<li><span>${c.conduite ? "PC" : `C${i + 1}`}</span><span class="barre"><i></i></span><b>0</b></li>`).join("");
   }
   const maximum = Math.max(1, monde.scenario.rouge.concentration_max);
   [...liste.children].forEach((ligne, i) => {

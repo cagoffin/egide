@@ -7,11 +7,14 @@ import {OUTILS} from "./outils.js";
 import {radars_voyants} from "./reseau.js";
 import {est_actif, journaliser} from "./tir.js";
 
-/** Rendre l'indice de cible de chaque drone : au plus `concentration_max` par cible (MODELE § 6.1). */
-export function repartir_drones(scenario, hasard) {
-  const {rouge, theatre} = scenario;
-  const groupes = Math.min(theatre.cibles_nombre, Math.ceil(rouge.nombre / rouge.concentration_max));
-  const visees = melanger([...Array(theatre.cibles_nombre).keys()], hasard).slice(0, groupes);
+/**
+ * Rendre l'indice de cible de chaque drone : au plus `concentration_max` par cible (MODELE § 6.1). `nombreCibles` :
+ * cibles du monde, centre de conduite visé compris (MODELE § 15.4).
+ */
+export function repartir_drones(scenario, hasard, nombreCibles = scenario.theatre.cibles_nombre) {
+  const {rouge} = scenario;
+  const groupes = Math.min(nombreCibles, Math.ceil(rouge.nombre / rouge.concentration_max));
+  const visees = melanger([...Array(nombreCibles).keys()], hasard).slice(0, groupes);
   return Array.from({length: rouge.nombre}, (_, i) => visees[i % groupes]);
 }
 
@@ -28,7 +31,7 @@ export function creer_drones(scenario, registre, cibles, hasard, rayonApparition
     caps: cibles.map(() => hasard.uniforme(0, 2 * Math.PI)),
     cap_commun: hasard.uniforme(0, 2 * Math.PI),
   };
-  return repartir_drones(scenario, hasard).map((cible, id) => {
+  return repartir_drones(scenario, hasard, cibles.length).map((cible, id) => {
     const {position, route, depart} = comportement.planifier_drone(contexte, cible, hasard, OUTILS);
     const geo = {...position, alt: rouge.altitude};
     // Chaque point de route garde son ECEF à l'altitude du drone : un pas ne coûte qu'un changement de repère.
@@ -70,13 +73,15 @@ export function detecter_drones(monde) {
   const {reseau} = monde;
   for (const drone of monde.drones) {
     if (!est_actif(drone, monde.t)) continue;
-    if (reseau.mode === "complet") {
-      if (drone.detection === null && detection.detecte(monde.couverture, drone, OUTILS)) [drone.detection, drone.connu] = [monde.t, monde.t];
+    if (reseau.simple) {
+      // Après une panne, un drone déjà vu peut rester inconnu : c'est `connu` qui décide de regarder encore.
+      if (drone.connu === null && detection.detecte(monde.couverture, drone, OUTILS)) [drone.detection, drone.connu] = [drone.detection ?? monde.t, monde.t];
       continue;
     }
     if (drone.connu !== null && drone.connu <= monde.t) continue;
     const voyants = radars_voyants(detection, monde.couverture, reseau, drone, OUTILS);
     if (!voyants.length) continue;
+    // Vu physiquement, même si l'information ne va nulle part.
     drone.detection ??= monde.t;
     for (const i of voyants) {
       const arrivee = monde.t + reseau.latences_radars[i];

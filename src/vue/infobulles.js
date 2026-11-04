@@ -21,7 +21,7 @@ export function decrire(survol, monde) {
     const {reseau} = monde;
     const etat = reseau.mode === "complet" ? "réseau complet : tout le monde est relié, sans délai"
       : `${reseau.fixes.filter((l) => l.active).length} liaisons au sol actives sur ${reseau.fixes.length}`;
-    return `Centre de conduite (C2)\n${etat}`;
+    return `Centre de conduite (PC)\n${etat}`;
   }
   if (survol.type === "radar") {
     const {radar} = monde.scenario;

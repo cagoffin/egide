@@ -191,7 +191,9 @@
         "lon": 0.04363323129985824,
         "alt": 0
       },
-      "liaisons": []
+      "conduite_ciblee": false,
+      "liaisons": [],
+      "pannes": []
     },
     "ordres": [],
     "simulation": {
@@ -215,7 +217,20 @@
           "vers": "avions:1",
           "moyen": "liaisons/radio_vhf_uhf_notionnelle"
         }
-      ]
+      ],
+      "bleu.reseau.pannes": [
+        {
+          "t_s": 300,
+          "element": "radar:2",
+          "duree_s": 120
+        },
+        {
+          "t_s": 200,
+          "element": "conduite",
+          "duree_s": null
+        }
+      ],
+      "bleu.reseau.conduite_ciblee": true
     },
     "resolu": {
       "nom": "Référence : 1 000 drones rapides contre une défense mixte",
@@ -404,6 +419,7 @@
           "lon": 0.041887902047863905,
           "alt": 0
         },
+        "conduite_ciblee": true,
         "liaisons": [
           {
             "de": "radar:0",
@@ -450,6 +466,18 @@
               "visibilite_directe": true,
               "hauteur_antenne": 15
             }
+          }
+        ],
+        "pannes": [
+          {
+            "t": 200,
+            "element": "conduite",
+            "fin": null
+          },
+          {
+            "t": 300,
+            "element": "radar:2",
+            "fin": 420
           }
         ]
       },
