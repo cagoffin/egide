@@ -1,9 +1,9 @@
 # Égide
 
 Simulation de défense du territoire face à un essaim de drones rapides, jouable comme un jeu de stratégie vu de
-dessus et assez rigoureuse pour en prouver les résultats. Le défenseur dispose de radars, de postes sol-air sur les
-cibles et d'avions en orbite armés de roquettes guidées ; l'attaquant choisit sa tactique, ou suit le plan de vol que
-vous dessinez.
+dessus et assez rigoureuse pour en prouver les résultats. Le défenseur dispose de radars, d'un centre de conduite
+relié par un réseau de liaisons, de postes sol-air sur les cibles et d'avions en orbite armés de roquettes guidées ;
+l'attaquant choisit sa tactique, ou suit le plan de vol que vous dessinez, sur la vraie Terre et son relief.
 
 ![L'interface en lecture : attaque « fourmi », les avions convergent sur l'essaim, le bilan évolue en direct](docs/images/interface.gif)
 
@@ -15,13 +15,16 @@ vous dessinez.
 
 - **Répond à deux questions** : à quelle vitesse les avions doivent-ils se mettre à poste, selon leur nombre, pour
   intercepter un essaim dont on ignore la route ? Combien de postes sol-air faudrait-il sans eux ?
-- **Simule sur la vraie Terre** : ellipsoïde WGS84, distances géodésiques, n'importe où sur le globe, sur fond de carte.
-- **Se joue à la souris** : placer les cibles et les avions, dessiner le plan de vol de l'essaim et des zones
-  protégées, donner des ordres en plein raid.
+- **Simule sur la vraie Terre** : ellipsoïde WGS84, distances géodésiques, relief qui masque radars et liaisons radio.
+- **Modélise l'information** : la conduite ne sait que ce que ses radars lui transmettent, par des liaisons qui ont
+  une latence, une portée et qui peuvent tomber en panne ; elle n'affecte que les avions qu'elle peut joindre.
+- **Se joue à la souris** : placer cibles, radars et avions, relier les unités, dessiner le plan de vol de l'essaim et
+  des zones protégées, donner des ordres et couper des liaisons en plein raid.
 - **S'explique** : chaque unité et chaque algorithme a sa fiche (équations, hypothèses, sources, code) ; un clic sur une
   entité dit pourquoi elle fait ce qu'elle fait.
-- **Se prouve** : graines fixées, intervalles de confiance, résultats confrontés aux formules fermées, et plus de 150
-  tests qui s'appliquent d'eux-mêmes à tout nouveau modèle.
+- **Se prouve** : graines fixées, intervalles de confiance, empreinte de reproductibilité, convergence en pas de temps,
+  duels à nombres aléatoires communs, criblage de sensibilité, et près de 200 tests qui s'appliquent d'eux-mêmes à tout
+  nouveau modèle.
 
 ## Lancer
 
@@ -44,19 +47,27 @@ tactique, moyenne et intervalle de confiance à 95 % :
 - Face aux groupes compacts, la limite est la cadence de tir par passage, pas le stock de munitions.
 - Avec 50 avions, garantir 5 avions sur une route quelconque demande ~350 km/h ; 8 avions, ~465 km/h ; 10, ~525 km/h.
 
-Ces chiffres viennent du moteur plan de la v0.1 ; le moteur géodésique de la v0.2 les retrouve à moins de 0,5 σ
-(`tests/equivalence_v01.test.js`).
+Le dossier de preuve du scénario de référence (`node src/preuve.js dossier`) redonne 403 ± 26 frappes en tactique
+fourmi, et montre que le pas de temps de 0,5 s a convergé alors que celui de 1 s ne l'a pas.
 
-## La situation
+## L'écran
 
-L'écran reprend les codes d'une situation aérienne : anneaux de distance, couverture radar, balayage du faisceau,
-plots radar avec leur historique. Symbologie inspirée d'APP-6 : dôme bleu plein pour un avion IR, creux pour un avion
-laser, demi-losange rouge pour un drone détecté (gris s'il ne l'est pas), carré pour une cible, cercle ocre pour une
-bulle sol qui pâlit à mesure qu'elle s'épuise.
+La carte occupe tout l'écran ; le reste flotte par-dessus et se replie.
 
-Le panneau **Carte** pose la situation sur un fond réel : sombre, OpenStreetMap, plan ou photographies IGN, relief
-ombré ou en 3D, bâtiments 3D, vue à plat ou sur le globe ; clic droit glissé pour incliner et tourner. Chaque source
-est un fichier de `cartes/`, avec son attribution et ses conditions d'usage. « Scope seul » retire la carte.
+- **En haut** : la tactique de l'essaim, l'éditeur, la Vue du PC, le catalogue.
+- **À gauche** : un rail de panneaux, un à la fois (touches 1 à 5) — Scénario, Calques, Balayage, Profil, Aide.
+- **À droite** : le bilan en quatre chiffres, ses détails repliés, et l'inspecteur au clic sur une entité.
+- **En bas** : la lecture (×0,25 à ×16, frise, graine) et, en édition, la barre d'outils.
+
+Symbologie inspirée d'APP-6 : dôme bleu plein pour un avion IR, creux pour un avion laser, cadre bleu pour un radar
+(R1, R2…) et pour le poste de commandement (PC), demi-losange rouge pour un drone détecté (gris s'il ne l'est pas),
+carré pour une cible, cercle ocre pour une bulle sol qui pâlit à mesure qu'elle s'épuise.
+
+Le panneau **Calques** choisit le fond de carte (sombre, OpenStreetMap, plan ou photographies IGN, relief ombré ou
+3D, bâtiments 3D, globe ; chaque source est un fichier de `cartes/`) et affiche ou masque chaque famille d'entités.
+Ce qui est masqué ne se survole, ne s'inspecte ni ne s'édite.
+
+![Le panneau Calques : fond de carte et quinze familles d'entités, chacune avec sa pastille de légende](docs/images/calques.png)
 
 ### Trois tactiques adverses
 
@@ -91,34 +102,75 @@ Même raid fourmi, même graine, en fin de raid :
 
 ## Éditer à la souris
 
-« Éditer le scénario » met le raid en pause au début et ouvre la barre d'outils :
+« Éditer » met le raid en pause au début et ouvre la barre d'outils :
 
-- **Sélection** (S) : glisser pour déplacer cibles, avions, points de passage ou zones ; rectangle ou Maj+clic pour
-  sélectionner ; clic droit pour envoyer la sélection en gardant sa formation ; Ctrl+1 à 9 forme un groupe, 1 à 9 le
-  rappelle ; Suppr efface ; Ctrl+Z annule.
-- **Cible** (C) : un clic, une cible.
-- **Plan de vol** (P) : chaque clic ajoute un point de passage ; l'essaim suit le tracé en colonne, puis chaque drone
-  rejoint sa cible. Le panneau « Profil du plan de vol » trace son altitude au-dessus du relief réel.
+- **Sélection** (S) : glisser pour déplacer cibles, avions, radars, PC, points de passage ou zones ; rectangle ou
+  Maj+clic pour sélectionner ; clic droit pour envoyer la sélection en gardant sa formation ; Ctrl+1 à 9 forme un
+  groupe, 1 à 9 le rappelle ; Suppr efface ; Ctrl+Z annule.
+- **Cible** (C) et **Radar** (R) : un clic, une unité. Toucher un radar fait passer la couverture « frontière » en
+  radars placés un à un, chacun avec sa portée.
+- **Liaison** (L) : un clic sur une unité, un clic sur l'autre, avec le moyen choisi dans la liste (filaire, radio,
+  satellite, optique). « Réseau complet » y revient.
+- **Plan de vol** (P) : l'essaim suit le tracé en colonne, puis chaque drone rejoint sa cible ; le panneau Profil
+  trace son altitude au-dessus du relief réel.
 - **Zone** (Z) : un clic par sommet, double-clic ou Entrée pour fermer ; une zone protégée compte les incursions.
 
-![Éditeur : plan de vol en trois points sélectionnés, zone protégée, barre d'outils](docs/images/editeur.png)
+![Éditeur : un radar déplacé, un radar ajouté (R11), une zone protégée et un plan de vol de trois points sélectionnés](docs/images/editeur.png)
 
-**Ordres en plein raid** : en pause à n'importe quel instant, « Éditer le scénario » passe en mode ordres ;
-sélectionnez des avions, clic droit pour les envoyer. L'ordre est enregistré avec son instant dans le scénario, et le
-raid se rejoue à l'identique.
+**En plein raid**, en pause, « Éditer » passe en mode ordres : sélectionnez des avions puis clic droit pour les
+envoyer depuis le PC ; sélectionnez un radar, le PC ou une liaison puis Suppr pour le mettre hors service. Tout est
+enregistré dans le scénario avec son instant, et le raid se rejoue à l'identique.
 
-![Ordre donné à 5:30 : les avions sélectionnés rallient le point, la zone protégée compte ses incursions](docs/images/ordres.png)
+![Ordres à 7:00 : avions envoyés au nord-ouest, radar R4 mis hors service (croix rouge), liaison optique de R1 hors de portée](docs/images/ordres.png)
 
 Chaque geste devient une modification du scénario, comme un curseur : l'annulation, l'export JSON, les réglages
 enregistrés et la reproductibilité par la graine valent pour tout ce que vous placez à la main.
 
+## Réseau d'information
+
+Par défaut, tout le monde parle avec tout le monde, sans délai. Dès la première liaison tracée, le réseau devient
+explicite : chaque radar relié au PC (au fil par défaut), le PC relié à chaque groupe d'avions (par radio), et vos
+liaisons en plus.
+
+- La conduite n'apprend un drone qu'après la latence du chemin depuis le radar qui le voit ; un radar non relié voit
+  pour rien.
+- Ses consignes, comme vos ordres, n'arrivent à l'avion qu'après la latence de sa liaison ; un avion hors de portée
+  radio n'est plus affecté (croix rouge).
+- Les pannes se datent ; le PC peut devenir une cible de l'essaim (panneau Scénario), détruit à la première frappe.
+- Le synoptique trace chaque liaison selon son moyen et sa latence ; une liaison coupée est barrée en rouge.
+
+![Réseau en liaisons : fil depuis la plupart des radars, satellite depuis R10, liaison optique de R1 trop longue ; l'inspecteur du PC liste liaisons et radars non reliés](docs/images/reseau.png)
+
+**Vue du PC** (V) : l'écran ne montre plus que ce que sait la conduite — les drones qu'elle connaît, regroupés en
+pistes par son algorithme de pistage. La vérité terrain revient au même bouton.
+
+![Vue du PC : les pistes de la conduite, avec leur effectif](docs/images/vue_pc.png)
+
+## Relief
+
+Un terrain du catalogue (`unites/terrains/`), choisi dans le panneau Scénario, donne au moteur le relief du théâtre :
+chaque radar a son masque d'horizon, un drone qui vole bas derrière une crête n'est pas vu, et les liaisons radio et
+optiques exigent la vue directe. L'écran trace la couverture réelle de chaque radar.
+
+![Relief de démonstration : une crête au nord et un massif au sud-est entament la couverture de R1, R2, R10 et R5](docs/images/relief.png)
+
+Le dépôt livre un relief synthétique de démonstration. Pour le vrai relief d'un théâtre, depuis un poste qui a le réseau :
+
+```sh
+node outils/terrain.js --nom centre_france --lat 47 --lon 2.5 --rayon_km 320 --pas_km 1
+node outils/indexer.js
+```
+
+Le terrain est ensuite un fichier : le moteur travaille hors ligne.
+
 ## Comprendre : fiches et inspecteur
 
 Un clic sur une entité ouvre l'**inspecteur**, mis à jour en direct : pour un avion, pourquoi la conduite l'a envoyé
-là (piste retenue, score, délai, alternatives écartées) ; pour un drone, chaque tir subi, sa probabilité de survie
-Π(1 − Pk) et la cause de sa perte ; pour une cible, sa défense et sa cadence de tir.
+là (piste retenue, score, délai, alternatives écartées) et par quelle liaison elle le joint ; pour un drone, chaque
+tir subi, sa probabilité de survie Π(1 − Pk) et la cause de sa perte ; pour une cible, sa défense ; pour un radar, sa
+portée, son masquage par le relief et sa latence jusqu'au PC ; pour le PC, l'état de tout le réseau.
 
-![Inspecteur : l'avion 18 a été envoyé sur une piste de 372 drones, au score 372, contre 134 et 117 pour les alternatives](docs/images/inspecteur.png)
+![Inspecteur : l'avion 42 a été envoyé sur une piste de 519 drones, au score 519, contre 116 pour l'alternative](docs/images/inspecteur.png)
 
 Le lien **Catalogue** ouvre l'explorateur : une fiche par unité (fidélité, lignée, sources, paramètres avec l'ancêtre
 qui les fixe, algorithmes) et par algorithme (équations, hypothèses, domaine de validité, références, code, utilisateurs).
@@ -130,16 +182,12 @@ qui les fixe, algorithmes) et par algorithme (équations, hypothèses, domaine d
 </tr>
 </table>
 
-## Réglages, lecture, balayage
+## Balayage
 
-- Un curseur par réglage, groupés par couche ; l'info-survol reprend la phrase d'aide du scénario ou de l'unité.
-- Lecture de ×0,25 à ×16, frise pour aller à n'importe quel instant (le raid est rejoué depuis la graine), « Autre raid »
-  pour changer de graine. Espace : lire ou suspendre ; flèches : ±30 s.
-- Réglages enregistrés dans le navigateur ; « Exporter le scénario » télécharge le JSON complet.
-- **Balayage** : faire varier un réglage, rejouer le raid sur plusieurs graines par valeur, lire chaque grandeur avec
-  son intervalle de confiance — calculé en arrière-plan.
+Le panneau **Balayage** fait varier un réglage, rejoue le raid sur plusieurs graines par valeur et trace chaque
+grandeur avec son intervalle de confiance, calculé en arrière-plan.
 
-![Balayage du nombre d'avions, avec intervalles de confiance](docs/images/balayage.png)
+![Balayage du nombre d'avions laser : détruits par les avions, au sol, frappes, avec intervalles de confiance](docs/images/balayage.png)
 
 <img src="docs/images/mobile.png" alt="L'interface sur un écran de téléphone" width="280">
 
@@ -147,6 +195,8 @@ qui les fixe, algorithmes) et par algorithme (équations, hypothèses, domaine d
 
 ```
 unites/<famille>/<classe>/<unite>.json    une unité par fichier, héritage par herite_de, chaque clé documentée
+unites/liaisons/<moyen>.json              moyens de communication : latence, portée, vue directe
+unites/terrains/<terrain>.json            reliefs : grilles d'altitudes (node outils/terrain.js)
 algos/global/<rôle>/<algo>.js             un algorithme par module : fiche « meta » + fonctions du rôle, sans import
 cartes/fonds|relief|batiments/<source>.json   une source de carte par fichier, attribution obligatoire
 prive/unites/…  prive/algos/…             votre catalogue privé (ignoré par git), identifiants préfixés « prive/ »
@@ -178,21 +228,41 @@ uv run --with matplotlib python -m analyse.abaques              # abaques analyt
 </tr>
 </table>
 
+## Prouver
+
+Chaque résultat des outils de preuve porte son **empreinte** (SHA-256 du scénario, des unités, des algorithmes en
+jeu et du code du moteur) et ses écarts au scénario de référence : deux résultats de même empreinte et de mêmes
+graines sont identiques au bit près.
+
+```sh
+node src/preuve.js dossier                                   # dossier Markdown : résultats, convergence, modèles, limites
+node src/preuve.js convergence --pas 2,1,0.5,0.25 --tirages 10
+node src/preuve.js duel --variante rouge.tactique=direct     # A contre B, mêmes graines, écart et verdict
+node src/preuve.js morris --facteur bleu.avions.1.nombre=0:60 --facteur bleu.sol.nombre=0:200
+node src/preuve.js empreinte
+```
+
+- **Convergence** : la campagne rejouée à plusieurs pas de temps, chaque pas comparé au plus fin tirage par tirage.
+- **Duel A/B** : deux variantes sur les mêmes graines ; différence appariée, intervalle de confiance, gain des
+  nombres aléatoires communs mesuré.
+- **Morris** : classement des réglages par influence (μ*, μ, σ) et seuil de bruit ; il a révélé, par exemple, que
+  l'étalement des départs n'a aucun effet hors tactique dispersée.
+
 ## Rigueur
 
 - Unités SI et géodésie WGS84 dans tout le calcul ; Vincenty vérifié sur les exemples de GeographicLib au millimètre.
-- Hasard à graine : une graine rejoue un raid à l'identique, ordres compris.
+- Hasard à graine : une graine rejoue un raid à l'identique, ordres et pannes compris.
 - Chaque formule codée cite son paragraphe de [docs/MODELE.md](docs/MODELE.md), et un test vérifie que chaque renvoi existe.
 - Formules fermées en Python et en JavaScript, vérifiées l'une contre l'autre ; simulation confrontée aux formules.
 - Chaque refonte prouvée : le moteur géodésique retrouve les statistiques de la v0.1, le passage aux algorithmes en
-  fichiers redonne les bilans exacts.
-- Limites connues : drones sans contre-mesures ni évitement, radar parfait dans sa couverture, relief affiché mais pas
-  encore pris en compte par le moteur (MODELE § 7).
+  fichiers redonne les bilans exacts, et le réseau complet sans relief laisse ces bilans inchangés.
+- Limites connues : drones sans contre-mesures ni évitement, radar parfait dans sa portée, pas encore de débit ni de
+  brouillage sur les liaisons (MODELE § 7, § 15 et § 16).
 
 ## Documentation
 
 - [docs/MODELE.md](docs/MODELE.md) : toutes les équations et hypothèses.
-- [docs/PLAN_V2.md](docs/PLAN_V2.md) : feuille de route, jalons, idées et suggestions.
+- [docs/PLAN_V2.md](docs/PLAN_V2.md) : feuille de route, jalons, idées et suggestions retenues.
 
 ## Tests
 

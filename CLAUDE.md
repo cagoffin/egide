@@ -13,7 +13,8 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
 ## Feuille de route
 - v0.1 (docs/PLAN.md) : abaques (`analyse/`), simulation (`src/moteur/`), interface (`index.html`, `src/vue/`).
 - v2 (docs/PLAN_V2.md) : plateforme à la manière d'un jeu de stratégie vu de dessus — catalogue d'unités et
-  d'algorithmes en fichiers, Terre réelle avec relief, éditeur à la souris, physique expliquée, preuve de qualité.
+  d'algorithmes en fichiers, Terre réelle avec relief, éditeur à la souris, physique expliquée, preuve de qualité,
+  réseau d'information. Versions et jalons : docs/PLAN_V2.md.
 - **Proposer au fil de l'eau de nouvelles fonctions** : l'utilisateur y tient. Par défaut, toute suggestion est
   retenue et ajoutée sans attendre au tableau de docs/PLAN_V2.md § Suggestions retenues (thème, jalon, état) ;
   passer son état à « fait » quand elle est livrée.

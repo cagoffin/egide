@@ -11,9 +11,16 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
 - **Ordre** : jalon 0, puis 1, puis les autres. Toutes les idées ci-dessous sont retenues.
 - **Arborescence** sans accents (`unites/`, `algos/unites/`) pour éviter les écarts entre macOS, Windows et git.
 
+## Versions
+- **v0.2.0** : moteur géodésique, catalogue et algorithmes en fichiers, carte 2,5D, éditeur, physique expliquée
+  (jalons 0 à 4).
+- **v0.3.0** : outils de preuve (jalon 5), interface centrée sur la carte avec calques, radars placés (jalon 6, premier
+  lot), réseau d'information avec pannes et Vue du PC (jalon 7, lots 1 et 2), relief dans le moteur (jalon 2).
+
 ## Arborescence cible
 ```
 unites/<famille>/<classe>/<unite>.json      catalogue public (notionnel), héritage par herite_de
+unites/liaisons/  unites/terrains/          moyens de communication, reliefs (grilles d'altitudes)
 prive/unites/…   prive/algos/…              catalogue privé, identifiants préfixés « prive/ »
 algos/global/<role>/<algo>.js               détection, pistage, allocation, guidage, mouvement, comportement
 algos/unites/<chemin de l'unité>/<role>.js  algorithmes propres à une unité
