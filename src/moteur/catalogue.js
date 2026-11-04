@@ -65,7 +65,9 @@ export function unite_si(id, fichiers, surcharges = {}) {
   const brute = unite_brute(id, fichiers);
   const inconnues = Object.keys(surcharges).filter((cle) => !(cle in brute));
   if (inconnues.length) throw new CatalogueInvalide(`${id} : surcharges de clés inconnues : ${inconnues.join(", ")}`);
-  const {nom, fidelite, sources, ...valeurs} = convertir_objet({...brute, ...surcharges});
+  // Des algorithmes en surcharge ne remplacent que les rôles qu'ils citent, comme chez une unité fille.
+  const algos = surcharges.algos ? {algos: {...brute.algos, ...surcharges.algos}} : {};
+  const {nom, fidelite, sources, ...valeurs} = convertir_objet({...brute, ...surcharges, ...algos});
   return {id, nom, fidelite, sources, lignee: brute._lignee, ...valeurs};
 }
 

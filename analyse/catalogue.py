@@ -92,5 +92,7 @@ def unite_si(identifiant: str, fichiers: dict, surcharges: dict | None = None) -
     inconnues = [cle for cle in surcharges if cle not in brute]
     if inconnues:
         raise CatalogueInvalideError(f"{identifiant} : surcharges de cles inconnues : {', '.join(inconnues)}")
-    valeurs = convertir_objet({**brute, **surcharges})
+    # Des algorithmes en surcharge ne remplacent que les roles qu'ils citent, comme chez une unite fille.
+    algos = {"algos": {**brute.get("algos", {}), **surcharges["algos"]}} if "algos" in surcharges else {}
+    valeurs = convertir_objet({**brute, **surcharges, **algos})
     return {"lignee": brute["_lignee"], **valeurs, "id": identifiant}

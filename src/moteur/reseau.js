@@ -2,7 +2,7 @@
 // En mode « complet », tout le monde parle avec tout le monde sans délai : le moteur se comporte comme avant.
 import {distance_oblique, inverse, vers_ecef} from "./geodesie.js";
 import {horizon_radar} from "./geometrie.js";
-import {portee_radar, positions_radars} from "./radars.js";
+import {parametres_radar, portee_site, positions_radars} from "./radars.js";
 import {altitude_sol, grille_terrain, masque_horizon, vu_par, vue_directe} from "./terrain.js";
 
 const masques = new Map();
@@ -18,11 +18,11 @@ export function masques_radars(scenario) {
   const grille = grille_scenario(scenario);
   if (!grille) return null;
   const radars = positions_radars(scenario);
-  const portee = portee_radar(scenario);
-  const cle = `${scenario.theatre.terrain.id}|${scenario.radar.hauteur_antenne}|${portee}|${radars.map((r) => `${r.lat},${r.lon}`).join(";")}`;
+  const reglages = radars.map((_, i) => ({h: parametres_radar(scenario, i).hauteur_antenne, portee: portee_site(scenario, i)}));
+  const cle = `${scenario.theatre.terrain.id}|${radars.map((r, i) => `${r.lat},${r.lon},${reglages[i].h},${reglages[i].portee}`).join(";")}`;
   if (!masques.has(cle)) {
     if (masques.size > 32) masques.clear();
-    masques.set(cle, radars.map((site) => masque_horizon(grille, site, scenario.radar.hauteur_antenne, portee)));
+    masques.set(cle, radars.map((site, i) => masque_horizon(grille, site, reglages[i].h, reglages[i].portee)));
   }
   return masques.get(cle);
 }
@@ -111,7 +111,7 @@ export function preparer_reseau(scenario, hs = new Set(), cibles = []) {
   const radars_hs = radars.map((_, i) => hs.has(`radar:${i}`));
   // Avec un terrain, chaque radar voit selon son masque : le moteur prend le chemin radar par radar.
   const commun = {centre: reseau.centre, centres, radars, ecefRadars, hs, conduite_hs: hs.has("conduite"), aucun_centre: centres.every((c) => c.hs),
-    grille, masques: masques_radars(scenario), hauteur_drones: scenario.rouge.altitude, portee_radars: portee_radar(scenario), radars_hs,
+    grille, masques: masques_radars(scenario), hauteur_drones: scenario.rouge.altitude, portees_radars: positions_radars(scenario).map((_, i) => portee_site(scenario, i)), radars_hs,
     simple: reseau.mode === "complet" && hs.size === 0 && !grille};
   const resumer = (latencesRadars, latencesSol) => ({
     latences_centres: latencesRadars, latences_sol: latencesSol,
@@ -184,9 +184,8 @@ export function radars_voyants(detection, couverture, reseau, drone, outils) {
  * le drone ; le masque d'horizon de chacun tranche, le drone volant à sa hauteur au-dessus du sol (MODELE § 16.2).
  */
 function radars_voyants_relief(detection, couverture, reseau, drone, outils) {
-  const portee2 = reseau.portee_radars ** 2;
   const candidats = detection.detecte_par
     ? detection.detecte_par(couverture, drone, outils)
-    : reseau.ecefRadars.map((e, i) => ((drone.ecef.x - e.x) ** 2 + (drone.ecef.y - e.y) ** 2 + (drone.ecef.z - e.z) ** 2 <= portee2 + reseau.hauteur_drones ** 2 ? i : -1)).filter((i) => i >= 0);
+    : reseau.ecefRadars.map((e, i) => ((drone.ecef.x - e.x) ** 2 + (drone.ecef.y - e.y) ** 2 + (drone.ecef.z - e.z) ** 2 <= reseau.portees_radars[i] ** 2 + reseau.hauteur_drones ** 2 ? i : -1)).filter((i) => i >= 0);
   return candidats.filter((i) => !reseau.radars_hs[i] && vu_par(reseau.masques[i], reseau.grille, drone.geo, drone.ecef, reseau.hauteur_drones));
 }

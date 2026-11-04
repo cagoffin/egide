@@ -523,3 +523,27 @@ elle trouve une bonne répartition parmi celles décrites, pas la meilleure poss
 `node src/autoconfig.js` écrit le scénario dans `scenarios/` et réindexe la bibliothèque (`scenarios/index.json`) ;
 dans l'interface, le résultat s'applique, se range dans la bibliothèque du navigateur ou s'exporte. La liste
 « Bibliothèque » du panneau Scénario charge un scénario du dépôt ou du navigateur comme nouvelle base.
+
+## 21 · Déploiement unité par unité (jalon 12)
+### 21.1 Radars d'unités différentes
+En disposition `sites`, chaque site peut citer sa propre unité (`bleu.radar.sites[].unite`) et ses surcharges. Sa
+hauteur d'antenne fixe l'altitude du site, et sa portée contre l'essaim est `d_i = min(√(2 k R_T)(√h_i + √h_c),
+portée_max_i)`. Détection, réseau d'information et masques de relief prennent `d_i` site par site. Sans unité propre,
+un site prend celles du radar commun, et le résultat est inchangé.
+
+### 21.2 Batteries placées
+`bleu.sol.batteries[]` place des batteries une à une, en plus des `nombre` postes répartis sur les cibles. Chacune a
+sa position, ses munitions et son unité (portée, Pk, engagements par passage, délai d'acquisition, algorithme
+`tir_sol`). Elle tire sur sa propre bulle avec sa propre cadence. Pour le réseau, elle est rattachée à la cible la
+plus proche et partage son nœud `sol:<i>` (désignation et latence, § 18.3).
+
+### 21.3 Algorithmes par unité, par groupe ou par centre
+Les `surcharges` d'un groupe, d'un site ou d'une batterie peuvent porter `algos` ; ils ne remplacent que les rôles
+qu'ils citent, comme chez une unité fille (§ 10.1). Un centre secondaire peut avoir son algorithme d'allocation
+(`bleu.reseau.centres[].allocation`) ; sinon il prend celui de `bleu.conduite`.
+
+### 21.4 Équipements de communication
+`bleu.reseau.equipements[]` déclare les moyens dont chaque nœud est équipé (radio, satellite, filaire, optique…).
+L'éditeur ne tire une liaison que sur un moyen commun aux deux bouts, en préférant le plus rapide. « Relier
+automatiquement » relie toute paire de nœuds qui partagent un moyen, si la distance tient dans sa portée et, pour un
+moyen à vue directe, si l'horizon (et le relief) le permet. Le moteur ne lit que les liaisons qui en résultent (§ 15.2).

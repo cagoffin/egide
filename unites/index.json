@@ -14,6 +14,13 @@
     "base": false
   },
   {
+    "id": "capteurs/radars/radar_longue_portee_notionnel",
+    "nom": "Radar de veille longue portée (notionnel)",
+    "famille": "capteurs",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
     "id": "effecteurs/brouillage/brouillage_notionnel",
     "nom": "Brouillage (notionnel)",
     "famille": "effecteurs",
@@ -98,6 +105,13 @@
     "base": false
   },
   {
+    "id": "sites/postes/batterie_moyenne_portee_notionnelle",
+    "nom": "Batterie sol-air de moyenne portée (notionnelle)",
+    "famille": "sites",
+    "fidelite": "notionnel",
+    "base": false
+  },
+  {
     "id": "sites/postes/poste_sol_air_notionnel",
     "nom": "Poste sol-air de courte portee (notionnel)",
     "famille": "sites",
@@ -110,6 +124,13 @@
     "famille": "terrains",
     "fidelite": "notionnel",
     "base": true
+  },
+  {
+    "id": "terrains/centre_france",
+    "nom": "Relief réel autour de 47° N, 2.5° E, 320 km",
+    "famille": "terrains",
+    "fidelite": "notionnel",
+    "base": false
   },
   {
     "id": "terrains/crete_notionnelle",

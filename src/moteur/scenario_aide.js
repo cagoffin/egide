@@ -61,6 +61,12 @@ export const AIDE = {
     nombre: "Nombre de postes sol-air.",
     munitions: "Stock total de munitions sol, partage a parts egales entre les postes.",
     surcharges: "Valeurs qui remplacent celles du poste pour ce scenario.",
+    batteries: "Batteries sol-air placees une a une sur la carte (deploiement, MODELE § 21.2), en plus des 'nombre' postes repartis sur les cibles.",
+    "batteries[].lat_deg": "Latitude de la batterie.",
+    "batteries[].lon_deg": "Longitude de la batterie.",
+    "batteries[].unite": "Unite de la batterie dans le catalogue (sites/postes/...) ; absente : celle du dispositif commun.",
+    "batteries[].surcharges": "Valeurs qui remplacent celles de l'unite pour cette batterie, algorithmes compris (algos).",
+    "batteries[].munitions": "Munitions propres de la batterie.",
   },
   radar: {
     unite: "Identifiant du radar dans le catalogue.",
@@ -69,6 +75,8 @@ export const AIDE = {
     sites: "Positions des radars en disposition 'sites'.",
     "sites[].lat_deg": "Latitude du radar.",
     "sites[].lon_deg": "Longitude du radar.",
+    "sites[].unite": "Unite propre de ce radar (capteurs/radars/...) ; absente : celle du radar commun (MODELE § 21.1).",
+    "sites[].surcharges": "Valeurs qui remplacent celles de l'unite pour ce radar.",
   },
   conduite: {
     delai_reaction_s: "Duree detection -> decision -> ordre de mise a poste.",
@@ -94,6 +102,10 @@ export const AIDE = {
     "centres[].lat_deg": "Latitude du centre.",
     "centres[].lon_deg": "Longitude du centre.",
     "pannes[].duree_s": "Duree de la panne ; null : definitive.",
+    "centres[].allocation": "Algorithme d'allocation propre a ce centre (algos/global/allocation/...) ; absent : celui de bleu.conduite (MODELE § 21.3).",
+    equipements: "Moyens de communication dont chaque noeud est equipe (MODELE § 21.4) : une liaison se tire sur un moyen commun aux deux bouts.",
+    "equipements[].noeud": "Noeud equipe : 'conduite', 'centre:<k>', 'radar:<i>', 'avions:<g>' ou 'sol:<i>'.",
+    "equipements[].moyens": "Identifiants des moyens (liaisons/...) dont le noeud est equipe.",
   },
   simulation: {
     pas_s: "Pas de temps ; 0,5 s = 111 m parcourus par un drone a 800 km/h.",

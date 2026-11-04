@@ -66,6 +66,11 @@ test("migration : le document migré porte les mêmes phrases d'aide que le scé
   }
 });
 
+test("résolution d'un déploiement (MODELE § 21) : identique à la variante partagée avec le jumeau Python", () => {
+  const {modifications, resolu} = JSON.parse(readFileSync(new URL("./resolution_reference.json", import.meta.url))).variante_deploiement;
+  assert.deepEqual(JSON.parse(JSON.stringify(resoudre_scenario(modifier_scenario(REFERENCE, modifications), FICHIERS))), resolu);
+});
+
 test("résolution : identique à tests/resolution_reference.json, partagé avec le jumeau Python", () => {
   const attendu = JSON.parse(readFileSync(new URL("./resolution_reference.json", import.meta.url))).resolu;
   const arrondi = (o) => JSON.parse(JSON.stringify(o, (k, v) => (typeof v === "number" ? Math.round(v * 1e9) / 1e9 : v)));

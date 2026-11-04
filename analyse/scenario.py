@@ -60,6 +60,9 @@ def ids_unites(brut: dict) -> list[str]:
         bleu["radar"]["unite"],
         *moyens,
         *([brut["theatre"]["terrain"]] if brut["theatre"].get("terrain") else []),
+        # Deploiement (MODELE § 21) : unites propres des sites et des batteries, moyens dont chaque noeud est equipe.
+        *(s["unite"] for s in [*bleu["radar"].get("sites", []), *bleu["sol"].get("batteries", [])] if s.get("unite")),
+        *(m for e in bleu.get("reseau", {}).get("equipements", []) for m in e["moyens"]),
     ]
     return list(dict.fromkeys(ids))
 
@@ -87,11 +90,45 @@ def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
     disposition = radar.get("disposition", "frontiere")
     if disposition not in DISPOSITIONS_RADAR:
         raise ScenarioInvalideError(f"disposition des radars inconnue « {disposition} »")
-    sites = _vers_geo(radar.get("sites"), unite["hauteur_antenne"])
+    # Un site peut citer sa propre unite ou ses surcharges (deploiement, MODELE § 21.1).
+    brutes = radar.get("sites") or []
+    propres = [
+        unite_si(s.get("unite", radar["unite"]), fichiers, s.get("surcharges"))
+        if s.get("unite") or s.get("surcharges")
+        else None
+        for s in brutes
+    ]
+    sites = [_vers_geo([s], (p or unite)["hauteur_antenne"])[0] for s, p in zip(brutes, propres, strict=True)]
     if disposition == "sites" and not sites:
         raise ScenarioInvalideError("disposition « sites » : au moins un radar place")
     detection = DISPOSITIONS_RADAR[disposition] or unite["algos"]["detection"]
-    return {**unite, "algos": {**unite["algos"], "detection": detection}, "disposition": disposition, "sites": sites}
+    resolu = {**unite, "algos": {**unite["algos"], "detection": detection}, "disposition": disposition, "sites": sites}
+    if any(propres):
+        resolu["sites_unites"] = [
+            p
+            and {"id": p["id"], "nom": p["nom"], "hauteur_antenne": p["hauteur_antenne"], "portee_max": p["portee_max"]}
+            for p in propres
+        ]
+    return resolu
+
+
+def _resoudre_sol(sol: dict, fichiers: dict) -> dict:
+    """Rendre les postes sol resolus : dispositif commun et batteries placees, chacune avec son unite (MODELE § 21.2)."""
+    resolu = {
+        **unite_si(sol["unite"], fichiers, sol.get("surcharges")),
+        "nombre": sol["nombre"],
+        "munitions": sol["munitions"],
+    }
+    if sol.get("batteries"):
+        resolu["batteries"] = [
+            {
+                "geo": _vers_geo([b], 0)[0],
+                "munitions": b["munitions"],
+                "unite": unite_si(b.get("unite", sol["unite"]), fichiers, b.get("surcharges")),
+            }
+            for b in sol["batteries"]
+        ]
+    return resolu
 
 
 MODES_RESEAU = ("complet", "liaisons")
@@ -129,7 +166,14 @@ def _resoudre_reseau(reseau: dict | None, theatre: dict, groupes: int, fichiers:
     return {
         "mode": mode,
         "conduite_ciblee": reseau.get("conduite_ciblee", False),
-        "centres": [{"nom": c["nom"], "geo": _vers_geo([c], 0)[0]} for c in reseau.get("centres", [])],
+        "centres": [
+            {
+                "nom": c["nom"],
+                "geo": _vers_geo([c], 0)[0],
+                **({"allocation": c["allocation"]} if c.get("allocation") else {}),
+            }
+            for c in reseau.get("centres", [])
+        ],
         "pannes": sorted(
             (
                 {
@@ -166,7 +210,6 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
             cle: valeur for cle, valeur in rouge.items() if cle not in {"unite", "surcharges", "plan_de_vol"}
         }
         cibles_placees = _vers_geo(theatre.get("cibles_placees"), 0)
-        sol = unite_si(bleu["sol"]["unite"], fichiers, bleu["sol"].get("surcharges"))
         return {
             "nom": brut["nom"],
             "theatre": {
@@ -193,7 +236,7 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                 "comportement": TACTIQUES.get(rouge["tactique"], rouge["tactique"]),
             },
             "avions": _resoudre_avions(bleu["avions"], fichiers),
-            "sol": {**sol, "nombre": bleu["sol"]["nombre"], "munitions": bleu["sol"]["munitions"]},
+            "sol": _resoudre_sol(bleu["sol"], fichiers),
             "radar": _resoudre_radar(bleu["radar"], fichiers),
             "conduite": convertir_objet(bleu["conduite"]),
             "reseau": _resoudre_reseau(bleu.get("reseau"), theatre, len(bleu["avions"]), fichiers),

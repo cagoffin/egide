@@ -1,5 +1,6 @@
 // Bilan vivant du raid : grands nombres, munitions, état de la flotte, frappes par cible.
 import {format_entier} from "./format.js";
+import {munitions_sol_initiales} from "../moteur/defense_sol.js";
 
 const ETATS = [["orbite", "En orbite"], ["ralliement", "En route"], ["engagement", "Au contact"], ["poste", "À poste"]];
 
@@ -38,7 +39,7 @@ export function mettre_a_jour_tableau(racine, monde) {
   const {scenario} = monde;
   const emportTotal = scenario.avions.reduce((total, groupe) => total + groupe.nombre * groupe.emport_nombre, 0);
   jauge(racine, "munitions_air", somme(monde.avions, "munitions"), emportTotal);
-  jauge(racine, "munitions_sol", somme(monde.postes, "munitions"), monde.postes.length ? scenario.sol.munitions : 0);
+  jauge(racine, "munitions_sol", somme(monde.postes, "munitions"), monde.postes.length ? munitions_sol_initiales(scenario.sol) : 0);
   for (const [etat] of ETATS) remplir(racine, `avions_${etat}`, format_entier(monde.avions.filter((a) => a.etat === etat && a.munitions > 0).length));
   remplir(racine, "avions_vides", format_entier(monde.avions.filter((a) => a.munitions === 0).length));
   frappes_par_cible(racine, monde);

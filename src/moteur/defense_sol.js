@@ -1,8 +1,9 @@
 // Postes sol-air : co-localisés avec les cibles, munitions partagées ; cadence donnée par l'algorithme tir_sol.
+// S'y ajoutent les batteries placées une à une (déploiement, MODELE § 21.2), chacune avec son unité.
 import {algo} from "./algos.js";
 import {connu_du_centre} from "./reseau.js";
 import {est_actif, plus_proche, resoudre_tir} from "./tir.js";
-import {distance_oblique} from "./geodesie.js";
+import {distance_horizontale, distance_oblique, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
 
 /**
@@ -51,10 +52,16 @@ function cible_du_poste(monde, poste, sol) {
   return monde.t - poste.acquisition.t >= sol.acquisition ? {drone, designe: false} : null;
 }
 
-/** Rendre les postes sol, répartis à parts égales sur les cibles (`cibles` : {geo, ecef}), chacun avec sa part du stock. */
+/** Rendre l'indice de la cible la plus proche de `geo` : celle que défend une batterie placée, dont elle partage le nœud réseau. */
+const cible_la_plus_proche = (cibles, geo) => cibles.reduce((m, c, i) => (distance_horizontale(geo, c.geo) < distance_horizontale(geo, cibles[m].geo) ? i : m), 0);
+
+/**
+ * Rendre les postes sol : `nombre` postes répartis à parts égales sur les cibles (`cibles` : {geo, ecef}), chacun avec
+ * sa part du stock, puis une batterie par position placée, rattachée à la cible la plus proche, avec son unité.
+ */
 export function creer_postes(scenario, cibles) {
-  const {nombre, munitions} = scenario.sol;
-  return Array.from({length: nombre}, (_, i) => ({
+  const {nombre, munitions, batteries = []} = scenario.sol;
+  const communs = Array.from({length: nombre}, (_, i) => ({
     id: i,
     cible: i % cibles.length,
     geo: cibles[i % cibles.length].geo,
@@ -62,20 +69,33 @@ export function creer_postes(scenario, cibles) {
     munitions: Math.floor(munitions / nombre) + (i < munitions % nombre ? 1 : 0),
     prochain_tir: 0,
   }));
+  const places = batteries.map((b, j) => ({
+    id: nombre + j, batterie: j, cible: cible_la_plus_proche(cibles, b.geo), geo: b.geo, ecef: vers_ecef(b.geo),
+    munitions: b.munitions, prochain_tir: 0, unite: b.unite,
+  }));
+  return [...communs, ...places];
 }
+
+/** Rendre le stock initial de munitions sol : celui du dispositif commun et celui des batteries placées. */
+export const munitions_sol_initiales = (sol) => sol.munitions + (sol.batteries ?? []).reduce((s, b) => s + b.munitions, 0);
 
 /** Faire tirer chaque poste prêt sur le drone le plus proche dans sa bulle ; le résultat est immédiat. */
 export function tirer_sol(monde) {
   const {sol, rouge} = monde.scenario;
-  const cadence = algo(monde.registre, sol.algos.tir_sol, "tir_sol").cadence(sol, rouge.vitesse);
+  const cadences = new Map();
+  const cadence = (unite) => {
+    if (!cadences.has(unite)) cadences.set(unite, algo(monde.registre, unite.algos.tir_sol, "tir_sol").cadence(unite, rouge.vitesse));
+    return cadences.get(unite);
+  };
   for (const poste of monde.postes) {
     if (poste.munitions === 0 || monde.t < poste.prochain_tir) continue;
-    const choix = cible_du_poste(monde, poste, sol);
+    const unite = poste.unite ?? sol;
+    const choix = cible_du_poste(monde, poste, unite);
     if (!choix) continue;
     const {drone} = choix;
     poste.munitions--;
-    poste.prochain_tir = monde.t + cadence;
+    poste.prochain_tir = monde.t + cadence(unite);
     monde.compteurs.tirs_sol++;
-    resoudre_tir(monde, drone, sol.pk, "sol", poste.geo, poste.id, {designe: choix.designe});
+    resoudre_tir(monde, drone, unite.pk, "sol", poste.geo, poste.id, {designe: choix.designe});
   }
 }

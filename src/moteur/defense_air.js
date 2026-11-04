@@ -72,7 +72,9 @@ function affecter(monde, c, siens) {
     return est_actif(drone, monde.t) && connu !== null && monde.t - connu >= conduite.delai_reaction;
   });
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
-  for (const {avion, point, explication} of algo(monde.registre, conduite.allocation, "allocation").allouer(siens, pistes, OUTILS)) {
+  // Un centre secondaire peut avoir son propre algorithme d'allocation (déploiement, MODELE § 21.3).
+  const allocation = (c > 0 && monde.scenario.reseau.centres[c - 1]?.allocation) || conduite.allocation;
+  for (const {avion, point, explication} of algo(monde.registre, allocation, "allocation").allouer(siens, pistes, OUTILS)) {
     // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
     // Nouvelle mission (l'avion n'était pas déjà en route) : journalisée pour le suivi de l'information (MODELE § 17).
     const nouvelle = Boolean(point && avion.etat !== "ralliement" && !avion.consigne);

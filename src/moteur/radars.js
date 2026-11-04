@@ -6,6 +6,18 @@ import {horizon_radar} from "./geometrie.js";
 export const portee_radar = (scenario) => Math.min(horizon_radar(scenario.radar.hauteur_antenne, scenario.rouge.altitude), scenario.radar.portee_max);
 
 /**
+ * Rendre les paramètres (hauteur d'antenne, portée instrumentée) du radar `i` : ceux de son unité propre si le site
+ * en a une (déploiement, MODELE § 21.1), sinon ceux du radar commun.
+ */
+export const parametres_radar = (scenario, i) => (scenario.radar.disposition === "sites" && scenario.radar.sites_unites?.[i]) || scenario.radar;
+
+/** Rendre la portée au sol du radar `i` contre l'essaim. */
+export function portee_site(scenario, i) {
+  const {hauteur_antenne, portee_max} = parametres_radar(scenario, i);
+  return Math.min(horizon_radar(hauteur_antenne, scenario.rouge.altitude), portee_max);
+}
+
+/**
  * Rendre les positions des radars qui matérialisent la couverture « frontière » : sur le cercle de la zone, espacés
  * de √3 d au plus, si bien que tout drone qui franchit la frontière passe à moins de d de l'un d'eux. Ce sont ces
  * positions que l'éditeur rend déplaçables ; en déplacer un fait passer le scénario en disposition « sites ».

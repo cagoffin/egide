@@ -16,14 +16,19 @@ export const meta = {
     hauteur_antenne: {unite: "m", aide: "Hauteur des antennes."},
     portee_max: {unite: "m", aide: "Portée instrumentée."},
     sites: {unite: "", aide: "Positions des radars (scénario : bleu.radar.sites)."},
+    sites_unites: {unite: "", aide: "Unité propre de chaque site, s'il en a une (scénario : bleu.radar.sites[].unite) ; sinon celle du radar commun."},
   },
 };
 
 /** Rendre l'état de la couverture : sites en ECEF, seuils de distance, et rayon au-delà duquel rien n'est vu. */
 export function preparer(scenario, radar, outils) {
-  const portee = Math.min(outils.horizon_radar(radar.hauteur_antenne, scenario.rouge.altitude), radar.portee_max);
-  const sites = radar.sites.map((geo) => ({geo, ecef: outils.vers_ecef(geo), portee, seuil2: portee ** 2 + (scenario.rouge.altitude - geo.alt) ** 2}));
-  const eloignement = sites.map((site) => outils.inverse(scenario.theatre.origine, site.geo).distance + portee);
+  // Un site peut porter sa propre unité (déploiement, MODELE § 21.1) : sa hauteur d'antenne et sa portée priment.
+  const sites = radar.sites.map((geo, i) => {
+    const propre = radar.sites_unites?.[i] ?? radar;
+    const portee = Math.min(outils.horizon_radar(propre.hauteur_antenne, scenario.rouge.altitude), propre.portee_max);
+    return {geo, ecef: outils.vers_ecef(geo), portee, seuil2: portee ** 2 + (scenario.rouge.altitude - geo.alt) ** 2};
+  });
+  const eloignement = sites.map((site) => outils.inverse(scenario.theatre.origine, site.geo).distance + site.portee);
   return {origine: scenario.theatre.origine, rayon_couverture: Math.max(scenario.theatre.zone_rayon, ...eloignement), sites};
 }
 

@@ -78,6 +78,18 @@ def test_resolution_du_reseau_identique_au_jumeau_javascript():
     assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), variante["resolu"])
 
 
+def test_resolution_du_deploiement_identique_au_jumeau_javascript():
+    variante = json.loads((ICI / "resolution_reference.json").read_text(encoding="utf-8"))["variante_deploiement"]
+    brut = json.loads(json.dumps(BRUT))
+    for chemin, valeur in variante["modifications"].items():
+        *parents, dernier = chemin.split(".")
+        noeud = brut
+        for cle in parents:
+            noeud = noeud[int(cle) if cle.isdigit() else cle]
+        noeud[int(dernier) if dernier.isdigit() else dernier] = valeur
+    assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), variante["resolu"])
+
+
 def test_reseau_refuse_un_noeud_inconnu():
     brut = json.loads(json.dumps(BRUT))
     brut["bleu"]["reseau"]["liaisons"] = [

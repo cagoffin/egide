@@ -55,14 +55,29 @@ function valider_aide(objet, chemin) {
 }
 
 /** Rendre le scénario en format v2, migré s'il est en v1. */
-export const en_v2 = (brut) => (brut.format === FORMAT ? brut : migrer_v1(brut));
+export const en_v2 = (brut) => (brut.format === FORMAT ? completer_aide(brut) : migrer_v1(brut));
+
+/**
+ * Rendre le scénario avec les phrases d'aide des clés apparues depuis qu'il a été écrit (déploiement, MODELE § 21) :
+ * un scénario enregistré avant reste éditable. Rendu tel quel s'il ne lui manque rien.
+ */
+function completer_aide(brut) {
+  const sections = ["sol", "radar", "reseau"].filter((s) => brut.bleu?.[s]?._aide && Object.keys(AIDE[s]).some((k) => !(k in brut.bleu[s]._aide)));
+  if (!sections.length) return brut;
+  const copie = structuredClone(brut);
+  for (const s of sections) copie.bleu[s]._aide = {...AIDE[s], ...copie.bleu[s]._aide};
+  return copie;
+}
 
 /** Rendre la liste des identifiants d'unités qu'un scénario cite directement. */
 export function ids_unites(brut) {
   const v2 = en_v2(brut);
   const moyens = (v2.bleu.reseau?.liaisons ?? []).map((liaison) => liaison.moyen);
   const terrain = v2.theatre.terrain ? [v2.theatre.terrain] : [];
-  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens, ...terrain])];
+  // Déploiement (MODELE § 21) : unités propres des sites radar et des batteries, moyens dont chaque nœud est équipé.
+  const propres = [...(v2.bleu.radar.sites ?? []), ...(v2.bleu.sol.batteries ?? [])].map((s) => s.unite).filter(Boolean);
+  const equipements = (v2.bleu.reseau?.equipements ?? []).flatMap((e) => e.moyens);
+  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens, ...terrain, ...propres, ...equipements])];
 }
 
 function resoudre_avions(groupes, fichiers) {
@@ -80,10 +95,26 @@ function resoudre_radar(radar, fichiers) {
   const unite = unite_si(radar.unite, fichiers, radar.surcharges);
   const disposition = radar.disposition ?? "frontiere";
   if (!(disposition in DISPOSITIONS_RADAR)) throw new ScenarioInvalide(`disposition des radars inconnue « ${disposition} » (${Object.keys(DISPOSITIONS_RADAR).join(", ")})`);
-  const sites = vers_geo(radar.sites, unite.hauteur_antenne);
+  // Un site peut citer sa propre unité ou ses surcharges (déploiement, MODELE § 21.1) : sa hauteur fixe celle du site.
+  const propres = (radar.sites ?? []).map((s) => (s.unite || s.surcharges ? unite_si(s.unite ?? radar.unite, fichiers, s.surcharges) : null));
+  const sites = (radar.sites ?? []).map((s, i) => vers_geo([s], (propres[i] ?? unite).hauteur_antenne)[0]);
   if (disposition === "sites" && sites.length === 0) throw new ScenarioInvalide("disposition « sites » : au moins un radar placé");
   const detection = DISPOSITIONS_RADAR[disposition] ?? unite.algos.detection;
-  return {...unite, algos: {...unite.algos, detection}, disposition, sites};
+  const resolu = {...unite, algos: {...unite.algos, detection}, disposition, sites};
+  if (propres.some(Boolean)) resolu.sites_unites = propres.map((p) => p && {id: p.id, nom: p.nom, hauteur_antenne: p.hauteur_antenne, portee_max: p.portee_max});
+  return resolu;
+}
+
+/**
+ * Rendre les postes sol résolus : le dispositif commun (`nombre` postes répartis sur les cibles) et les batteries
+ * placées une à une, chacune avec son unité (déploiement, MODELE § 21.2).
+ */
+function resoudre_sol(sol, fichiers) {
+  const resolu = {...unite_si(sol.unite, fichiers, sol.surcharges), nombre: sol.nombre, munitions: sol.munitions};
+  if ((sol.batteries ?? []).length) {
+    resolu.batteries = sol.batteries.map((b) => ({geo: vers_geo([b], 0)[0], munitions: b.munitions, unite: unite_si(b.unite ?? sol.unite, fichiers, b.surcharges)}));
+  }
+  return resolu;
 }
 
 /** Modes du réseau d'information (MODELE § 15.2). */
@@ -111,7 +142,7 @@ function resoudre_reseau(reseau, theatre, groupes, fichiers) {
   }
   const centre = lat === null || lon === null ? geo_deg(theatre.origine_lat_deg, theatre.origine_lon_deg, 0) : geo_deg(lat, lon, 0);
   return {
-    mode, centre, conduite_ciblee, centres: centres.map((c) => ({nom: c.nom, geo: geo_deg(c.lat_deg, c.lon_deg, 0)})), liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)})),
+    mode, centre, conduite_ciblee, centres: centres.map((c) => ({nom: c.nom, geo: geo_deg(c.lat_deg, c.lon_deg, 0), ...(c.allocation ? {allocation: c.allocation} : {})})), liaisons: liaisons.map(({de, vers, moyen}) => ({de, vers, moyen: unite_si(moyen, fichiers)})),
     // Pannes triées par instant ; fin null : définitive.
     pannes: pannes.map((p) => ({t: p.t_s, element: p.element, fin: p.duree_s === null || p.duree_s === undefined ? null : p.t_s + p.duree_s})).sort((a, b) => a.t - b.t),
   };
@@ -153,7 +184,7 @@ export function resoudre_scenario(brutDonne, fichiers) {
         plan_de_vol: vers_geo(plan, drone.altitude_croisiere), comportement: algo_tactique(rouge.tactique),
       },
       avions: resoudre_avions(bleu.avions, fichiers),
-      sol: {...unite_si(bleu.sol.unite, fichiers, bleu.sol.surcharges), nombre: bleu.sol.nombre, munitions: bleu.sol.munitions},
+      sol: resoudre_sol(bleu.sol, fichiers),
       radar: resoudre_radar(bleu.radar, fichiers),
       conduite: convertir_objet(bleu.conduite),
       reseau: resoudre_reseau(bleu.reseau, reglagesTheatre, bleu.avions.length, fichiers),

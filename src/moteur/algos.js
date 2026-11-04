@@ -71,6 +71,8 @@ export function ids_algos(scenario) {
     scenario.rouge.algos.mouvement,
     ...scenario.avions.flatMap((groupe) => [groupe.algos.mouvement, groupe.arme.algos.tir]),
     scenario.sol.algos.tir_sol,
+    ...(scenario.sol.batteries ?? []).map((b) => b.unite.algos.tir_sol),
+    ...scenario.reseau.centres.map((c) => c.allocation),
     scenario.radar.algos.detection,
     scenario.conduite.pistage,
     scenario.conduite.allocation,
