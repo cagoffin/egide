@@ -1,0 +1,16 @@
+{
+  "_aide": {
+    "_": "Format d'une source de carte : un fichier par source sous cartes/fonds/, cartes/relief/ ou cartes/batiments/, lu par l'interface (src/vue/carte.js). Ajouter une source = deposer un fichier puis lancer node outils/indexer.js.",
+    "nom": "Nom affiche dans le choix des cartes.",
+    "type": "Type de source : 'raster' (images), 'raster-dem' (altitudes en images), 'vector' (tuiles vectorielles), 'aucun' (fond uni).",
+    "tuiles": "Adresses des tuiles, avec {z} {x} {y} ; ou absent si 'tilejson' est donne.",
+    "tilejson": "Adresse d'une description TileJSON de la source (alternative a 'tuiles').",
+    "taille_tuile": "Taille des tuiles en pixels (256 ou 512).",
+    "zoom_max": "Zoom maximal servi par la source ; au-dela, les tuiles sont agrandies.",
+    "encodage": "Relief : codage des altitudes dans les images ('terrarium' ou 'mapbox').",
+    "couche": "Batiments : nom de la couche vectorielle qui porte les batiments.",
+    "hauteur": "Batiments : attribut qui porte la hauteur, en m.",
+    "attribution": "Mention de source et de licence, affichee en bas de carte. Obligatoire pour toute source tierce.",
+    "conditions": "Conditions d'usage a respecter (volume, cle, usage commercial), a lire avant de diffuser l'outil."
+  }
+}

@@ -1,6 +1,6 @@
 // Entités du scope en symbologie inspirée d'APP-6 : ami en dôme (plein = IR, creux = laser), hostile en
 // demi-losange, cibles en carré ; bulle de défense sol dont l'opacité suit les munitions restantes.
-import {geo_vers_ecran} from "./camera.js";
+import {chemin_cercle, ecran as projeter_ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
 import {avancement} from "./effets.js";
 
@@ -11,7 +11,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant) {
   const {sol} = monde.scenario;
   const munitionsInitiales = monde.postes.length ? sol.munitions : 0;
   monde.cibles.forEach((cible, indice) => {
-    const ecran = geo_vers_ecran(camera, cible.geo);
+    const ecran = projeter_ecran(camera, cible.geo);
     const postes = monde.postes.filter((poste) => poste.cible === indice);
     if (postes.length) {
       const restantes = postes.reduce((somme, poste) => somme + poste.munitions, 0);
@@ -19,8 +19,7 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant) {
       ctx.fillStyle = `rgba(184, 134, 11, ${0.05 + 0.13 * part})`;
       ctx.strokeStyle = COULEURS.sol;
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(ecran.x, ecran.y, sol.portee * camera.echelle, 0, 2 * Math.PI);
+      chemin_cercle(ctx, camera, cible.geo, sol.portee, 36);
       ctx.fill();
       ctx.stroke();
     }
@@ -45,7 +44,7 @@ function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
   for (const effet of effets.liste) {
     if (effet.type !== "impact") continue;
     const progres = avancement(effet, maintenant);
-    const ecran = geo_vers_ecran(camera, monde.cibles[effet.cible].geo);
+    const ecran = projeter_ecran(camera, monde.cibles[effet.cible].geo);
     ctx.strokeStyle = `rgba(229, 87, 75, ${1 - progres})`;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -58,14 +57,14 @@ function dessiner_impacts(ctx, camera, monde, effets, maintenant) {
 export function dessiner_drones(ctx, camera, monde, traces) {
   for (const [, plots] of traces.plots) {
     plots.forEach((plot, rang) => {
-      const ecran = geo_vers_ecran(camera, plot);
+      const ecran = projeter_ecran(camera, plot);
       ctx.fillStyle = `rgba(229, 87, 75, ${0.12 + (0.4 * rang) / plots.length})`;
       ctx.fillRect(ecran.x - 1, ecran.y - 1, 2, 2);
     });
   }
   for (const drone of monde.drones) {
     if (!drone.vivant || drone.arrive || monde.t < drone.depart) continue;
-    const ecran = geo_vers_ecran(camera, drone.geo);
+    const ecran = projeter_ecran(camera, drone.geo);
     ctx.fillStyle = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
     ctx.beginPath();
     ctx.moveTo(ecran.x, ecran.y - TAILLE * 0.8);
@@ -79,10 +78,10 @@ export function dessiner_drones(ctx, camera, monde, traces) {
 /** Tracer les avions : dôme ami, ligne pointillée vers le point de mise à poste, estompés une fois vides. */
 export function dessiner_avions(ctx, camera, monde) {
   for (const avion of monde.avions) {
-    const ecran = geo_vers_ecran(camera, avion.geo);
+    const ecran = projeter_ecran(camera, avion.geo);
     ctx.globalAlpha = avion.munitions === 0 ? 0.35 : 1;
     if (avion.etat === "ralliement" && avion.point) {
-      const but = geo_vers_ecran(camera, avion.point);
+      const but = projeter_ecran(camera, avion.point);
       ctx.strokeStyle = COULEURS.ami;
       ctx.setLineDash([3, 4]);
       ctx.lineWidth = 1;
@@ -110,8 +109,8 @@ export function dessiner_tirs(ctx, camera, effets, maintenant) {
     const progres = avancement(effet, maintenant);
     const couleur = effet.couche === "air" ? "74, 152, 232" : "184, 134, 11";
     if (effet.type === "trait") {
-      const de = geo_vers_ecran(camera, effet.de);
-      const vers = geo_vers_ecran(camera, effet.vers);
+      const de = projeter_ecran(camera, effet.de);
+      const vers = projeter_ecran(camera, effet.vers);
       ctx.strokeStyle = `rgba(${couleur}, ${0.9 * (1 - progres)})`;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -119,7 +118,7 @@ export function dessiner_tirs(ctx, camera, effets, maintenant) {
       ctx.lineTo(vers.x, vers.y);
       ctx.stroke();
     } else if (effet.type === "eclat") {
-      const ecran = geo_vers_ecran(camera, effet.position);
+      const ecran = projeter_ecran(camera, effet.position);
       ctx.strokeStyle = `rgba(255, 241, 204, ${1 - progres})`;
       ctx.lineWidth = 2;
       ctx.beginPath();

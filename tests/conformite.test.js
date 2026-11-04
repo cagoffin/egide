@@ -9,7 +9,7 @@ import {charger_unites, unite_brute, unite_si} from "../src/moteur/catalogue.js"
 import {RACINE, ids_unites_disque, lire_fichier} from "../src/moteur/catalogue_node.js";
 import {OUTILS} from "../src/moteur/outils.js";
 import {creer_hasard} from "../src/moteur/hasard.js";
-import {index_algos, index_unites} from "../outils/indexer.js";
+import {index_algos, index_cartes, index_unites} from "../outils/indexer.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
 
 // Ce qu'un algorithme n'a pas le droit d'écrire : il reçoit tout en argument et ne dépend que de ses entrées.
@@ -88,4 +88,18 @@ test("conformité pistage : chaque drone connu compte dans exactement une piste"
 test("index : unites/index.json et algos/index.json sont à jour (sinon : node outils/indexer.js)", async () => {
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "unites", "index.json"), "utf-8")), index_unites());
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "algos", "index.json"), "utf-8")), await index_algos());
+  assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "cartes", "index.json"), "utf-8")), index_cartes());
+});
+
+test("conformité cartes : chaque source n'emploie que des clés documentées, et toute source tierce est attribuée", () => {
+  const aide = JSON.parse(readFileSync(join(RACINE, "cartes", "_format.json"), "utf-8"))._aide;
+  for (const {id} of index_cartes()) {
+    const source = JSON.parse(readFileSync(join(RACINE, "cartes", `${id}.json`), "utf-8"));
+    for (const cle of Object.keys(source)) assert.ok(cle in aide, `${id} : clé non documentée « ${cle} »`);
+    assert.ok(["raster", "raster-dem", "vector", "aucun"].includes(source.type), id);
+    if (source.type !== "aucun") {
+      assert.ok(source.attribution, `${id} : attribution manquante`);
+      assert.ok(source.tuiles || source.tilejson, `${id} : ni tuiles ni tilejson`);
+    }
+  }
 });

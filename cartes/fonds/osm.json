@@ -1,0 +1,9 @@
+{
+  "nom": "OpenStreetMap",
+  "type": "raster",
+  "tuiles": ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+  "taille_tuile": 256,
+  "zoom_max": 19,
+  "attribution": "© contributeurs OpenStreetMap",
+  "conditions": "Politique d'usage des tuiles OSM : usage interactif modéré, pas de téléchargement massif, attribution obligatoire."
+}

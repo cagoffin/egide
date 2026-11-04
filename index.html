@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Égide</title>
 <meta name="description" content="Simulation de défense du territoire face à un essaim de drones rapides : radars, avions en orbite, postes sol-air.">
+<link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
 <link rel="stylesheet" href="src/vue/style.css">
 <script type="module" src="src/vue/app.js"></script>
 </head>
@@ -37,7 +38,19 @@
   </aside>
 
   <section class="ecran" aria-label="Situation aérienne">
-    <canvas id="scope" aria-label="Scope : zone défendue, avions, drones, cibles"></canvas>
+    <div class="vue" id="vue">
+      <div id="carte" aria-label="Fond de carte"></div>
+      <canvas id="scope" aria-label="Situation : zone défendue, avions, drones, cibles"></canvas>
+      <fieldset class="reglages-carte">
+        <legend>Carte</legend>
+        <select name="fond_carte" aria-label="Fond de carte"></select>
+        <label><input type="checkbox" name="ombrage">Relief ombré</label>
+        <label><input type="checkbox" name="relief_3d">Relief 3D</label>
+        <label><input type="checkbox" name="batiments">Bâtiments 3D</label>
+        <label><input type="checkbox" name="globe">Globe</label>
+        <label><input type="checkbox" name="scope_seul">Scope seul</label>
+      </fieldset>
+    </div>
     <p class="legende">
       <span class="ami-plein">Avion IR</span><span class="ami-creux">Avion laser</span>
       <span class="hostile">Drone détecté</span><span class="inconnu">Drone non détecté</span>
@@ -52,7 +65,7 @@
       <label class="graine">Graine <input type="number" name="graine" min="0" step="1"></label>
       <button data-action="autre_graine">Autre raid</button>
     </div>
-    <p class="astuce">Espace : lire ou suspendre. Flèches : ±30 s. Molette : zoom, double-clic : recadrer.</p>
+    <p class="astuce">Espace : lire ou suspendre. Flèches : ±30 s. Molette : zoom. Clic droit glissé : incliner et tourner la carte. Double-clic : recadrer.</p>
   </section>
 
   <aside id="tableau" class="colonne" aria-label="Bilan du raid" aria-live="off">

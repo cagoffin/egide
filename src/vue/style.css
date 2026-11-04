@@ -45,7 +45,18 @@ summary { cursor: pointer; font-weight: 600; padding-block: 4px; }
 .ligne input:not([type]) { flex: 1; min-inline-size: 0; }
 
 .ecran { display: flex; flex-direction: column; min-inline-size: 0; }
-#scope { flex: 1; inline-size: 100%; min-block-size: 420px; display: block; cursor: crosshair; touch-action: none; }
+.vue { position: relative; flex: 1; min-block-size: 420px; overflow: hidden; background: var(--fond); }
+#carte, #scope { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; }
+#scope { display: block; cursor: crosshair; touch-action: none; }
+/* Sur la carte, le scope est un calque : souris et clavier vont à MapLibre (déplacer, zoomer, incliner). */
+.vue.avec-carte #scope { pointer-events: none; }
+.vue:not(.avec-carte) #carte { display: none; }
+.reglages-carte { position: absolute; inset-block-start: 10px; inset-inline-start: 10px; z-index: 2; display: grid; gap: 4px;
+  padding: 8px 10px; font-size: 13px; background: rgba(24, 34, 45, 0.88); border: 1px solid var(--trait); border-radius: 8px; }
+.reglages-carte legend { float: left; font-weight: 600; margin-block-end: 2px; }
+.reglages-carte label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+.reglages-carte select { font-size: 13px; }
+.maplibregl-ctrl-attrib, .maplibregl-ctrl-group { filter: invert(0.9) hue-rotate(180deg); }
 .legende { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 8px 16px; font-size: 13px; color: var(--texte-secondaire); }
 .legende span::before { content: ""; display: inline-block; inline-size: 10px; block-size: 10px; margin-inline-end: 6px; vertical-align: -1px; }
 .legende .ami-plein::before { background: var(--ami); border-radius: 10px 10px 0 0; }
@@ -109,7 +120,7 @@ summary { cursor: pointer; font-weight: 600; padding-block: 4px; }
 @media (max-width: 1100px) {
   .poste { grid-template-columns: 1fr; }
   .ecran { order: -1; }
-  #scope { block-size: 70vh; flex: none; }
+  .vue { block-size: 70vh; flex: none; }
   .colonne { max-block-size: none; border: 0; border-block-start: 1px solid var(--trait); }
   .tactiques { margin-inline-start: 0; flex-wrap: wrap; }
   .tactiques legend { float: none; inline-size: 100%; margin-block-end: 4px; }

@@ -1,0 +1,10 @@
+{
+  "nom": "Relief mondial (Terrain Tiles, AWS)",
+  "type": "raster-dem",
+  "tuiles": ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+  "encodage": "terrarium",
+  "taille_tuile": 256,
+  "zoom_max": 15,
+  "attribution": "Relief : Terrain Tiles (Mapzen, AWS Open Data) — SRTM, GMTED, ETOPO1 et sources nationales",
+  "conditions": "Jeu de données ouvert AWS Open Data ; voir la page « Terrain Tiles » pour les attributions détaillées par source."
+}

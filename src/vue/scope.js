@@ -1,5 +1,5 @@
 // Le scope : assemble le fond et les entités dans l'ordre de lecture, et retrouve l'entité sous le curseur.
-import {geo_vers_ecran} from "./camera.js";
+import {ecran as projeter_ecran} from "./ecran.js";
 import {dessiner_anneaux, dessiner_balayage, dessiner_echelle} from "./cadre.js";
 import {COULEURS} from "./couleurs.js";
 import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_tirs} from "./symboles.js";
@@ -10,8 +10,12 @@ import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_tirs} from "
  */
 export function dessiner_scope(ctx, camera, etat) {
   const {monde, traces, effets, maintenant} = etat;
-  ctx.fillStyle = COULEURS.fond;
-  ctx.fillRect(0, 0, camera.largeur, camera.hauteur);
+  // Sur la carte, le canevas est un calque transparent posé sur le fond MapLibre.
+  if (camera.type === "carte") ctx.clearRect(0, 0, camera.largeur, camera.hauteur);
+  else {
+    ctx.fillStyle = COULEURS.fond;
+    ctx.fillRect(0, 0, camera.largeur, camera.hauteur);
+  }
   if (etat.balayage) dessiner_balayage(ctx, camera, monde, etat.angle);
   dessiner_anneaux(ctx, camera, monde);
   dessiner_cibles(ctx, camera, monde, effets, maintenant);
@@ -23,7 +27,7 @@ export function dessiner_scope(ctx, camera, etat) {
 }
 
 function dessiner_survol(ctx, camera, survol) {
-  const ecran = geo_vers_ecran(camera, survol.objet.geo);
+  const ecran = projeter_ecran(camera, survol.objet.geo);
   ctx.strokeStyle = COULEURS.texte;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -35,7 +39,7 @@ function plus_proche_ecran(camera, elements, position, ecran, rayonPx) {
   let retenu = null;
   let meilleure = rayonPx;
   for (const element of elements) {
-    const point = geo_vers_ecran(camera, position(element));
+    const point = projeter_ecran(camera, position(element));
     const ecart = Math.hypot(point.x - ecran.x, point.y - ecran.y);
     if (ecart <= meilleure) {
       meilleure = ecart;
@@ -50,7 +54,7 @@ export function trouver_sous_curseur(camera, monde, ecran) {
   const avion = plus_proche_ecran(camera, monde.avions, (a) => a.geo, ecran, 10);
   if (avion) return {type: "avion", objet: avion};
   const indice = monde.cibles.findIndex((cible) => {
-    const point = geo_vers_ecran(camera, cible.geo);
+    const point = projeter_ecran(camera, cible.geo);
     return Math.abs(point.x - ecran.x) <= 8 && Math.abs(point.y - ecran.y) <= 8;
   });
   if (indice >= 0) return {type: "cible", objet: monde.cibles[indice], indice};

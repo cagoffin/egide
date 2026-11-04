@@ -1,0 +1,44 @@
+[
+  {
+    "id": "batiments/openfreemap",
+    "nom": "Bâtiments OpenStreetMap (OpenFreeMap)",
+    "type": "vector",
+    "attribution": "© OpenFreeMap © OpenMapTiles © contributeurs OpenStreetMap"
+  },
+  {
+    "id": "fonds/aucun",
+    "nom": "Aucun fond (hors ligne)",
+    "type": "aucun",
+    "attribution": ""
+  },
+  {
+    "id": "fonds/ign_ortho",
+    "nom": "Photographies aériennes IGN (France)",
+    "type": "raster",
+    "attribution": "© IGN — Géoplateforme"
+  },
+  {
+    "id": "fonds/ign_plan",
+    "nom": "Plan IGN (France)",
+    "type": "raster",
+    "attribution": "© IGN — Géoplateforme"
+  },
+  {
+    "id": "fonds/osm",
+    "nom": "OpenStreetMap",
+    "type": "raster",
+    "attribution": "© contributeurs OpenStreetMap"
+  },
+  {
+    "id": "fonds/sombre_carto",
+    "nom": "Sombre (CARTO)",
+    "type": "raster",
+    "attribution": "© contributeurs OpenStreetMap © CARTO"
+  },
+  {
+    "id": "relief/terrarium_aws",
+    "nom": "Relief mondial (Terrain Tiles, AWS)",
+    "type": "raster-dem",
+    "attribution": "Relief : Terrain Tiles (Mapzen, AWS Open Data) — SRTM, GMTED, ETOPO1 et sources nationales"
+  }
+]

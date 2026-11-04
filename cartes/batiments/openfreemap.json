@@ -1,0 +1,9 @@
+{
+  "nom": "Bâtiments OpenStreetMap (OpenFreeMap)",
+  "type": "vector",
+  "tilejson": "https://tiles.openfreemap.org/planet",
+  "couche": "building",
+  "hauteur": "render_height",
+  "attribution": "© OpenFreeMap © OpenMapTiles © contributeurs OpenStreetMap",
+  "conditions": "Service gratuit sans clé ; attribution obligatoire."
+}

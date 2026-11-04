@@ -19,7 +19,7 @@ export function projeter(origine, {lat, lon}) {
 
 /** Rendre une caméra centrée sur `origine` (géo) qui montre un disque de `rayonVisible` m dans `largeur` × `hauteur` px. */
 export function creer_camera(largeur, hauteur, rayonVisible, origine = {lat: 0, lon: 0}) {
-  return {largeur, hauteur, origine, echelle: Math.min(largeur, hauteur) / (2 * rayonVisible), centre: {x: 0, y: 0}};
+  return {type: "scope", largeur, hauteur, origine, echelle: Math.min(largeur, hauteur) / (2 * rayonVisible), centre: {x: 0, y: 0}};
 }
 
 /** Rendre la position écran (px) d'un point du monde (m). */
@@ -57,9 +57,9 @@ export const deplacer = (camera, dx, dy) => ({
   centre: {x: camera.centre.x - dx / camera.echelle, y: camera.centre.y + dy / camera.echelle},
 });
 
-/** Rendre la longueur « ronde » (1, 2 ou 5 × 10^n m) dont le tracé à l'écran approche `largeurVisee` px. */
-export function longueur_ronde(camera, largeurVisee) {
-  const brute = largeurVisee / camera.echelle;
+/** Rendre la longueur « ronde » (1, 2 ou 5 × 10^n m) dont le tracé approche `largeurVisee` px, à `metresParPixel`. */
+export function longueur_ronde(metresParPixel, largeurVisee) {
+  const brute = largeurVisee * metresParPixel;
   const puissance = 10 ** Math.floor(Math.log10(brute));
   const facteur = [5, 2, 1].find((f) => f * puissance <= brute) ?? 1;
   return facteur * puissance;

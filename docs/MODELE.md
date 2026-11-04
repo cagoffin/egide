@@ -206,3 +206,14 @@ complète, rangement sous le bon rôle, aucune dépendance cachée, algorithmes 
 paramètres lus présents dans l'unité, déterminisme et invariants par rôle (un mouvement ne va jamais plus loin que
 demandé ni ne change d'altitude ; un pistage compte chaque drone dans une seule piste ; un comportement mène chaque
 drone sur sa cible). Les index `unites/index.json` et `algos/index.json` sont régénérés par `node outils/indexer.js`.
+
+## 11 · Fond de carte (jalon 2)
+La carte n'entre dans aucun calcul : elle sert de fond à l'affichage. Le moteur garde sa géodésie (§ 9) ; le scope se
+dessine sur un canevas transparent posé sur la carte MapLibre, chaque position géographique passant par la projection
+de la carte (`src/vue/ecran.js`). Anneaux, frontière, couverture et bulles sont tracés en polygones géodésiques
+(sommets calculés par Vincenty direct), donc justes sur toute projection : Mercator, globe, vue inclinée.
+La barre d'échelle donne la taille au sol d'un pixel au centre de la vue ; en vue inclinée ou sur le globe, elle ne
+vaut que près du centre.
+
+Les sources (fonds, relief, bâtiments) sont des fichiers de `cartes/` au format de `cartes/_format.json`, chacun avec
+son attribution et ses conditions d'usage ; la conformité vérifie leurs clés et la présence de l'attribution.

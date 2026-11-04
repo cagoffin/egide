@@ -5,12 +5,16 @@ import {avancer_monde, creer_monde, est_termine, simuler} from "../moteur/monde.
 export const SECONDES_SIMULEES_PAR_SECONDE = 20;
 export const MULTIPLICATEURS = [0.25, 0.5, 1, 2, 4, 8, 16];
 
-/** Rendre un lecteur pour `scenario`, au début du raid, à l'arrêt. Sa durée totale est connue d'avance (rejeu). */
-export function creer_lecteur(scenario) {
+/**
+ * Rendre un lecteur pour `scenario` et le `registre` de ses algorithmes, au début du raid, à l'arrêt.
+ * Sa durée totale est connue d'avance (rejeu).
+ */
+export function creer_lecteur(scenario, registre) {
   return {
     scenario,
-    monde: creer_monde(scenario),
-    duree: simuler(scenario, {journal: false}).t,
+    registre,
+    monde: creer_monde(scenario, {registre}),
+    duree: simuler(scenario, {registre, journal: false}).t,
     enLecture: false,
     multiplicateur: 1,
     reserve: 0,
@@ -38,7 +42,7 @@ export function avancer_temps_reel(lecteur, dtReel, apresPas) {
 
 /** Placer le raid à l'instant `t` (s) en le rejouant depuis le début : même graine, même déroulement. */
 export function aller_a(lecteur, t, apresPas) {
-  if (t < lecteur.monde.t) lecteur.monde = creer_monde(lecteur.scenario);
+  if (t < lecteur.monde.t) lecteur.monde = creer_monde(lecteur.scenario, {registre: lecteur.registre});
   while (lecteur.monde.t < t && !est_termine(lecteur.monde)) {
     avancer_monde(lecteur.monde);
     apresPas(lecteur.monde);

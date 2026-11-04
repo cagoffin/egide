@@ -1,0 +1,9 @@
+{
+  "nom": "Photographies aériennes IGN (France)",
+  "type": "raster",
+  "tuiles": ["https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&TILEMATRIXSET=PM&FORMAT=image/jpeg&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}"],
+  "taille_tuile": 256,
+  "zoom_max": 19,
+  "attribution": "© IGN — Géoplateforme",
+  "conditions": "Données IGN ouvertes (Licence Ouverte Etalab 2.0), service Géoplateforme sans clé."
+}

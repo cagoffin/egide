@@ -1,4 +1,5 @@
 import {test} from "node:test";
+import {readFileSync} from "node:fs";
 import assert from "node:assert/strict";
 import {creer_camera, deplacer, longueur_ronde, vers_ecran, vers_monde, zoomer} from "../src/vue/camera.js";
 import {format_distance, format_duree, format_intervalle} from "../src/vue/format.js";
@@ -25,7 +26,7 @@ test("caméra : glisser vers la droite montre ce qui était à gauche", () => {
   assert.ok(deplacer(CAMERA, 100, 0).centre.x < 0);
 });
 test("caméra : la barre d'échelle prend une longueur ronde", () => {
-  assert.ok([1, 2, 5].includes(longueur_ronde(CAMERA, 120) / 10 ** Math.floor(Math.log10(longueur_ronde(CAMERA, 120)))));
+  assert.ok([1, 2, 5].includes(longueur_ronde(1 / CAMERA.echelle, 120) / 10 ** Math.floor(Math.log10(longueur_ronde(1 / CAMERA.echelle, 120)))));
 });
 
 test("format : durées en minutes:secondes", () => {
@@ -76,4 +77,30 @@ test("chemins : l'aide vient du scénario, d'un tableau du scénario ou du fichi
   assert.match(aide_chemin(REFERENCE, FICHIERS, "rouge.concentration_max"), /meme cible/);
   assert.match(aide_chemin(REFERENCE, FICHIERS, "bleu.avions.1.nombre"), /groupe/);
   assert.match(aide_chemin(REFERENCE, FICHIERS, "bleu.avions.1.surcharges_emport.duree_designation_s"), /designation/);
+});
+
+import {bornes_disque, style_carte} from "../src/vue/carte_style.js";
+
+const SOURCES = Object.fromEntries(
+  JSON.parse(readFileSync(new URL("../cartes/index.json", import.meta.url))).map(({id}) => [id, JSON.parse(readFileSync(new URL(`../cartes/${id}.json`, import.meta.url)))]),
+);
+
+test("carte : le style empile fond, ombrage et bâtiments selon les réglages, avec leurs attributions", () => {
+  const style = style_carte(SOURCES, {fond: "fonds/osm", ombrage: true, relief_3d: false, batiments: true, globe: false});
+  assert.deepEqual(style.layers.map((c) => c.id), ["fond-uni", "fond", "ombrage", "batiments"]);
+  assert.match(style.sources.fond.attribution, /OpenStreetMap/);
+  assert.equal(style.terrain, undefined);
+  assert.equal(style.projection.type, "mercator");
+});
+test("carte : fond « aucun » et globe — rien à télécharger pour le fond, projection globe", () => {
+  const style = style_carte(SOURCES, {fond: "fonds/aucun", ombrage: false, relief_3d: true, batiments: false, globe: true});
+  assert.equal(style.sources.fond, undefined);
+  assert.equal(style.terrain.source, "relief_3d");
+  assert.equal(style.projection.type, "globe");
+});
+test("carte : les bornes du disque de 200 km encadrent le centre et s'élargissent en longitude avec la latitude", () => {
+  const [[o, s], [e, n]] = bornes_disque(geo_deg(47, 2.5), 200_000);
+  assert.ok(o < 2.5 && e > 2.5 && s < 47 && n > 47);
+  const [[o2], [e2]] = bornes_disque(geo_deg(65, 2.5), 200_000);
+  assert.ok(e2 - o2 > e - o);
 });

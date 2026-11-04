@@ -1,8 +1,11 @@
 // Point d'entrée de l'interface : charge le scénario, branche réglages, scope, lecture, tableau et balayage.
+import {AlgoInvalide, charger_algos, ids_algos} from "../moteur/algos.js";
 import {CatalogueInvalide, charger_unites} from "../moteur/catalogue.js";
 import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalide} from "../moteur/scenario.js";
 import {brancher_balayage, montrer} from "./balayage.js";
 import {creer_camera, deplacer, zoomer} from "./camera.js";
+import {cadrer_carte, creer_carte} from "./carte.js";
+import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {publier_couleurs} from "./couleurs.js";
 import {absorber, creer_effets, sauter} from "./effets.js";
@@ -20,8 +23,9 @@ const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)");
 // Un tour de faisceau toutes les 4 s simulées : le balayage visible suit le rythme des plots.
 const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 
-const etat = {base: null, modifications: {}, fichiers: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
-  camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null};
+const etat = {base: null, modifications: {}, fichiers: {}, registre: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
+  camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null,
+  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 
@@ -37,6 +41,13 @@ async function completer_catalogue(brut) {
   if (manquantes.length) Object.assign(etat.fichiers, await charger_unites(manquantes, lire_json));
 }
 
+/** Charger les algorithmes que fait tourner le scénario résolu et qui ne sont pas encore en mémoire. */
+async function completer_registre(scenario) {
+  const manquants = ids_algos(scenario).filter((id) => !(id in etat.registre));
+  const importer = (chemin) => import(new URL(chemin, document.baseURI).href);
+  if (manquants.length) Object.assign(etat.registre, await charger_algos(manquants, importer));
+}
+
 const contexte_reglages = () => ({
   valeur: (chemin) => valeur_effective(brut_courant(), etat.fichiers, chemin),
   aide: (chemin) => aide_chemin(brut_courant(), etat.fichiers, chemin),
@@ -48,9 +59,11 @@ async function charger() {
   const brut = brut_courant();
   try {
     await completer_catalogue(brut);
-    etat.lecteur = creer_lecteur(resoudre_scenario(brut, etat.fichiers));
+    const scenario = resoudre_scenario(brut, etat.fichiers);
+    await completer_registre(scenario);
+    etat.lecteur = creer_lecteur(scenario, etat.registre);
   } catch (erreur) {
-    if (!(erreur instanceof ScenarioInvalide || erreur instanceof CatalogueInvalide)) throw erreur;
+    if (!(erreur instanceof ScenarioInvalide || erreur instanceof CatalogueInvalide || erreur instanceof AlgoInvalide)) throw erreur;
     $("[data-champ='message']").textContent = `Scénario refusé : ${erreur.message}`;
     return;
   }
@@ -71,13 +84,32 @@ function modifier(modification) {
   minuterie = setTimeout(charger, 200);
 }
 
-function cadrer() {
+const avec_carte = () => Boolean(etat.carte) && !etat.reglages_carte.scope_seul;
+
+/** Recaler canevas et caméra sur la vue ; `forcer` recadre même si le théâtre n'a pas changé (double-clic). */
+function cadrer(forcer = false) {
   const toile = $("#scope");
   const ratio = devicePixelRatio || 1;
-  toile.width = toile.clientWidth * ratio;
-  toile.height = toile.clientHeight * ratio;
+  const [largeur, hauteur] = [Math.round(toile.clientWidth * ratio), Math.round(toile.clientHeight * ratio)];
+  // Ne toucher aux tailles que si elles changent : redimensionner relance l'observateur de taille, et une carte
+  // redimensionnée à chaque image tombait à 0,5 image/s.
+  const tailleChangee = toile.width !== largeur || toile.height !== hauteur;
+  if (tailleChangee) [toile.width, toile.height] = [largeur, hauteur];
+  $("#vue").classList.toggle("avec-carte", avec_carte());
   const {monde} = etat.lecteur ?? {};
-  if (monde) etat.camera = creer_camera(toile.clientWidth, toile.clientHeight, monde.rayonDetection * 1.08, monde.scenario.theatre.origine);
+  if (!monde) return;
+  const {origine} = monde.scenario.theatre;
+  const rayon = monde.rayonDetection * 1.08;
+  if (!avec_carte()) {
+    etat.camera = creer_camera(toile.clientWidth, toile.clientHeight, rayon, origine);
+    return;
+  }
+  if (tailleChangee) etat.carte.resize();
+  etat.camera = {type: "carte", carte: etat.carte, largeur: toile.clientWidth, hauteur: toile.clientHeight};
+  // On ne recadre la carte que si le théâtre change : un zoom ou une inclinaison de l'utilisateur sont respectés.
+  const cadrage = `${origine.lat},${origine.lon},${rayon}`;
+  if (forcer || cadrage !== etat.cadrage) cadrer_carte(etat.carte, origine, rayon);
+  etat.cadrage = cadrage;
 }
 
 function image(maintenant, precedent) {
@@ -136,6 +168,7 @@ function brancher_transport() {
 
 function brancher_scope() {
   const toile = $("#scope");
+  const vue = $("#vue");
   const infobulle = $("#infobulle");
   let glisse = null;
   toile.addEventListener("wheel", (e) => {
@@ -144,18 +177,24 @@ function brancher_scope() {
   }, {passive: false});
   toile.addEventListener("pointerdown", (e) => (glisse = {x: e.clientX, y: e.clientY}, toile.setPointerCapture(e.pointerId)));
   toile.addEventListener("pointerup", () => (glisse = null));
-  toile.addEventListener("dblclick", cadrer);
+  vue.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    cadrer(true);
+  });
   toile.addEventListener("pointermove", (e) => {
-    if (glisse) {
-      etat.camera = deplacer(etat.camera, e.clientX - glisse.x, e.clientY - glisse.y);
-      glisse = {x: e.clientX, y: e.clientY};
-      return;
-    }
-    etat.survol = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.offsetX, y: e.offsetY});
+    if (!glisse) return;
+    etat.camera = deplacer(etat.camera, e.clientX - glisse.x, e.clientY - glisse.y);
+    glisse = {x: e.clientX, y: e.clientY};
+  });
+  // Survol écouté sur la vue entière : sur la carte, le canevas laisse passer la souris à MapLibre.
+  vue.addEventListener("pointermove", (e) => {
+    if (glisse || !etat.camera || !etat.lecteur) return;
+    const cadre = vue.getBoundingClientRect();
+    etat.survol = trouver_sous_curseur(etat.camera, etat.lecteur.monde, {x: e.clientX - cadre.left, y: e.clientY - cadre.top});
     montrer(infobulle, etat.survol && decrire(etat.survol, etat.lecteur.monde), e.clientX, e.clientY);
   });
-  toile.addEventListener("pointerleave", () => (etat.survol = null, montrer(infobulle, null)));
-  new ResizeObserver(cadrer).observe(toile);
+  vue.addEventListener("pointerleave", () => (etat.survol = null, montrer(infobulle, null)));
+  new ResizeObserver(() => cadrer()).observe(vue);
 }
 
 function rafraichir_reglages() {
@@ -186,8 +225,37 @@ function brancher_prereglages() {
   });
 }
 
+async function charger_sources_carte() {
+  const index = await lire_json("cartes/index.json");
+  const sources = await Promise.all(index.map(({id}) => lire_json(`cartes/${id}.json`)));
+  etat.sources_carte = Object.fromEntries(index.map(({id}, i) => [id, sources[i]]));
+}
+
+function brancher_reglages_carte() {
+  const panneau = $(".reglages-carte");
+  const fonds = Object.entries(etat.sources_carte).filter(([id]) => id.startsWith("fonds/"));
+  const choix = panneau.querySelector("[name='fond_carte']");
+  choix.innerHTML = fonds.map(([id, source]) => `<option value="${id}" title="${source.conditions}">${source.nom}</option>`).join("");
+  choix.value = etat.reglages_carte.fond;
+  for (const cle of ["ombrage", "relief_3d", "batiments", "globe", "scope_seul"]) panneau.querySelector(`[name='${cle}']`).checked = Boolean(etat.reglages_carte[cle]);
+  panneau.addEventListener("change", (e) => {
+    const cle = e.target.name === "fond_carte" ? "fond" : e.target.name;
+    etat.reglages_carte = {...etat.reglages_carte, [cle]: e.target.type === "checkbox" ? e.target.checked : e.target.value};
+    memoriser_reglages_carte(etat.reglages_carte);
+    if (etat.carte && cle !== "scope_seul") etat.carte.setStyle(style_carte(etat.sources_carte, etat.reglages_carte));
+    cadrer(cle === "scope_seul");
+  });
+  if (!etat.carte) {
+    panneau.querySelectorAll("select, input:not([name='scope_seul'])").forEach((champ) => (champ.disabled = true));
+    panneau.title = "Carte indisponible dans ce navigateur (WebGL) : vue scope seule.";
+  }
+}
+
 async function demarrer() {
   publier_couleurs(document.documentElement);
+  await charger_sources_carte();
+  etat.carte = creer_carte($("#carte"), etat.sources_carte, etat.reglages_carte);
+  brancher_reglages_carte();
   etat.base = en_v2(await lire_json("scenarios/reference.json"));
   etat.afficher_reglages = construire_reglages($("#reglages"), modifier);
   brancher_transport();
