@@ -6,5 +6,6 @@
   ],
   "type_vecteur": "brouilleur",
   "emport": "effecteurs/brouillage/brouillage_notionnel",
-  "emport_nombre": 1
+  "emport_nombre": 1,
+  "icone": "brouilleur"
 }

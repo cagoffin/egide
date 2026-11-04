@@ -3,6 +3,7 @@
 import {chemin_cercle, ecran as projeter_ecran} from "./ecran.js";
 import {COULEURS} from "./couleurs.js";
 import {avancement} from "./effets.js";
+import {dessiner_icone, dessiner_silhouette} from "./icones.js";
 
 const TAILLE = 6;
 
@@ -48,12 +49,12 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
       ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
     }
   });
-  if (calques.postes) dessiner_batteries(ctx, camera, monde);
+  if (calques.postes) dessiner_batteries(ctx, camera, monde, calques);
   if (calques.cibles) dessiner_impacts(ctx, camera, monde, effets, maintenant);
 }
 
 /** Tracer les batteries placées (MODELE § 21.2) : bulle de leur propre portée, opacité selon leurs munitions, symbole et nom. */
-function dessiner_batteries(ctx, camera, monde) {
+function dessiner_batteries(ctx, camera, monde, calques) {
   const initiales = monde.scenario.sol.batteries ?? [];
   for (const poste of monde.postes) {
     if (poste.batterie === undefined) continue;
@@ -65,6 +66,12 @@ function dessiner_batteries(ctx, camera, monde) {
     ctx.fill();
     ctx.stroke();
     const p = projeter_ecran(camera, poste.geo);
+    if (calques.icones && poste.unite.icone && dessiner_icone(ctx, p.x, p.y, {icone: poste.unite.icone, pays: poste.unite.pays, camp: COULEURS.sol, taille: 22})) {
+      ctx.font = "11px system-ui, sans-serif";
+      ctx.fillStyle = COULEURS.sol;
+      ctx.fillText(`B${poste.batterie + 1}`, p.x + 13, p.y + 4);
+      continue;
+    }
     // Symbole de batterie sol-air : socle et rampe dressée.
     ctx.fillStyle = COULEURS.fond;
     ctx.lineWidth = 1.5;
@@ -111,7 +118,9 @@ export function dessiner_drones(ctx, camera, monde, traces, calques, montre = ()
     if (!drone.vivant || drone.arrive || monde.t < drone.depart) continue;
     if (!calques[drone.detection === null ? "drones_inconnus" : "drones_detectes"] || !montre(drone)) continue;
     const ecran = projeter_ecran(camera, drone.geo);
-    ctx.fillStyle = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
+    const couleur = drone.detection === null ? COULEURS.inconnu : COULEURS.hostile;
+    if (calques.icones && monde.scenario.rouge.icone && dessiner_silhouette(ctx, ecran.x, ecran.y, monde.scenario.rouge.icone, couleur)) continue;
+    ctx.fillStyle = couleur;
     ctx.beginPath();
     ctx.moveTo(ecran.x, ecran.y - TAILLE * 0.8);
     ctx.lineTo(ecran.x + TAILLE * 0.8, ecran.y);
@@ -178,6 +187,10 @@ export function dessiner_avions(ctx, camera, monde, calques) {
       ctx.stroke();
       ctx.setLineDash([]);
     }
+    if (calques.icones && avion.groupe.icone && dessiner_icone(ctx, ecran.x, ecran.y, {icone: avion.groupe.icone, pays: avion.groupe.pays, taille: avion.type && avion.type !== "avion" ? 18 : 22})) {
+      ctx.globalAlpha = 1;
+      continue;
+    }
     if (avion.type && avion.type !== "avion") {
       dessiner_drone_defensif(ctx, camera, avion, ecran);
       ctx.globalAlpha = 1;
@@ -224,10 +237,16 @@ export function dessiner_tirs(ctx, camera, effets, maintenant) {
  * Tracer les radars : symbole d'installation amie (cadre bleu) et parabole, numérotés R1, R2… En disposition
  * « frontière », ce sont les positions qui matérialisent la couverture (MODELE § 15.1).
  */
-export function dessiner_radars(ctx, camera, positions) {
+export function dessiner_radars(ctx, camera, positions, icones = () => null) {
   ctx.font = "11px system-ui, sans-serif";
   positions.forEach((geo, i) => {
     const p = projeter_ecran(camera, geo);
+    const icone = icones(i);
+    if (icone && dessiner_icone(ctx, p.x, p.y, {...icone, taille: 24})) {
+      ctx.fillStyle = COULEURS.ami;
+      ctx.fillText(`R${i + 1}`, p.x + 14, p.y + 4);
+      return;
+    }
     ctx.fillStyle = COULEURS.fond;
     ctx.strokeStyle = COULEURS.ami;
     ctx.lineWidth = 1.5;

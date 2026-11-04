@@ -1,0 +1,10 @@
+{
+  "herite_de": "vecteurs/drones_defensifs/intercepteur_kamikaze_notionnel",
+  "nom": "Thym I (USA, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "USA",
+  "vitesse_mise_a_poste_kmh": 350,
+  "vitesse_engagement_kmh": 330
+}

@@ -1,0 +1,11 @@
+{
+  "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
+  "nom": "Arnica 400 (USA, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "USA",
+  "hauteur_antenne_m": 40,
+  "portee_max_km": 400,
+  "icone": "radar_pylone"
+}

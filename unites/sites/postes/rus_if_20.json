@@ -1,0 +1,13 @@
+{
+  "herite_de": "sites/postes/poste_sol_air_notionnel",
+  "nom": "If 20 (RUS, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "RUS",
+  "portee_km": 20,
+  "pk": 0.6,
+  "engagements_par_passage": 10,
+  "acquisition_s": 10,
+  "icone": "batterie_moyenne"
+}

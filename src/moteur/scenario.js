@@ -101,7 +101,7 @@ function resoudre_radar(radar, fichiers) {
   if (disposition === "sites" && sites.length === 0) throw new ScenarioInvalide("disposition « sites » : au moins un radar placé");
   const detection = DISPOSITIONS_RADAR[disposition] ?? unite.algos.detection;
   const resolu = {...unite, algos: {...unite.algos, detection}, disposition, sites};
-  if (propres.some(Boolean)) resolu.sites_unites = propres.map((p) => p && {id: p.id, nom: p.nom, hauteur_antenne: p.hauteur_antenne, portee_max: p.portee_max});
+  if (propres.some(Boolean)) resolu.sites_unites = propres.map((p) => p && {id: p.id, nom: p.nom, hauteur_antenne: p.hauteur_antenne, portee_max: p.portee_max, pays: p.pays, icone: p.icone});
   return resolu;
 }
 

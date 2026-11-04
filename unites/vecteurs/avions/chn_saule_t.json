@@ -1,0 +1,14 @@
+{
+  "herite_de": "vecteurs/avions/_avion",
+  "nom": "Saule T (CHN, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "CHN",
+  "vitesse_mise_a_poste_kmh": 480,
+  "vitesse_engagement_kmh": 330,
+  "facteur_charge_max_g": 5,
+  "emport": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+  "emport_nombre": 12,
+  "icone": "turbopropulseur"
+}

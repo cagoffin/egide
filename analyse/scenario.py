@@ -106,7 +106,14 @@ def _resoudre_radar(radar: dict, fichiers: dict) -> dict:
     if any(propres):
         resolu["sites_unites"] = [
             p
-            and {"id": p["id"], "nom": p["nom"], "hauteur_antenne": p["hauteur_antenne"], "portee_max": p["portee_max"]}
+            and {
+                "id": p["id"],
+                "nom": p["nom"],
+                "hauteur_antenne": p["hauteur_antenne"],
+                "portee_max": p["portee_max"],
+                "pays": p["pays"],
+                "icone": p["icone"],
+            }
             for p in propres
         ]
     return resolu

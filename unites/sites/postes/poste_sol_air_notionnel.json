@@ -16,5 +16,6 @@
   "acquisition_s": 10,
   "algos": {
     "tir_sol": "global/tir_sol/cadence_par_passage"
-  }
+  },
+  "icone": "batterie_courte"
 }

@@ -12,6 +12,7 @@ import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./ca
 import {creer_editeur} from "./editeur.js";
 import {choisir_moyen, modifications_reseau_auto, palette} from "./deploiement.js";
 import {fiches} from "./fiche.js";
+import {couleur_pays, PAYS} from "./pays.js";
 import {libelle_noeud, MOYENS_PAR_DEFAUT} from "./reseau_vue.js";
 import {resume_situation} from "./situation.js";
 import {FAMILLES, lignes_journal} from "./journal.js";
@@ -556,7 +557,7 @@ function brancher_editeur() {
 // Pastille de légende de chaque calque (classes définies dans style.css).
 const PASTILLES = {avions_ir: "ami-plein", avions_laser: "ami-creux", missions: "trait-ami", radars: "radar", reseau: "reseau", couverture: "trait-ami",
   drones_defensifs: "drone-def", balayage: "faisceau", postes: "sol", drones_detectes: "hostile", drones_inconnus: "inconnu", plots: "plots", plan: "trait-hostile",
-  tirs: "eclat", messages: "message", cibles: "cible", zones: "zone", anneaux: "trait"};
+  tirs: "eclat", messages: "message", cibles: "cible", zones: "zone", anneaux: "trait", icones: "ami-plein"};
 
 function brancher_calques() {
   const zone = $("[data-zone='calques']");
@@ -580,13 +581,31 @@ const PASTILLES_PALETTE = {infrastructures: "var(--texte)", capteurs: "var(--ami
   liaisons: "var(--texte-secondaire)", effecteurs: "var(--sol)", menace: "var(--hostile)", terrains: "var(--inconnu)"};
 const echapper_html = (texte) => texte.replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"})[c]);
 
+/** Rendre le nom court d'une unité : sans la mention « (notionnel) » ni le pays, montré à part. */
+const nom_court = (nom) => nom.replace(/ \((?:[A-Z]{3}, )?notionnel(le)?\)$/, "");
+
+/** Rendre le bouton d'une unité de la palette : son icône de jeu sur la pastille de son pays, son nom, son pays. */
+function bouton_palette(e, famille) {
+  const fond = couleur_pays(e.pays, PASTILLES_PALETTE[famille]);
+  const vignette = e.icone ? `<i class="vignette" style="background: ${fond}"><img src="icones/${echapper_html(e.icone)}.svg" alt=""></i>` : `<i style="--pastille: ${PASTILLES_PALETTE[famille]}"></i>`;
+  const pays = e.pays ? `<small title="${echapper_html(PAYS[e.pays]?.nom ?? e.pays)}">${e.pays}</small>` : "";
+  return `<button class="unite-palette" draggable="true" data-unite="${echapper_html(e.id)}" aria-pressed="false" title="${echapper_html(e.nom)}">${vignette}<span>${echapper_html(nom_court(e.nom))}</span>${pays}</button>`;
+}
+
 /** Remplir la palette du déploiement (MODELE § 21) : une famille par rubrique, chaque unité à cliquer ou à glisser sur la carte. */
 function remplir_palette(index) {
-  const familles = palette(index);
-  etat.noms_unites = Object.fromEntries(familles.flatMap((f) => f.elements.map((e) => [e.id, e.nom.replace(/ \(notionnel(le)?\)$/, "")])));
+  etat.noms_unites = Object.fromEntries(palette(index).flatMap((f) => f.elements.map((e) => [e.id, nom_court(e.nom)])));
   const zone = $("[data-zone='palette']");
-  zone.innerHTML = familles.map((f, i) => `<details ${i < 5 ? "open" : ""}><summary>${f.libelle}</summary><p class="famille-aide">${f.aide}</p>
-    ${f.elements.map((e) => `<button class="unite-palette" draggable="true" data-unite="${echapper_html(e.id)}" aria-pressed="false" title="${echapper_html(e.id)}"><i style="--pastille: ${PASTILLES_PALETTE[f.id]}"></i>${echapper_html(etat.noms_unites[e.id])}</button>`).join("")}</details>`).join("");
+  const choixPays = $("[name='pays_palette']");
+  const presents = [...new Set(index.map((u) => u.pays).filter(Boolean))].sort((a, b) => (PAYS[a]?.nom ?? a).localeCompare(PAYS[b]?.nom ?? b));
+  choixPays.innerHTML = `<option value="">Tous les pays</option>${presents.map((p) => `<option value="${p}">${PAYS[p]?.nom ?? p}</option>`).join("")}`;
+  const dessiner = () => {
+    const ouvertes = new Set([...zone.querySelectorAll("details[open]")].map((d) => d.dataset.famille));
+    zone.innerHTML = palette(index, choixPays.value).map((f, i) => `<details data-famille="${f.id}" ${(ouvertes.size ? ouvertes.has(f.id) : i < 5) ? "open" : ""}><summary>${f.libelle}</summary><p class="famille-aide">${f.aide}</p>
+      ${f.elements.map((e) => bouton_palette(e, f.id)).join("")}</details>`).join("");
+  };
+  dessiner();
+  choixPays.addEventListener("change", dessiner);
   zone.addEventListener("click", (e) => {
     const choix = e.target.closest("[data-unite]");
     if (choix) etat.editeur.armer_depot(choix.dataset.unite);

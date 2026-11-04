@@ -21,6 +21,7 @@ export const CALQUES = [
   {id: "cibles", groupe: "Théâtre", libelle: "Cibles"},
   {id: "zones", groupe: "Théâtre", libelle: "Zones"},
   {id: "anneaux", groupe: "Théâtre", libelle: "Anneaux de distance"},
+  {id: "icones", groupe: "Affichage", libelle: "Icônes de jeu (sinon symboles APP-6)"},
 ];
 
 const CLE = "egide.calques";

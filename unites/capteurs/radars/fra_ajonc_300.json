@@ -1,0 +1,11 @@
+{
+  "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
+  "nom": "Ajonc 300 (FRA, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "FRA",
+  "hauteur_antenne_m": 30,
+  "portee_max_km": 300,
+  "icone": "radar_pylone"
+}

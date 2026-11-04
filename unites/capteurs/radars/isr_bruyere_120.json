@@ -1,0 +1,11 @@
+{
+  "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
+  "nom": "Bruyère 120 (ISR, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "ISR",
+  "hauteur_antenne_m": 12,
+  "portee_max_km": 120,
+  "icone": "radar_mobile"
+}

@@ -1,0 +1,13 @@
+{
+  "herite_de": "sites/postes/poste_sol_air_notionnel",
+  "nom": "Genêt 35 (DEU, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "DEU",
+  "portee_km": 4,
+  "pk": 0.3,
+  "engagements_par_passage": 20,
+  "acquisition_s": 5,
+  "icone": "canon"
+}

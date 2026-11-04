@@ -9,5 +9,6 @@
   "altitude_croisiere_m": 100,
   "algos": {
     "mouvement": "global/mouvement/croisiere_geodesique"
-  }
+  },
+  "icone": "drone_delta"
 }

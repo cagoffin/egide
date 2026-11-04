@@ -1,0 +1,9 @@
+{
+  "herite_de": "vecteurs/drones_defensifs/brouilleur_notionnel",
+  "nom": "Camerisier B (DEU, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "DEU",
+  "vitesse_mise_a_poste_kmh": 160
+}

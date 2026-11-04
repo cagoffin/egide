@@ -13,7 +13,7 @@ export function index_unites() {
   const fichiers = Object.fromEntries(ids.map((id) => [id, JSON.parse(readFileSync(join(RACINE, "unites", `${id}.json`), "utf-8"))]));
   return ids.map((id) => {
     const unite = unite_brute(id, fichiers);
-    return {id, nom: unite.nom, famille: id.split("/")[0], fidelite: unite.fidelite, base: id.split("/").at(-1).startsWith("_")};
+    return {id, nom: unite.nom, famille: id.split("/")[0], fidelite: unite.fidelite, base: id.split("/").at(-1).startsWith("_"), pays: unite.pays ?? null, icone: unite.icone ?? null};
   });
 }
 

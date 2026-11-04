@@ -1,9 +1,12 @@
 {
   "herite_de": "sites/postes/poste_sol_air_notionnel",
   "nom": "Batterie sol-air de moyenne portée (notionnelle)",
-  "sources": ["Ordre de grandeur notionnel : défense sol-air de moyenne portée, bulle de quelques dizaines de km"],
+  "sources": [
+    "Ordre de grandeur notionnel : défense sol-air de moyenne portée, bulle de quelques dizaines de km"
+  ],
   "portee_km": 25,
   "pk": 0.6,
   "engagements_par_passage": 6,
-  "acquisition_s": 20
+  "acquisition_s": 20,
+  "icone": "batterie_moyenne"
 }

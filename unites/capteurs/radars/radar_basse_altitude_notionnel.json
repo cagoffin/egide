@@ -12,5 +12,6 @@
   "portee_max_km": 250,
   "algos": {
     "detection": "global/detection/couverture_frontiere"
-  }
+  },
+  "icone": "radar_mobile"
 }

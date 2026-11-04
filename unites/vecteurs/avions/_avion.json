@@ -19,5 +19,6 @@
   "emport_nombre": 12,
   "algos": {
     "mouvement": "global/mouvement/croisiere_geodesique"
-  }
+  },
+  "icone": "turbopropulseur"
 }

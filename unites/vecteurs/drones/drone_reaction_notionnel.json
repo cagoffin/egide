@@ -1,7 +1,10 @@
 {
   "herite_de": "vecteurs/drones/_drone",
   "nom": "Drone d'attaque a reaction (notionnel)",
-  "sources": ["Ordre de grandeur notionnel : classe des drones d'attaque a turboreacteur, 600 a 900 km/h, vol tres bas"],
+  "sources": [
+    "Ordre de grandeur notionnel : classe des drones d'attaque a turboreacteur, 600 a 900 km/h, vol tres bas"
+  ],
   "vitesse_kmh": 800,
-  "altitude_croisiere_m": 100
+  "altitude_croisiere_m": 100,
+  "icone": "drone_reaction"
 }

@@ -11,6 +11,7 @@ import {OUTILS} from "../src/moteur/outils.js";
 import {creer_hasard} from "../src/moteur/hasard.js";
 import {index_algos, index_cartes, index_scenarios, index_unites} from "../outils/indexer.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
+import {PAYS} from "../src/vue/pays.js";
 
 // Ce qu'un algorithme n'a pas le droit d'écrire : il reçoit tout en argument et ne dépend que de ses entrées.
 const INTERDITS = [/^\s*import\s/m, /\brequire\(/, /Math\.random/, /Date\.now|new Date\b/, /\bfetch\(/, /\bperformance\./];
@@ -42,6 +43,9 @@ for (const id of ids_unites_disque()) {
         for (const parametre of Object.keys(module.meta.parametres)) assert.ok(parametre in valeurs, `${id} : ${idAlgo} lit « ${parametre} »`);
       }
     }
+    // Icône de jeu : un fichier de icones/ ; pays : un code ISO 3166 à trois lettres connu de l'interface.
+    if (valeurs.icone) assert.doesNotThrow(() => readFileSync(join(RACINE, "icones", `${valeurs.icone}.svg`)), `${id} : icône absente icones/${valeurs.icone}.svg`);
+    if (valeurs.pays) assert.ok(valeurs.pays in PAYS, `${id} : pays inconnu « ${valeurs.pays} » (src/vue/pays.js)`);
   });
 }
 

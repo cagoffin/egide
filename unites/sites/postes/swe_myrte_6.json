@@ -1,0 +1,13 @@
+{
+  "herite_de": "sites/postes/poste_sol_air_notionnel",
+  "nom": "Myrte 6 (SWE, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "SWE",
+  "portee_km": 6,
+  "pk": 0.65,
+  "engagements_par_passage": 10,
+  "acquisition_s": 8,
+  "icone": "batterie_courte"
+}

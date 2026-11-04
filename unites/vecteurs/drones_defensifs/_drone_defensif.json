@@ -6,5 +6,6 @@
   "type_vecteur": "drone_arme",
   "vitesse_mise_a_poste_kmh": 180,
   "vitesse_engagement_kmh": 150,
-  "facteur_charge_max_g": 3
+  "facteur_charge_max_g": 3,
+  "icone": "drone_arme"
 }

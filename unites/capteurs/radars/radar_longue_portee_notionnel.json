@@ -1,7 +1,10 @@
 {
   "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
   "nom": "Radar de veille longue portée (notionnel)",
-  "sources": ["Ordre de grandeur notionnel : radar de veille sur pylône, antenne haute, portée instrumentée de plusieurs centaines de km"],
+  "sources": [
+    "Ordre de grandeur notionnel : radar de veille sur pylône, antenne haute, portée instrumentée de plusieurs centaines de km"
+  ],
   "hauteur_antenne_m": 40,
-  "portee_max_km": 400
+  "portee_max_km": 400,
+  "icone": "radar_pylone"
 }

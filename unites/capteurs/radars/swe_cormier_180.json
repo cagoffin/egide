@@ -1,0 +1,11 @@
+{
+  "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
+  "nom": "Cormier 180 (SWE, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "SWE",
+  "hauteur_antenne_m": 20,
+  "portee_max_km": 180,
+  "icone": "radar_mobile"
+}

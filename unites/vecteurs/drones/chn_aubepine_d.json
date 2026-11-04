@@ -1,0 +1,11 @@
+{
+  "herite_de": "vecteurs/drones/_drone",
+  "nom": "Aubépine D (CHN, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "CHN",
+  "vitesse_kmh": 200,
+  "altitude_croisiere_m": 120,
+  "icone": "drone_delta"
+}

@@ -1,0 +1,13 @@
+{
+  "herite_de": "sites/postes/poste_sol_air_notionnel",
+  "nom": "Gui M30 (USA, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "USA",
+  "portee_km": 30,
+  "pk": 0.65,
+  "engagements_par_passage": 6,
+  "acquisition_s": 20,
+  "icone": "batterie_moyenne"
+}

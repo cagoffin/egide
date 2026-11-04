@@ -1,0 +1,14 @@
+{
+  "herite_de": "vecteurs/avions/_avion",
+  "nom": "Sauge J (ITA, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "ITA",
+  "vitesse_mise_a_poste_kmh": 700,
+  "vitesse_engagement_kmh": 430,
+  "facteur_charge_max_g": 7,
+  "emport": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+  "emport_nombre": 8,
+  "icone": "chasseur"
+}

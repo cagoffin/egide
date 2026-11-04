@@ -1,0 +1,11 @@
+{
+  "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
+  "nom": "Bouleau 450 (RUS, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "RUS",
+  "hauteur_antenne_m": 35,
+  "portee_max_km": 450,
+  "icone": "radar_pylone"
+}

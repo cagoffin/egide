@@ -2,7 +2,7 @@
 import {ecran as projeter_ecran} from "./ecran.js";
 import {dessiner_anneaux, dessiner_balayage, dessiner_echelle} from "./cadre.js";
 import {COULEURS} from "./couleurs.js";
-import {positions_radars} from "../moteur/radars.js";
+import {parametres_radar, positions_radars} from "../moteur/radars.js";
 import {pistes_connues, connu_du_pc} from "./situation.js";
 import {calques_par_defaut, element_visible} from "./calques.js";
 import {dessiner_pannes, dessiner_reseau} from "./reseau_vue.js";
@@ -26,7 +26,7 @@ export function dessiner_scope(ctx, camera, etat) {
   dessiner_anneaux(ctx, camera, monde, calques);
   dessiner_cibles(ctx, camera, monde, effets, maintenant, calques);
   if (calques.reseau) dessiner_reseau(ctx, camera, monde);
-  if (calques.radars) dessiner_radars(ctx, camera, positions_radars(monde.scenario));
+  if (calques.radars) dessiner_radars(ctx, camera, positions_radars(monde.scenario), (i) => icone_radar(monde.scenario, i, calques));
   if (calques.radars || calques.reseau) dessiner_pannes(ctx, camera, monde);
   if (etat.percue) {
     dessiner_drones(ctx, camera, monde, traces, calques, (drone) => connu_du_pc(monde, drone));
@@ -101,4 +101,10 @@ export function trouver_sous_curseur(camera, monde, ecran, calques = calques_par
   const enVol = monde.drones.filter((d) => d.vivant && !d.arrive && monde.t >= d.depart && visible("drone")(d) && (!percue || connu_du_pc(monde, d)));
   const drone = plus_proche_ecran(camera, enVol, (d) => d.geo, ecran, 8);
   return drone ? {type: "drone", objet: drone} : null;
+}
+
+/** Rendre l'icône du radar `i` ({icone, pays}) si le calque des icônes est actif et que son modèle en a une. */
+function icone_radar(scenario, i, calques) {
+  const {icone, pays} = parametres_radar(scenario, i);
+  return calques.icones && icone ? {icone, pays} : null;
 }

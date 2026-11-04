@@ -1,0 +1,13 @@
+{
+  "herite_de": "sites/postes/poste_sol_air_notionnel",
+  "nom": "Houx 35 (ISR, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "ISR",
+  "portee_km": 35,
+  "pk": 0.7,
+  "engagements_par_passage": 4,
+  "acquisition_s": 15,
+  "icone": "batterie_moyenne"
+}

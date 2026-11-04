@@ -29,13 +29,20 @@ export const FAMILLES_PALETTE = [
   {id: "terrains", libelle: "Terrain", prefixe: "terrains/", cible: "carte", aide: "Relief du théâtre (où qu'on le dépose)."},
 ];
 
-const SPECIAUX = [{id: "special/cible", nom: "Site sensible à défendre"}, {id: "special/centre", nom: "Centre C2 (CDC)"}];
+const SPECIAUX = [{id: "special/cible", nom: "Site sensible à défendre", icone: "site"}, {id: "special/centre", nom: "Centre C2 (CDC)", icone: "c2"}];
 
-/** Rendre la palette : pour chaque famille, ses éléments déposables {id, nom}, lus dans l'index du catalogue (sans les classes `_`). */
-export function palette(index) {
+/**
+ * Rendre la palette : pour chaque famille, ses éléments déposables {id, nom, pays, icone}, lus dans l'index du
+ * catalogue (sans les classes `_`), les unités génériques d'abord puis par pays ; `pays` (code ISO) restreint aux
+ * unités de ce pays et aux génériques.
+ */
+export function palette(index, pays = "") {
+  const garde = (u) => !pays || !u.pays || u.pays === pays;
+  const ordre = (a, b) => (a.pays ?? "").localeCompare(b.pays ?? "") || a.nom.localeCompare(b.nom);
   return FAMILLES_PALETTE.map((famille) => ({
     ...famille,
-    elements: famille.id === "infrastructures" ? SPECIAUX : index.filter((u) => !u.base && u.id.startsWith(famille.prefixe)).map(({id, nom}) => ({id, nom})),
+    elements: famille.id === "infrastructures" ? SPECIAUX
+      : index.filter((u) => !u.base && u.id.startsWith(famille.prefixe) && garde(u)).sort(ordre).map(({id, nom, pays: p = null, icone = null}) => ({id, nom, pays: p, icone})),
   })).filter((famille) => famille.elements.length);
 }
 

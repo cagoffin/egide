@@ -1,0 +1,11 @@
+{
+  "herite_de": "vecteurs/drones/_drone",
+  "nom": "Chardon D (IRN, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "IRN",
+  "vitesse_kmh": 185,
+  "altitude_croisiere_m": 100,
+  "icone": "drone_delta"
+}

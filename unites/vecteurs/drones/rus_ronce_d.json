@@ -1,0 +1,11 @@
+{
+  "herite_de": "vecteurs/drones/_drone",
+  "nom": "Ronce D (RUS, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "RUS",
+  "vitesse_kmh": 180,
+  "altitude_croisiere_m": 80,
+  "icone": "drone_delta"
+}

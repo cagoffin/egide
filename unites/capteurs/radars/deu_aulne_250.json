@@ -1,0 +1,11 @@
+{
+  "herite_de": "capteurs/radars/radar_basse_altitude_notionnel",
+  "nom": "Aulne 250 (DEU, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "DEU",
+  "hauteur_antenne_m": 25,
+  "portee_max_km": 250,
+  "icone": "radar_mobile"
+}

@@ -12,6 +12,7 @@ d'algorithmes).
 ## 1 · Vue d'ensemble
 
 ```
+icones/                              silhouettes SVG des icônes de jeu
 unites/                              catalogue public d'unités (notionnel)
   _unite.json                        racine : nom, fidélité, sources, algos
   vecteurs/drones/                   menace : drones d'attaque
@@ -92,7 +93,24 @@ Chaque unité déclare `fidelite` — `notionnel` (ordres de grandeur), `cinemat
 liberté) ou `6ddl` — et au moins une entrée dans `sources`. Le catalogue public est **entièrement notionnel** : des
 ordres de grandeur par classe, jamais les performances d'un système réel identifié.
 
-### 2.5 Ce que chaque famille règle
+### 2.5 Pays d'inspiration et icônes de jeu
+
+Deux clés d'affichage, héritées comme les autres :
+
+- `pays` : code ISO 3166 à trois lettres (`"FRA"`, `"USA"`…) du pays dont la classe s'inspire. Il sert au classement
+  (filtre « Pays » de la palette) et à la couleur de la pastille. Le nom de l'unité est fictif et ses valeurs restent
+  celles de la classe, arrondies : aucune unité publique ne correspond à un système réel identifié, et aucune fiche
+  ne nomme le système qui l'aurait inspirée. Les pays connus de l'interface sont dans `src/vue/pays.js`.
+- `icone` : nom d'une silhouette de `icones/` (`radar_pylone`, `batterie_moyenne`, `chasseur`, `helicoptere`,
+  `drone_delta`…). Une icône est un SVG carré (viewBox 64 × 64), blanc sur fond transparent, vu de dessus ; la
+  carte la pose sur la pastille du pays, cerclée de la couleur du camp. `null` : symbole APP-6 seul. Le calque
+  « Icônes de jeu » bascule entre les deux.
+
+Le catalogue public compte 35 unités rangées par pays (radars, batteries, avions et hélicoptères, drones
+défensifs, drones d'attaque), nommées d'après des plantes : `unites/capteurs/radars/fra_ajonc_300.json`,
+`unites/vecteurs/drones/irn_chardon_d.json`… La conformité vérifie que chaque icône existe et que chaque pays est connu.
+
+### 2.6 Ce que chaque famille règle
 
 | Famille | Clés principales | Rôles d'algorithme portés |
 |---|---|---|

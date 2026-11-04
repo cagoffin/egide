@@ -1,0 +1,14 @@
+{
+  "herite_de": "vecteurs/avions/_avion",
+  "nom": "Prunelle J (GBR, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "GBR",
+  "vitesse_mise_a_poste_kmh": 750,
+  "vitesse_engagement_kmh": 450,
+  "facteur_charge_max_g": 7,
+  "emport": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+  "emport_nombre": 8,
+  "icone": "chasseur"
+}

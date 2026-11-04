@@ -9,5 +9,6 @@
   "vitesse_mise_a_poste_kmh": 300,
   "vitesse_engagement_kmh": 300,
   "emport": "effecteurs/drones/charge_impact_notionnelle",
-  "emport_nombre": 1
+  "emport_nombre": 1,
+  "icone": "intercepteur"
 }

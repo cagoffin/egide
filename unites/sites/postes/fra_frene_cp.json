@@ -1,0 +1,13 @@
+{
+  "herite_de": "sites/postes/poste_sol_air_notionnel",
+  "nom": "Frêne CP (FRA, notionnel)",
+  "sources": [
+    "Ordre de grandeur notionnel de la classe, valeurs arrondies ; nom fictif, aucune correspondance avec un systeme reel"
+  ],
+  "pays": "FRA",
+  "portee_km": 8,
+  "pk": 0.7,
+  "engagements_par_passage": 8,
+  "acquisition_s": 10,
+  "icone": "batterie_courte"
+}
