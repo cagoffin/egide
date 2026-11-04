@@ -53,7 +53,9 @@ test("conformité : tous les rôles branchés sur le moteur ont au moins un algo
 test("conformité comportement : même graine, même essaim ; route finissant sur la cible visée", () => {
   const s = scenario();
   const cibles = [OUTILS.geo_deg(47.2, 2.4), OUTILS.geo_deg(46.8, 2.9)];
-  const contexte = {rouge: s.rouge, cibles, rayon_apparition: 250_000, origine: s.theatre.origine, caps: [0.3, 2.1], cap_commun: 4};
+  // Contexte générique : il fournit tout ce qu'un comportement public peut lire, plan de vol compris.
+  const plan = [OUTILS.geo_deg(48.5, 0.5, 100), OUTILS.geo_deg(47.8, 1.6, 100)];
+  const contexte = {rouge: {...s.rouge, plan_de_vol: plan}, cibles, rayon_apparition: 250_000, origine: s.theatre.origine, caps: [0.3, 2.1], cap_commun: 4};
   for (const [id, module] of Object.entries(REGISTRE).filter(([, m]) => m.meta.role === "comportement")) {
     const tirer = () => [0, 1, 1, 0].map((cible) => module.planifier_drone(contexte, cible, creer_hasard(5), OUTILS));
     assert.deepEqual(tirer(), tirer(), id);

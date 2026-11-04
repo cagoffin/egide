@@ -28,7 +28,7 @@ scenarios/                                  placements, plans de vol, zones, mé
 | 0 | Socle géodésique 3D, catalogue minimal, scénario v2 par chemins, migration v1 | Statistiques de la v0.1 retrouvées à moins de 3 σ ; géodésie sur exemples GeographicLib | **fait** |
 | 1 | Registre d'algorithmes par rôle, portage du comportement actuel dans `algos/global/`, suite de conformité, index du catalogue | Bilans du jalon 0 rendus à l'identique ; conformité appliquée à tout fichier déposé | **socle fait** — pas de bibliothèque publique de modèles d'armes : ces modèles relèvent de `prive/` |
 | 2 | Globe et carte 2,5D (MapLibre), sources configurables, relief dans le moteur (masquage radar), couverture réelle, tuiles hors ligne (PMTiles) | Sur relief plat, l'horizon calculé retrouve le § 2 | **fond de carte fait** (MapLibre embarqué, 5 fonds, relief ombré et 3D, bâtiments 3D, globe) ; relief dans le moteur et hors ligne à faire |
-| 3 | Éditeur façon jeu de stratégie : palette, glisser-déposer, sélection, groupes Ctrl+1–9, ordres enchaînés, plans de vol, vue en profil, zones dessinées, ordres en direct rejoués | Un raid avec ordres en direct se rejoue à l'identique | à faire |
+| 3 | Éditeur façon jeu de stratégie : palette, glisser-déposer, sélection, groupes Ctrl+1–9, ordres enchaînés, plans de vol, vue en profil, zones dessinées, ordres en direct rejoués | Un raid avec ordres en direct se rejoue à l'identique | **premier lot fait** (cibles, orbites, plan de vol de l'essaim, sélection, groupes, envoi, annulation) ; vue en profil, zones et ordres en direct à faire |
 | 4 | Physique expliquée : niveaux de fidélité, fiches (équations, hypothèses, validité, sources), inspecteur « pourquoi » | Chaque formule codée a sa fiche ; chaque fiche cite le code | à faire |
 | 5 | Preuve : convergence en pas de temps, sensibilité (Morris, Sobol), duel A/B, empreinte de reproductibilité, dossier de preuve | Les résultats publiés portent leur empreinte et leur convergence | à faire |
 | 6 | Idées ci-dessous, par lots | Selon l'idée | à faire |
@@ -72,6 +72,12 @@ Nouvelles idées proposées pendant le développement, à trier avec l'utilisate
   référence (`bleu.avions.1.nombre : 30 → 50`), pour qu'un chiffre se lise toujours avec ce qui l'a produit.
 - *Jalon 0* — **Explorateur du catalogue** : une page qui liste les unités, montre leur arbre d'héritage, leurs
   sources, leur niveau de fidélité et leur état de validation (à faire avec le jalon 1).
+- *Jalon 3* — **Mini-carte** : une vignette de tout le théâtre dans un coin, avec le cadre de la vue, cliquable pour
+  s'y rendre — le réflexe des jeux de stratégie dès qu'on zoome.
+- *Jalon 3* — **Sélection par type** : double-cliquer une unité sélectionne toutes celles du même type visibles à
+  l'écran (tous les avions IR, toutes les cibles).
+- *Jalon 3* — **Formations** : répartir les avions sélectionnés en cercle, en ligne ou en grille autour du point
+  visé, avec un espacement réglable, plutôt que de les placer un par un.
 - *Jalon 2* — **Export vidéo du raid** : enregistrer la vue animée (carte, scope, bilan) en vidéo ou GIF depuis
   l'interface, pour partager une démonstration sans installer l'outil.
 - *Jalon 2* — **Scénario dans l'adresse** : encoder les modifications du scénario dans l'URL, pour partager une

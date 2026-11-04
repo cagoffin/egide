@@ -14,10 +14,13 @@ const MARGE_APPARITION = 20_000;
 const DUREE_MAXIMALE = 7_200;
 const ESSAIS_PLACEMENT = 10_000;
 
-/** Rendre les cibles ({geo, ecef}), tirées dans 70 % du rayon et espacées d'au moins un cinquième du rayon. */
+/**
+ * Rendre les cibles ({geo, ecef}) : d'abord celles placées à la main, puis des cibles tirées dans 70 % du rayon,
+ * espacées d'au moins un cinquième du rayon de toutes les autres.
+ */
 export function placer_cibles(scenario, hasard) {
-  const {origine, zone_rayon: rayon, cibles_nombre: nombre} = scenario.theatre;
-  const cibles = [];
+  const {origine, zone_rayon: rayon, cibles_nombre: nombre, cibles_placees: placees = []} = scenario.theatre;
+  const cibles = placees.map((geo) => ({geo, ecef: vers_ecef(geo)}));
   let ecartMinimal = rayon / 5;
   for (let essai = 0; cibles.length < nombre; essai++) {
     // Zone trop petite pour l'écart demandé : on le réduit plutôt que de boucler sans fin.

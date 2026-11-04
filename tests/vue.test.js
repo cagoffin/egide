@@ -104,3 +104,52 @@ test("carte : les bornes du disque de 200 km encadrent le centre et s'élargisse
   const [[o2], [e2]] = bornes_disque(geo_deg(65, 2.5), 200_000);
   assert.ok(e2 - o2 > e - o);
 });
+
+import {barycentre, dans_rectangle, element_sous, en_degres, modifications_ajout_cible, modifications_ajout_passage, modifications_deplacement, modifications_suppression, translater} from "../src/vue/edition.js";
+import {creer_monde} from "../src/moteur/monde.js";
+import {inverse} from "../src/moteur/geodesie.js";
+import {REGISTRE, scenario} from "./aide_scenario.js";
+
+const MONDE = creer_monde(scenario(), {registre: REGISTRE});
+
+test("édition : une translation garde distance et azimut par rapport au point de référence", () => {
+  const de = geo_deg(47, 2.5), vers = geo_deg(48, 3), point = direct(de, 1, 20_000);
+  const deplace = translater(point, de, vers);
+  assert.ok(Math.abs(inverse(vers, deplace).distance - 20_000) < 1e-3);
+});
+test("édition : le barycentre de deux points symétriques est le milieu", () => {
+  const b = barycentre([geo_deg(47, 2), geo_deg(47, 3)]);
+  assert.ok(Math.abs(b.lon - (2.5 * Math.PI) / 180) < 1e-9);
+});
+test("édition : déplacer une cible fige toutes les cibles et ne bouge qu'elle", () => {
+  const de = MONDE.cibles[2].geo;
+  const vers = direct(de, 0, 10_000);
+  const m = modifications_deplacement(MONDE, REFERENCE, ["cible:2"], de, vers);
+  assert.equal(m["theatre.cibles_placees"].length, MONDE.cibles.length);
+  assert.deepEqual(m["theatre.cibles_placees"][0], en_degres(MONDE.cibles[0].geo));
+  assert.ok(Math.abs(m["theatre.cibles_placees"][2].lat_deg - en_degres(vers).lat_deg) < 1e-6);
+  assert.equal(Object.keys(m).some((k) => k.startsWith("bleu")), false);
+});
+test("édition : déplacer un avion fige les orbites de son seul groupe", () => {
+  const avion = MONDE.avions[25];
+  const m = modifications_deplacement(MONDE, REFERENCE, [`avion:${avion.id}`], avion.orbite, direct(avion.orbite, 1, 5_000));
+  assert.deepEqual(Object.keys(m), ["bleu.avions.1.orbites_placees"]);
+  assert.equal(m["bleu.avions.1.orbites_placees"].length, 30);
+});
+test("édition : ajouter une cible, un point de passage ; supprimer en gardant au moins une cible", () => {
+  assert.equal(modifications_ajout_cible(MONDE, geo_deg(47, 2.5))["theatre.cibles_nombre"], MONDE.cibles.length + 1);
+  const passage = modifications_ajout_passage(REFERENCE, geo_deg(49, 1));
+  assert.equal(passage["rouge.tactique"], "plan_de_vol");
+  assert.deepEqual(passage["rouge.plan_de_vol"], [{lat_deg: 49, lon_deg: 1}]);
+  const toutes = MONDE.cibles.map((_, i) => `cible:${i}`);
+  assert.deepEqual(modifications_suppression(MONDE, REFERENCE, toutes), {});
+  assert.equal(modifications_suppression(MONDE, REFERENCE, ["cible:0"])["theatre.cibles_nombre"], MONDE.cibles.length - 1);
+});
+test("édition : sélection au rectangle et au clic, dans le repère écran", () => {
+  const elements = [{cle: "a", geo: {x: 10, y: 10}}, {cle: "b", geo: {x: 50, y: 80}}];
+  const versEcran = (g) => g;
+  assert.deepEqual(dans_rectangle(elements, versEcran, {x0: 60, y0: 90, x1: 0, y1: 0}), ["a", "b"]);
+  assert.deepEqual(dans_rectangle(elements, versEcran, {x0: 0, y0: 0, x1: 20, y1: 20}), ["a"]);
+  assert.equal(element_sous(elements, versEcran, {x: 52, y: 77}).cle, "b");
+  assert.equal(element_sous(elements, versEcran, {x: 200, y: 200}), null);
+});

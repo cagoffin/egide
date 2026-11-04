@@ -24,6 +24,12 @@
     "fidelite": "notionnel"
   },
   {
+    "id": "global/comportement/plan_de_vol",
+    "nom": "Plan de vol",
+    "role": "comportement",
+    "fidelite": "notionnel"
+  },
+  {
     "id": "global/detection/couverture_frontiere",
     "nom": "Couverture continue à la frontière",
     "role": "detection",

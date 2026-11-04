@@ -13,6 +13,8 @@ export const COULEURS = {
   sol: "#b8860b",
   inconnu: "#7d8b99",
   eclat: "#fff1cc",
+  // Sélection de l'éditeur : hors palette de séries, pour ne jamais se confondre avec une entité.
+  selection: "#f2f2f2",
 };
 
 /** Publier les couleurs en variables CSS (--fond, --ami…) sur l'élément racine. */

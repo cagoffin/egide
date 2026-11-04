@@ -217,3 +217,22 @@ vaut que près du centre.
 
 Les sources (fonds, relief, bâtiments) sont des fichiers de `cartes/` au format de `cartes/_format.json`, chacun avec
 son attribution et ses conditions d'usage ; la conformité vérifie leurs clés et la présence de l'attribution.
+
+## 12 · Éditeur et plan de vol (jalon 3)
+### 12.1 Positions placées
+Le scénario peut fixer des cibles (`theatre.cibles_placees`) et des orbites d'avions (`bleu.avions[].orbites_placees`)
+en {lat_deg, lon_deg}. Les éléments placés passent d'abord ; le complément jusqu'au nombre demandé est tiré au hasard
+comme avant (§ 8). Le nombre de cibles ne descend jamais sous le nombre de cibles placées.
+
+### 12.2 Gestes de l'éditeur
+Chaque geste devient des modifications par chemin du scénario (`src/vue/edition.js`, pur et testé), exactement comme
+un curseur : l'annulation, l'export, les réglages enregistrés et la reproductibilité par la graine valent donc pour
+l'édition. Déplacer un élément fige toutes les cibles, ou toutes les orbites de son groupe : rien d'autre ne bouge à
+la relecture. Un déplacement est une translation géodésique : chaque élément garde sa distance et son azimut par
+rapport au point de référence (barycentre de la sélection pour l'envoi au clic droit), donc la formation est conservée.
+
+### 12.3 Comportement « plan de vol »
+L'essaim suit les points de passage dessinés, en colonne de largeur `fourmi_largeur_couloir_km` et de 4 km de
+profondeur ; chaque drone garde son décalage latéral, mesuré perpendiculairement au tronçon, à chaque point. Après le
+dernier point, il rejoint sa cible. Le premier point est le départ : s'il est dans la couverture radar, l'essaim est vu
+d'emblée.

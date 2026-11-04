@@ -59,3 +59,31 @@ test("géographie : le même raid se joue ailleurs sur le globe, y compris à ch
   const ailleurs = bilan(simuler(scenario({...PETIT, "theatre.origine_lat_deg": -40, "theatre.origine_lon_deg": 179.5}), {registre: REGISTRE, journal: false}));
   assert.equal(ailleurs.fuites + ailleurs.detruits_air + ailleurs.detruits_sol, 200);
 });
+
+test("éditeur : cibles et orbites placées à la main sont prises telles quelles, les autres tirées au hasard", () => {
+  const monde = creer_monde(scenario({
+    "theatre.cibles_placees": [{lat_deg: 47.1, lon_deg: 2.6}, {lat_deg: 46.9, lon_deg: 2.2}], "theatre.cibles_nombre": 4,
+    "bleu.avions.0.orbites_placees": [{lat_deg: 47.3, lon_deg: 2.4}],
+  }), {registre: REGISTRE});
+  assert.equal(monde.cibles.length, 4);
+  assert.ok(Math.abs(monde.cibles[1].geo.lat - (46.9 * Math.PI) / 180) < 1e-12);
+  assert.ok(Math.abs(monde.avions[0].orbite.lon - (2.4 * Math.PI) / 180) < 1e-12);
+  assert.equal(monde.avions[0].orbite.alt, 1000);
+});
+
+test("éditeur : des cibles placées en nombre supérieur au réglage l'emportent", () => {
+  const placees = [0, 1, 2].map((i) => ({lat_deg: 47 + i * 0.2, lon_deg: 2.5}));
+  assert.equal(scenario({"theatre.cibles_placees": placees, "theatre.cibles_nombre": 1}).theatre.cibles_nombre, 3);
+});
+
+test("plan de vol : l'essaim passe par chaque point du plan avant de rejoindre ses cibles", () => {
+  const plan = [{lat_deg: 49.2, lon_deg: 0.8}, {lat_deg: 48.4, lon_deg: 1.4}, {lat_deg: 47.6, lon_deg: 2.0}];
+  const monde = creer_monde(scenario({...PETIT, "rouge.tactique": "plan_de_vol", "rouge.plan_de_vol": plan}), {registre: REGISTRE});
+  for (const drone of monde.drones) {
+    assert.equal(drone.route.length, 3);
+    // Chaque point de passage du drone est à moins d'une demi-largeur de colonne (3 km) du point du plan.
+    plan.slice(1).forEach((p, i) => assert.ok(inverse(drone.route[i].geo, {lat: (p.lat_deg * Math.PI) / 180, lon: (p.lon_deg * Math.PI) / 180}).distance <= 3_001));
+  }
+  const resultat = bilan(simuler(scenario({...PETIT, ...SANS_DEFENSE, "rouge.tactique": "plan_de_vol", "rouge.plan_de_vol": plan}), {registre: REGISTRE, journal: false}));
+  assert.equal(resultat.fuites, 200);
+});

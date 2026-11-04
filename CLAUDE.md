@@ -30,6 +30,8 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
 - Cartes (MODELE § 11) : une source par fichier sous `cartes/fonds|relief|batiments/`, clés de `cartes/_format.json`,
   attribution et conditions d'usage obligatoires. La carte ne sert qu'à l'affichage, jamais au calcul.
 - Bibliothèques tierces : copiées dans `vendor/` (version, licence et procédure dans `vendor/README.md`), jamais de CDN.
+- Éditeur (MODELE § 12) : tout geste devient des modifications par chemin, calculées dans `src/vue/edition.js`
+  (pur, testé) ; `src/vue/editeur.js` ne fait que lire les gestes et dessiner.
 - Toute évolution de la résolution se fait dans `src/moteur/scenario.js` ET `analyse/scenario.py` ;
   `tests/resolution_reference.json` garde les deux d'accord.
 

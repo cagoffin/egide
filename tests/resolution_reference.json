@@ -12,7 +12,8 @@
         "alt": 0
       },
       "zone_rayon": 150000,
-      "cibles_nombre": 10
+      "cibles_nombre": 10,
+      "cibles_placees": []
     },
     "rouge": {
       "id": "vecteurs/drones/drone_reaction_notionnel",
@@ -38,6 +39,7 @@
       "etalement": 120,
       "fourmi_eclatement_rayon": 60000,
       "fourmi_largeur_couloir": 6000,
+      "plan_de_vol": [],
       "comportement": "global/comportement/essaim_fourmi"
     },
     "avions": [
@@ -63,6 +65,7 @@
         "emport_nombre": 12,
         "nombre": 20,
         "altitude": 1000,
+        "orbites_placees": [],
         "arme": {
           "id": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
           "nom": "Roquette guidee infrarouge (notionnelle)",
@@ -108,6 +111,7 @@
         "emport_nombre": 12,
         "nombre": 30,
         "altitude": 1000,
+        "orbites_placees": [],
         "arme": {
           "id": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
           "nom": "Roquette guidee laser de 70 mm (notionnelle)",

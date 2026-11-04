@@ -7,6 +7,7 @@ import {creer_camera, deplacer, zoomer} from "./camera.js";
 import {cadrer_carte, creer_carte} from "./carte.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
+import {creer_editeur} from "./editeur.js";
 import {publier_couleurs} from "./couleurs.js";
 import {absorber, creer_effets, sauter} from "./effets.js";
 import {format_duree} from "./format.js";
@@ -25,7 +26,7 @@ const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 
 const etat = {base: null, modifications: {}, fichiers: {}, registre: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
   camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null,
-  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null};
+  carte: null, sources_carte: {}, reglages_carte: lire_reglages_carte(), cadrage: null, editeur: null, historique: []};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 
@@ -122,6 +123,7 @@ function image(maintenant, precedent) {
     ctx.setTransform(devicePixelRatio || 1, 0, 0, devicePixelRatio || 1, 0, 0);
     dessiner_scope(ctx, etat.camera, {monde: lecteur.monde, traces: etat.traces, effets: etat.effets, maintenant,
       angle: etat.angle, balayage: lecteur.enLecture && !mouvementReduit.matches, survol: etat.survol});
+    etat.editeur?.dessiner(ctx, etat.camera, lecteur.monde);
     if (fini || maintenant - etat.dernierTableau > 100) rafraichir_commandes(maintenant);
   }
   requestAnimationFrame((suivant) => image(suivant, maintenant));
@@ -144,6 +146,8 @@ function sauter_a(t) {
 
 function basculer_lecture() {
   const {lecteur} = etat;
+  // Lire, c'est quitter l'édition : on ne modifie pas un raid en cours.
+  if (etat.editeur?.est_actif()) etat.editeur.activer(false);
   if (lecteur.monde.t >= lecteur.duree) sauter_a(0);
   lecteur.enLecture = !lecteur.enLecture;
 }
@@ -171,11 +175,14 @@ function brancher_scope() {
   const vue = $("#vue");
   const infobulle = $("#infobulle");
   let glisse = null;
+  // Zoom et déplacement propres au scope ; en édition, c'est l'éditeur qui reçoit la souris.
+  const scope_libre = () => etat.camera?.type === "scope" && !etat.editeur?.est_actif();
   toile.addEventListener("wheel", (e) => {
+    if (!scope_libre()) return;
     e.preventDefault();
     etat.camera = zoomer(etat.camera, e.deltaY < 0 ? 1.15 : 1 / 1.15, {x: e.offsetX, y: e.offsetY});
   }, {passive: false});
-  toile.addEventListener("pointerdown", (e) => (glisse = {x: e.clientX, y: e.clientY}, toile.setPointerCapture(e.pointerId)));
+  toile.addEventListener("pointerdown", (e) => scope_libre() && (glisse = {x: e.clientX, y: e.clientY}, toile.setPointerCapture(e.pointerId)));
   toile.addEventListener("pointerup", () => (glisse = null));
   vue.addEventListener("dblclick", (e) => {
     e.preventDefault();
@@ -251,6 +258,46 @@ function brancher_reglages_carte() {
   }
 }
 
+/** Appliquer un geste d'édition : il s'empile pour l'annulation, puis le raid est recalculé à t = 0. */
+async function appliquer_edition(modifications) {
+  if (!Object.keys(modifications).length) return;
+  etat.historique.push(structuredClone(etat.modifications));
+  Object.assign(etat.modifications, modifications);
+  await charger();
+  rafraichir_reglages();
+}
+
+async function annuler_edition() {
+  if (!etat.historique.length) return;
+  etat.modifications = etat.historique.pop();
+  await charger();
+  rafraichir_reglages();
+}
+
+function brancher_editeur() {
+  const bouton = $("[data-action='editer']");
+  etat.editeur = creer_editeur({
+    vue: $("#vue"), toile: $("#scope"), barre: $(".barre-edition"),
+    camera: () => etat.camera, monde: () => etat.lecteur.monde, brut: brut_courant,
+    appliquer: appliquer_edition, annuler: annuler_edition,
+    panoramique: (dx, dy) => {
+      if (etat.camera.type === "carte") etat.carte.panBy([-dx, -dy], {duration: 0});
+      else etat.camera = deplacer(etat.camera, dx, dy);
+    },
+    zoom: (facteur, point) => {
+      if (etat.camera.type !== "carte") return void (etat.camera = zoomer(etat.camera, facteur, point));
+      etat.carte.zoomTo(etat.carte.getZoom() + Math.log2(facteur), {around: etat.carte.unproject([point.x, point.y]), duration: 0});
+    },
+    sur_activation: (actif) => {
+      bouton.setAttribute("aria-pressed", String(actif));
+      if (!actif) return;
+      etat.lecteur.enLecture = false;
+      sauter_a(0);
+    },
+  });
+  bouton.addEventListener("click", () => etat.editeur.activer(!etat.editeur.est_actif()));
+}
+
 async function demarrer() {
   publier_couleurs(document.documentElement);
   await charger_sources_carte();
@@ -260,6 +307,7 @@ async function demarrer() {
   etat.afficher_reglages = construire_reglages($("#reglages"), modifier);
   brancher_transport();
   brancher_scope();
+  brancher_editeur();
   brancher_prereglages();
   brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));
   await charger();

@@ -9,14 +9,20 @@ import {est_actif, plus_proche, resoudre_tir} from "./tir.js";
 // Un drone qui se rapproche à moins de 3 portées d'arme fait passer l'avion de la mise à poste à l'engagement.
 const PORTEES_ENGAGEMENT = 3;
 
-/** Rendre les avions de tous les groupes, en orbite à des positions uniformes sur le disque défendu. */
-export function creer_avions(scenario, hasard) {
+/** Rendre l'orbite tirée au hasard, uniformément sur le disque défendu. */
+function orbite_aleatoire(scenario, groupe, hasard) {
   const {origine, zone_rayon: rayon} = scenario.theatre;
+  const distance = rayon * Math.sqrt(hasard.uniforme());
+  return {...direct(origine, hasard.uniforme(0, 2 * Math.PI), distance), alt: groupe.altitude};
+}
+
+/** Rendre les avions de tous les groupes : orbites placées à la main d'abord, puis tirées au hasard sur le disque. */
+export function creer_avions(scenario, hasard) {
   const avions = [];
   for (const groupe of scenario.avions) {
+    const placees = groupe.orbites_placees ?? [];
     for (let i = 0; i < groupe.nombre; i++) {
-      const distance = rayon * Math.sqrt(hasard.uniforme());
-      const orbite = {...direct(origine, hasard.uniforme(0, 2 * Math.PI), distance), alt: groupe.altitude};
+      const orbite = i < placees.length ? {...placees[i]} : orbite_aleatoire(scenario, groupe, hasard);
       avions.push({
         id: avions.length, groupe, orbite, geo: {...orbite}, ecef: vers_ecef(orbite), etat: "orbite", point: null,
         prochain_tir: 0, guidage: groupe.arme.guidage, munitions: groupe.emport_nombre,

@@ -1,7 +1,7 @@
 // Passage géographique → écran, quelle que soit la vue : scope (projection azimutale, camera.js) ou carte MapLibre.
 // Tout le dessin passe par ici ; les cercles sont tracés en polygones géodésiques, exacts sur toute projection.
-import {direct, vers_degres} from "../moteur/geodesie.js";
-import {geo_vers_ecran} from "./camera.js";
+import {direct, geo_deg, vers_degres} from "../moteur/geodesie.js";
+import {geo_vers_ecran, vers_monde} from "./camera.js";
 
 // Circonférence équatoriale WGS84 et taille de monde de MapLibre (tuiles de 512 px au zoom 0).
 const CIRCONFERENCE = 40_075_016.686;
@@ -12,6 +12,17 @@ export function ecran(camera, geo) {
   if (camera.type !== "carte") return geo_vers_ecran(camera, geo);
   const point = camera.carte.project([vers_degres(geo.lon), vers_degres(geo.lat)]);
   return {x: point.x, y: point.y};
+}
+
+/** Rendre la position géographique (au sol) sous un point écran (px), pour une caméra de scope ou de carte. */
+export function geo_depuis_ecran(camera, point) {
+  if (camera.type === "carte") {
+    const {lng, lat} = camera.carte.unproject([point.x, point.y]);
+    return geo_deg(lat, lng, 0);
+  }
+  // Projection azimutale équidistante : la distance au centre et l'azimut se lisent directement sur le plan.
+  const plan = vers_monde(camera, point);
+  return direct(camera.origine, Math.atan2(plan.x, plan.y), Math.hypot(plan.x, plan.y));
 }
 
 /** Rendre la taille au sol d'un pixel au centre de la vue, en m. */

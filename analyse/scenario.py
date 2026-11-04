@@ -17,7 +17,15 @@ TACTIQUES = {
     "direct": "global/comportement/essaim_direct",
     "disperse": "global/comportement/essaim_disperse",
     "fourmi": "global/comportement/essaim_fourmi",
+    "plan_de_vol": "global/comportement/plan_de_vol",
 }
+
+
+def _vers_geo(points, altitude: float) -> list[dict]:
+    """Rendre les positions placees a la main ({lat_deg, lon_deg}) en radians, a l'altitude donnee."""
+    return [
+        {"lat": math.radians(p["lat_deg"]), "lon": math.radians(p["lon_deg"]), "alt": altitude} for p in points or []
+    ]
 
 
 class ScenarioInvalideError(ValueError):
@@ -51,7 +59,11 @@ def _resoudre_avions(groupes: list, fichiers: dict) -> list[dict]:
     for groupe in groupes:
         avion = unite_si(groupe["unite"], fichiers, groupe.get("surcharges"))
         arme = unite_si(avion["emport"], fichiers, groupe.get("surcharges_emport"))
-        resolus.append({**avion, "nombre": groupe["nombre"], "altitude": float(groupe["altitude_m"]), "arme": arme})
+        altitude = float(groupe["altitude_m"])
+        orbites = _vers_geo(groupe.get("orbites_placees"), altitude)
+        resolus.append(
+            {**avion, "nombre": groupe["nombre"], "altitude": altitude, "orbites_placees": orbites, "arme": arme}
+        )
     return resolus
 
 
@@ -69,7 +81,10 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
         raise ScenarioInvalideError(f"tactique inconnue « {rouge['tactique']} »")
     try:
         drone = unite_si(rouge["unite"], fichiers, rouge.get("surcharges"))
-        reglages_rouge = {cle: valeur for cle, valeur in rouge.items() if cle not in {"unite", "surcharges"}}
+        reglages_rouge = {
+            cle: valeur for cle, valeur in rouge.items() if cle not in {"unite", "surcharges", "plan_de_vol"}
+        }
+        cibles_placees = _vers_geo(theatre.get("cibles_placees"), 0)
         sol = unite_si(bleu["sol"]["unite"], fichiers, bleu["sol"].get("surcharges"))
         return {
             "nom": brut["nom"],
@@ -79,14 +94,16 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                     "lon": math.radians(theatre["origine_lon_deg"]),
                     "alt": 0,
                 },
-                **convertir_objet(
-                    {"zone_rayon_km": theatre["zone_rayon_km"], "cibles_nombre": theatre["cibles_nombre"]}
-                ),
+                "zone_rayon": convertir_objet({"zone_rayon_km": theatre["zone_rayon_km"]})["zone_rayon"],
+                # Les cibles placees comptent toujours : le nombre de cibles ne descend pas sous leur nombre.
+                "cibles_nombre": max(theatre["cibles_nombre"], len(cibles_placees)),
+                "cibles_placees": cibles_placees,
             },
             "rouge": {
                 **drone,
                 "altitude": drone["altitude_croisiere"],
                 **convertir_objet(reglages_rouge),
+                "plan_de_vol": _vers_geo(rouge.get("plan_de_vol"), drone["altitude_croisiere"]),
                 "comportement": TACTIQUES.get(rouge["tactique"], rouge["tactique"]),
             },
             "avions": _resoudre_avions(bleu["avions"], fichiers),

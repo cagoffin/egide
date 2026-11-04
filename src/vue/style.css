@@ -45,15 +45,26 @@ summary { cursor: pointer; font-weight: 600; padding-block: 4px; }
 .ligne input:not([type]) { flex: 1; min-inline-size: 0; }
 
 .ecran { display: flex; flex-direction: column; min-inline-size: 0; }
-.vue { position: relative; flex: 1; min-block-size: 420px; overflow: hidden; background: var(--fond); }
+.vue { position: relative; flex: 1; min-block-size: 420px; overflow: hidden; background: var(--fond); user-select: none; -webkit-user-select: none; }
 #carte, #scope { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; }
 #scope { display: block; cursor: crosshair; touch-action: none; }
 /* Sur la carte, le scope est un calque : souris et clavier vont à MapLibre (déplacer, zoomer, incliner). */
 .vue.avec-carte #scope { pointer-events: none; }
 .vue:not(.avec-carte) #carte { display: none; }
+/* En édition, le canevas reprend la souris, même sur la carte : c'est lui qui sélectionne et déplace. */
+.vue.edition #scope { pointer-events: auto; cursor: default; }
+.vue.edition[data-outil="cible"] #scope, .vue.edition[data-outil="plan"] #scope { cursor: crosshair; }
+.barre-edition { position: absolute; inset-block-end: 12px; inset-inline: 12px; z-index: 3; display: flex; flex-wrap: wrap;
+  align-items: center; gap: 6px; padding: 8px 10px; background: rgba(24, 34, 45, 0.92); border: 1px solid var(--trait); border-radius: 8px; }
+.barre-edition[hidden] { display: none; }
+.barre-edition [aria-pressed="true"] { background: var(--texte); color: var(--fond); border-color: var(--texte); }
+.aide-edition { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: var(--texte-secondaire); }
+.bandeau [data-action="editer"][aria-pressed="true"] { background: var(--texte); color: var(--fond); }
 .reglages-carte { position: absolute; inset-block-start: 10px; inset-inline-start: 10px; z-index: 2; display: grid; gap: 4px;
   padding: 8px 10px; font-size: 13px; background: rgba(24, 34, 45, 0.88); border: 1px solid var(--trait); border-radius: 8px; }
-.reglages-carte legend { float: left; font-weight: 600; margin-block-end: 2px; }
+.reglages-carte summary { font-weight: 600; cursor: pointer; }
+.reglages-carte[open] summary { margin-block-end: 4px; }
+.reglages-carte:not([open]) { padding-block: 5px; }
 .reglages-carte label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
 .reglages-carte select { font-size: 13px; }
 .maplibregl-ctrl-attrib, .maplibregl-ctrl-group { filter: invert(0.9) hue-rotate(180deg); }

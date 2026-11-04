@@ -11,7 +11,11 @@ export const TACTIQUES = {
   direct: "global/comportement/essaim_direct",
   disperse: "global/comportement/essaim_disperse",
   fourmi: "global/comportement/essaim_fourmi",
+  plan_de_vol: "global/comportement/plan_de_vol",
 };
+
+// Positions placées à la main ({lat_deg, lon_deg}) → positions géographiques en radians, à l'altitude donnée.
+const vers_geo = (points, alt) => (points ?? []).map((p) => geo_deg(p.lat_deg, p.lon_deg, alt));
 
 /** Rendre l'identifiant de l'algorithme de comportement d'une tactique (nom court ou identifiant complet). */
 export const algo_tactique = (tactique) => TACTIQUES[tactique] ?? tactique;
@@ -63,7 +67,7 @@ function resoudre_avions(groupes, fichiers) {
   return groupes.map((groupe) => {
     const avion = unite_si(groupe.unite, fichiers, groupe.surcharges);
     const arme = unite_si(avion.emport, fichiers, groupe.surcharges_emport);
-    return {...avion, nombre: groupe.nombre, altitude: groupe.altitude_m, arme};
+    return {...avion, nombre: groupe.nombre, altitude: groupe.altitude_m, orbites_placees: vers_geo(groupe.orbites_placees, groupe.altitude_m), arme};
   });
 }
 
@@ -80,14 +84,22 @@ export function resoudre_scenario(brutDonne, fichiers) {
   }
   try {
     const drone = unite_si(rouge.unite, fichiers, rouge.surcharges);
-    const {unite: _u, surcharges: _s, ...reglagesRouge} = rouge;
+    const {unite: _u, surcharges: _s, plan_de_vol: plan, ...reglagesRouge} = rouge;
+    const {cibles_placees: placees, ...reglagesTheatre} = theatre;
+    const ciblesPlacees = vers_geo(placees, 0);
     return structuredClone({
       nom: brut.nom,
       theatre: {
-        origine: geo_deg(theatre.origine_lat_deg, theatre.origine_lon_deg, 0),
-        ...convertir_objet({zone_rayon_km: theatre.zone_rayon_km, cibles_nombre: theatre.cibles_nombre}),
+        origine: geo_deg(reglagesTheatre.origine_lat_deg, reglagesTheatre.origine_lon_deg, 0),
+        zone_rayon: convertir_objet({zone_rayon_km: reglagesTheatre.zone_rayon_km}).zone_rayon,
+        // Les cibles placées comptent toujours : le nombre de cibles ne descend pas sous leur nombre.
+        cibles_nombre: Math.max(reglagesTheatre.cibles_nombre, ciblesPlacees.length),
+        cibles_placees: ciblesPlacees,
       },
-      rouge: {...drone, altitude: drone.altitude_croisiere, ...convertir_objet(reglagesRouge), comportement: algo_tactique(rouge.tactique)},
+      rouge: {
+        ...drone, altitude: drone.altitude_croisiere, ...convertir_objet(reglagesRouge),
+        plan_de_vol: vers_geo(plan, drone.altitude_croisiere), comportement: algo_tactique(rouge.tactique),
+      },
       avions: resoudre_avions(bleu.avions, fichiers),
       sol: {...unite_si(bleu.sol.unite, fichiers, bleu.sol.surcharges), nombre: bleu.sol.nombre, munitions: bleu.sol.munitions},
       radar: unite_si(bleu.radar.unite, fichiers, bleu.radar.surcharges),
