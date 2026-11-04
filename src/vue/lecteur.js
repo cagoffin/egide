@@ -23,7 +23,7 @@ export function creer_lecteur(scenario) {
  */
 export function avancer_temps_reel(lecteur, dtReel, apresPas) {
   if (!lecteur.enLecture) return false;
-  const pas = lecteur.scenario.simulation_pas;
+  const pas = lecteur.scenario.simulation.pas;
   // Plafond : un onglet resté en arrière-plan ne doit pas rattraper des minutes d'un coup.
   lecteur.reserve += Math.min(dtReel, 0.25) * SECONDES_SIMULEES_PAR_SECONDE * lecteur.multiplicateur;
   while (lecteur.reserve >= pas && !est_termine(lecteur.monde)) {

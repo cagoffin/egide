@@ -76,6 +76,7 @@ La simulation (étape 2) remplace cette approximation et doit la retrouver quand
 uniformément réparti.
 
 ## 7 · Limites connues
+- Couverture radar sans relief : continue le long de la frontière, à l'horizon du § 2 (le relief arrive au jalon 2).
 - Pas de contre-mesures, pas de leurres, pas de manœuvre d'évitement des drones.
 - Radar parfait dans sa couverture (pas de fausse alarme ni de perte de piste).
 - Pas de rechargement des avions pendant le raid.
@@ -121,3 +122,51 @@ rapproche à moins de 3 portées d'arme, l'avion passe en engagement et vole ver
 Le pas discret place un tir à l'entrée de la bulle et un à l'arrivée sur la cible : un poste réalise 8 à 9 tirs
 là où le § 5 en compte 8. Les tests d'acceptation (`tests/simulation.test.js`) vérifient cette fourchette et
 que les destructions valent tirs × Pk à l'intervalle de confiance près.
+
+## 9 · Géodésie et scénario v2 (jalon 0)
+### 9.1 Scénario v2 et catalogue
+Un scénario (`scenarios/*.json`, format 2) cite ses unités par identifiant ; chaque unité est un fichier de
+`unites/` (public, notionnel) ou de `prive/unites/` (hors git, identifiant préfixé `prive/`). Une unité hérite des
+clés de son parent (`herite_de`) ; toute clé porte sa phrase d'aide chez elle ou chez un ancêtre. Le scénario peut
+remplacer une valeur d'unité (`surcharges`, `surcharges_emport`). La résolution rend un scénario en SI où chaque groupe
+porte ses propres paramètres : la flotte peut être hétérogène. Toute valeur se modifie par son chemin
+(`bleu.avions.1.nombre`, `rouge.surcharges.vitesse_kmh`), que ce soit dans l'interface, un balayage ou la ligne de commande.
+Un scénario v1 (clés plates de la v0.1) est migré à la lecture ; la migration est vérifiée par les tests.
+
+### 9.2 Ellipsoïde et repères
+WGS84 : a = 6 378 137 m, f = 1/298,257 223 563. Une position est (φ, λ, h) en radians et mètres ; sa position
+géocentrique (ECEF) est gardée en cache. Deux distances, chacune à sa place :
+- **oblique** (ligne droite ECEF) pour tout ce que mesure un capteur ou ce que couvre une arme : portées, bulles sol ;
+- **géodésique** (Vincenty, sur l'ellipsoïde) pour la couverture radar autour du centre et le placement des entités.
+
+Vincenty est vérifié sur les exemples publiés de GeographicLib (JFK → Heathrow, Wellington → Salamanque, ce dernier
+presque antipodal) à mieux que le millimètre. La méthode ne converge pas pour des points exactement antipodaux : elle
+lève alors une erreur plutôt que de rendre une valeur fausse.
+
+### 9.3 Mouvement à altitude constante
+À chaque pas, la direction du but est recalculée dans le plan tangent local (Est, Nord, Haut) et le mobile avance de
+v·Δt horizontalement, par les rayons de courbure méridien M et normal N :
+Δφ = Δn / (M + h), Δλ = Δe / ((N + h) cos φ). Recalculer la direction à chaque pas fait suivre la géodésique : sur
+100 km par pas de 111 m, la longueur parcourue diffère de la géodésique de moins de 10 m (test).
+
+### 9.4 Interception en trois dimensions
+Le trinôme du § 8.3 se résout en ECEF, vecteurs à trois composantes. L'extrapolation rectiligne d'une piste suit la
+corde et passe sous la surface d'environ d²/8R (≈ 785 m à 200 km) : on ne garde que la latitude et la longitude du
+point extrapolé, et l'avion y vole à l'altitude de son groupe. Les portées d'arme sont des distances obliques : un avion
+à 1 000 m atteint un drone à 100 m jusqu'à √(8² − 0,9²) ≈ 7,95 km de distance au sol.
+
+### 9.5 Index spatial
+Cases cubiques de 12 km en ECEF, sans singularité aux pôles ni à l'antiméridien. Une recherche parcourt les cases du
+cube englobant, ou les cases occupées quand elles sont moins nombreuses. 12 km est le compromis mesuré entre essaim
+compact et essaim dispersé ; la taille des cases ne change aucun résultat, seulement le temps de calcul.
+
+### 9.6 Équivalence avec la v0.1
+Le moteur plan de la v0.1 a été figé en statistiques (`tests/references_v01.json`, 20 raids par tactique). Le moteur
+géodésique doit les retrouver à moins de 3 σ sur l'écart des moyennes des frappes et des destructions air et sol
+(`tests/equivalence_v01.test.js`), alors que la géométrie diffère (ellipsoïde, avions à 1 000 m, azimuts comptés depuis
+le nord). Les graines étant fixées, ce test est déterministe.
+
+### 9.7 Affichage
+Le scope projette les positions en azimutale équidistante sphérique autour du centre (rayon moyen 6 371 008,8 m) :
+les distances au centre sont exactes à 0,5 % près jusqu'à 300 km, et les anneaux restent des cercles. Cette projection
+ne sert qu'à l'affichage ; aucun calcul du moteur ne l'utilise.

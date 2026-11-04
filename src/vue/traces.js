@@ -18,7 +18,7 @@ export function echantillonner(traces, monde) {
       continue;
     }
     const plots = traces.plots.get(drone.id) ?? [];
-    plots.push({...drone.position});
+    plots.push({lat: drone.geo.lat, lon: drone.geo.lon});
     if (plots.length > HISTORIQUE) plots.shift();
     traces.plots.set(drone.id, plots);
   }

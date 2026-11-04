@@ -91,7 +91,7 @@ def _section_postes(scenario: Scenario, concentration: int) -> list[str]:
         avec = postes_sol_totaux(scenario, drones, scenario.avions_nombre, scenario.avions_vitesse)
         engages = avions_sur_groupe(scenario, scenario.avions_nombre, scenario.avions_vitesse, drones)
         lignes.append(_ligne_tableau([libelle, sans, avec, f"{engages:.1f}"]))
-    stock = scenario.sol_roquettes_nombre + scenario.sol_missiles_nombre
+    stock = scenario.sol_munitions
     besoin = scenario.drones_nombre / scenario.sol_pk
     lignes += ["", f"Munitions sol pour tout l'essaim sans avions : {besoin:.0f} tirs pour un stock de {stock}."]
     return lignes

@@ -3,9 +3,10 @@ import {mener_campagne} from "../moteur/campagne.js";
 import {modifier_scenario} from "../moteur/scenario.js";
 
 self.addEventListener("message", ({data}) => {
-  const {brut, cle, valeurs, tirages} = data;
+  const {brut, fichiers, chemins, valeurs, tirages} = data;
   valeurs.forEach((valeur, indice) => {
-    const resume = mener_campagne(modifier_scenario(brut, {[cle]: valeur}), tirages);
+    const modifications = Object.fromEntries(chemins.map((chemin) => [chemin, valeur]));
+    const resume = mener_campagne(modifier_scenario(brut, modifications), tirages, fichiers);
     self.postMessage({type: "point", indice, valeur, resume});
   });
   self.postMessage({type: "fin"});

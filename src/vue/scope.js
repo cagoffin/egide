@@ -1,5 +1,5 @@
 // Le scope : assemble le fond et les entités dans l'ordre de lecture, et retrouve l'entité sous le curseur.
-import {vers_ecran} from "./camera.js";
+import {geo_vers_ecran} from "./camera.js";
 import {dessiner_anneaux, dessiner_balayage, dessiner_echelle} from "./cadre.js";
 import {COULEURS} from "./couleurs.js";
 import {dessiner_avions, dessiner_cibles, dessiner_drones, dessiner_tirs} from "./symboles.js";
@@ -23,7 +23,7 @@ export function dessiner_scope(ctx, camera, etat) {
 }
 
 function dessiner_survol(ctx, camera, survol) {
-  const ecran = vers_ecran(camera, survol.objet.position ?? survol.objet);
+  const ecran = geo_vers_ecran(camera, survol.objet.geo);
   ctx.strokeStyle = COULEURS.texte;
   ctx.lineWidth = 1;
   ctx.beginPath();
@@ -35,7 +35,7 @@ function plus_proche_ecran(camera, elements, position, ecran, rayonPx) {
   let retenu = null;
   let meilleure = rayonPx;
   for (const element of elements) {
-    const point = vers_ecran(camera, position(element));
+    const point = geo_vers_ecran(camera, position(element));
     const ecart = Math.hypot(point.x - ecran.x, point.y - ecran.y);
     if (ecart <= meilleure) {
       meilleure = ecart;
@@ -47,14 +47,14 @@ function plus_proche_ecran(camera, elements, position, ecran, rayonPx) {
 
 /** Rendre l'entité sous la position écran `ecran` : avion, cible ou drone en vol (dans cet ordre), ou null. */
 export function trouver_sous_curseur(camera, monde, ecran) {
-  const avion = plus_proche_ecran(camera, monde.avions, (a) => a.position, ecran, 10);
+  const avion = plus_proche_ecran(camera, monde.avions, (a) => a.geo, ecran, 10);
   if (avion) return {type: "avion", objet: avion};
   const indice = monde.cibles.findIndex((cible) => {
-    const point = vers_ecran(camera, cible);
+    const point = geo_vers_ecran(camera, cible.geo);
     return Math.abs(point.x - ecran.x) <= 8 && Math.abs(point.y - ecran.y) <= 8;
   });
   if (indice >= 0) return {type: "cible", objet: monde.cibles[indice], indice};
   const enVol = monde.drones.filter((d) => d.vivant && !d.arrive && monde.t >= d.depart);
-  const drone = plus_proche_ecran(camera, enVol, (d) => d.position, ecran, 8);
+  const drone = plus_proche_ecran(camera, enVol, (d) => d.geo, ecran, 8);
   return drone ? {type: "drone", objet: drone} : null;
 }

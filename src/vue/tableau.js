@@ -21,7 +21,7 @@ function frappes_par_cible(racine, monde) {
   if (liste.children.length !== monde.cibles.length) {
     liste.innerHTML = monde.cibles.map((_, i) => `<li><span>C${i + 1}</span><span class="barre"><i></i></span><b>0</b></li>`).join("");
   }
-  const maximum = Math.max(1, monde.scenario.drones_concentration_max);
+  const maximum = Math.max(1, monde.scenario.rouge.concentration_max);
   [...liste.children].forEach((ligne, i) => {
     ligne.querySelector("i").style.inlineSize = `${Math.min(100, (100 * monde.fuites[i]) / maximum)}%`;
     ligne.querySelector("b").textContent = format_entier(monde.fuites[i]);
@@ -36,8 +36,9 @@ export function mettre_a_jour_tableau(racine, monde) {
   remplir(racine, "detruits_sol", format_entier(monde.compteurs.detruits_sol));
   remplir(racine, "frappes", format_entier(somme(monde.fuites.map((n) => ({n})), "n")));
   const {scenario} = monde;
-  jauge(racine, "munitions_air", somme(monde.avions, "munitions"), scenario.avions_nombre * scenario.avions_roquettes_par_avion);
-  jauge(racine, "munitions_sol", somme(monde.postes, "munitions"), monde.postes.length ? scenario.sol_roquettes_nombre + scenario.sol_missiles_nombre : 0);
+  const emportTotal = scenario.avions.reduce((total, groupe) => total + groupe.nombre * groupe.emport_nombre, 0);
+  jauge(racine, "munitions_air", somme(monde.avions, "munitions"), emportTotal);
+  jauge(racine, "munitions_sol", somme(monde.postes, "munitions"), monde.postes.length ? scenario.sol.munitions : 0);
   for (const [etat] of ETATS) remplir(racine, `avions_${etat}`, format_entier(monde.avions.filter((a) => a.etat === etat && a.munitions > 0).length));
   remplir(racine, "avions_vides", format_entier(monde.avions.filter((a) => a.munitions === 0).length));
   frappes_par_cible(racine, monde);

@@ -26,7 +26,7 @@ export function dessiner_anneaux(ctx, camera, monde) {
   }
   ctx.strokeStyle = COULEURS.texte_secondaire;
   ctx.lineWidth = 1.5;
-  cercle(ctx, camera, monde.scenario.zone_rayon);
+  cercle(ctx, camera, monde.scenario.theatre.zone_rayon);
   ctx.setLineDash([6, 6]);
   ctx.strokeStyle = COULEURS.ami;
   ctx.lineWidth = 1;

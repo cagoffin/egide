@@ -1,11 +1,10 @@
 import {test} from "node:test";
 import assert from "node:assert/strict";
 import {creer_hasard, melanger} from "../src/moteur/hasard.js";
-import {ScenarioInvalide, lire_scenario} from "../src/moteur/scenario.js";
 import {resumer} from "../src/moteur/statistiques.js";
 import {delai_interception} from "../src/moteur/defense_air.js";
 import {repartir_drones} from "../src/moteur/menace.js";
-import {REFERENCE, scenario} from "./aide_scenario.js";
+import {scenario} from "./aide_scenario.js";
 
 test("hasard : une même graine rejoue la même suite", () => {
   const a = creer_hasard(7), b = creer_hasard(7);
@@ -20,20 +19,6 @@ test("melanger : permutation des mêmes éléments", () => {
   assert.deepEqual(melanger([1, 2, 3, 4, 5], creer_hasard(3)).sort(), [1, 2, 3, 4, 5]);
 });
 
-test("scénario de référence : converti en SI", () => {
-  const s = scenario();
-  assert.equal(s.zone_rayon, 150_000);
-  assert.ok(Math.abs(s.drones_vitesse - 222.222) < 1e-3);
-});
-test("scénario : clé manquante refusée", () => {
-  const {sol_pk: _, ...sansPk} = REFERENCE;
-  assert.throws(() => lire_scenario({...sansPk, _aide: {...REFERENCE._aide}}), ScenarioInvalide);
-});
-test("scénario : clé sans phrase d'aide refusée", () => {
-  const {graine: _, ...aide} = REFERENCE._aide;
-  assert.throws(() => lire_scenario({...REFERENCE, _aide: aide}), /_aide/);
-});
-
 test("statistiques : moyenne, écart-type et IC à 95 %", () => {
   const resume = resumer([1, 2, 3]);
   assert.equal(resume.moyenne, 2);
@@ -42,21 +27,26 @@ test("statistiques : moyenne, écart-type et IC à 95 %", () => {
 });
 
 test("répartition : au plus la concentration maximale par cible, en ceil(n / c) groupes", () => {
-  const cibles = repartir_drones(scenario({drones_concentration_max: 300}), creer_hasard(1));
+  const cibles = repartir_drones(scenario({"rouge.concentration_max": 300}), creer_hasard(1));
   const parCible = Object.values(Object.groupBy(cibles, (c) => c)).map((groupe) => groupe.length);
   assert.equal(parCible.length, 4);
   assert.ok(parCible.every((n) => n <= 300));
 });
 
+const DRONE_DE_FACE = {position: {x: 50_000, y: 0, z: 0}, vitesse: {x: -222.222, y: 0, z: 0}};
 test("délai d'interception : drone de face à 50 km, rapprochement à 361 m/s, portée 8 km → 116 s", () => {
-  const drone = {position: {x: 50_000, y: 0}, vitesse: {x: -222.222, y: 0}};
-  assert.ok(Math.abs(delai_interception({x: 0, y: 0}, drone, 138.889, 8_000) - 42_000 / 361.111) < 0.01);
+  assert.ok(Math.abs(delai_interception({x: 0, y: 0, z: 0}, DRONE_DE_FACE, 138.889, 8_000) - 42_000 / 361.111) < 0.01);
+});
+test("délai d'interception : invariant par rotation du repère 3D", () => {
+  const c = Math.SQRT1_2;
+  const tourne = {position: {x: 0, y: 50_000 * c, z: 50_000 * c}, vitesse: {x: 0, y: -222.222 * c, z: -222.222 * c}};
+  assert.ok(Math.abs(delai_interception({x: 0, y: 0, z: 0}, tourne, 138.889, 8_000) - 42_000 / 361.111) < 0.01);
 });
 test("délai d'interception : nul quand le drone est déjà à portée", () => {
-  const drone = {position: {x: 5_000, y: 0}, vitesse: {x: 222, y: 0}};
-  assert.equal(delai_interception({x: 0, y: 0}, drone, 138.889, 8_000), 0);
+  const drone = {position: {x: 5_000, y: 0, z: 1_000}, vitesse: {x: 222, y: 0, z: 0}};
+  assert.equal(delai_interception({x: 0, y: 0, z: 0}, drone, 138.889, 8_000), 0);
 });
 test("délai d'interception : impossible quand le drone, plus rapide, s'éloigne", () => {
-  const drone = {position: {x: 50_000, y: 0}, vitesse: {x: 222.222, y: 0}};
-  assert.equal(delai_interception({x: 0, y: 0}, drone, 138.889, 8_000), null);
+  const drone = {position: {x: 50_000, y: 0, z: 0}, vitesse: {x: 222.222, y: 0, z: 0}};
+  assert.equal(delai_interception({x: 0, y: 0, z: 0}, drone, 138.889, 8_000), null);
 });

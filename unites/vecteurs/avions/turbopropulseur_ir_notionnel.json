@@ -1,0 +1,6 @@
+{
+  "herite_de": "vecteurs/avions/_avion",
+  "nom": "Turbopropulseur d'appui, roquettes IR (notionnel)",
+  "sources": ["Ordre de grandeur notionnel : classe des turbopropulseurs d'appui leger, 450 a 600 km/h"],
+  "emport": "effecteurs/roquettes/roquette_guidee_ir_notionnelle"
+}

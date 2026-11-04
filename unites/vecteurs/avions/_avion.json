@@ -1,0 +1,16 @@
+{
+  "_aide": {
+    "_": "Base des avions de la couche aerienne : mise a poste puis engagement (MODELE § 3 et § 8.4).",
+    "vitesse_mise_a_poste_kmh": "Vitesse de ralliement vers un point d'interception (et non de poursuite).",
+    "vitesse_engagement_kmh": "Vitesse une fois a poste, pendant le tir : fixe la fenetre de tir (MODELE § 4.1).",
+    "facteur_charge_max_g": "Facteur de charge maximal en virage.",
+    "emport": "Identifiant de l'arme emportee (catalogue des effecteurs).",
+    "emport_nombre": "Nombre d'armes emportees, sans rechargement pendant le raid."
+  },
+  "herite_de": "_unite",
+  "vitesse_mise_a_poste_kmh": 500,
+  "vitesse_engagement_kmh": 350,
+  "facteur_charge_max_g": 5,
+  "emport": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+  "emport_nombre": 12
+}

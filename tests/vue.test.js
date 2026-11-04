@@ -48,3 +48,32 @@ test("graphique : graduations rondes, 4 à 8 intervalles", () => {
     assert.ok([1, 2, 5].includes(Math.round(pas / 10 ** Math.floor(Math.log10(pas)))), `${pas}`);
   }
 });
+
+import {projeter} from "../src/vue/camera.js";
+import {aide_chemin, valeur_effective} from "../src/vue/chemins.js";
+import {direct, geo_deg} from "../src/moteur/geodesie.js";
+import {FICHIERS, REFERENCE} from "./aide_scenario.js";
+
+test("projection : la distance au centre est conservée à 0,5 % près jusqu'à 300 km", () => {
+  const origine = geo_deg(47, 2.5);
+  for (const azimut of [0, 1, 2.5, 4]) {
+    const point = direct(origine, azimut, 300_000);
+    const plan = projeter(origine, point);
+    assert.ok(Math.abs(Math.hypot(plan.x, plan.y) - 300_000) < 1500);
+  }
+});
+test("projection : le nord est en haut, l'est à droite", () => {
+  const origine = geo_deg(47, 2.5);
+  assert.ok(projeter(origine, direct(origine, 0, 10_000)).y > 9_000);
+  assert.ok(projeter(origine, direct(origine, Math.PI / 2, 10_000)).x > 9_000);
+});
+test("chemins : une surcharge absente affiche la valeur de l'unité, une présente l'emporte", () => {
+  assert.equal(valeur_effective(REFERENCE, FICHIERS, "rouge.surcharges.vitesse_kmh"), 800);
+  assert.equal(valeur_effective(REFERENCE, FICHIERS, "bleu.avions.0.surcharges_emport.portee_km"), 8);
+  assert.equal(valeur_effective(REFERENCE, FICHIERS, "bleu.avions.1.nombre"), 30);
+});
+test("chemins : l'aide vient du scénario, d'un tableau du scénario ou du fichier d'unité", () => {
+  assert.match(aide_chemin(REFERENCE, FICHIERS, "rouge.concentration_max"), /meme cible/);
+  assert.match(aide_chemin(REFERENCE, FICHIERS, "bleu.avions.1.nombre"), /groupe/);
+  assert.match(aide_chemin(REFERENCE, FICHIERS, "bleu.avions.1.surcharges_emport.duree_designation_s"), /designation/);
+});

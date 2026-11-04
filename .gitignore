@@ -9,3 +9,5 @@ node_modules/
 data/sources/
 resultats/
 _to_delete/
+# Catalogue prive (unites et algorithmes reels) : jamais dans le depot public. Peut etre un lien vers un depot prive.
+prive/

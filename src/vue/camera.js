@@ -1,8 +1,25 @@
-// Passage monde (m, nord en haut) ↔ écran (px, y vers le bas), zoom et déplacement. Pur, testé.
+// Passage monde ↔ écran. Le monde est vu en projection azimutale équidistante autour du centre du théâtre :
+// les distances au centre sont exactes, les anneaux de distance restent des cercles. Pur, testé.
 
-/** Rendre une caméra qui montre un disque de `rayonVisible` m dans un canevas `largeur` × `hauteur` px. */
-export function creer_camera(largeur, hauteur, rayonVisible) {
-  return {largeur, hauteur, echelle: Math.min(largeur, hauteur) / (2 * rayonVisible), centre: {x: 0, y: 0}};
+// Rayon moyen de la Terre (IUGG) : la projection sert l'affichage, la sphère suffit (écart < 0,5 % à 300 km).
+const RAYON_MOYEN = 6_371_008.8;
+
+/** Rendre le point plan {x vers l'est, y vers le nord} (m) d'une position géographique (rad), autour de `origine`. */
+export function projeter(origine, {lat, lon}) {
+  const dLon = lon - origine.lon;
+  const cosC = Math.sin(origine.lat) * Math.sin(lat) + Math.cos(origine.lat) * Math.cos(lat) * Math.cos(dLon);
+  const c = Math.acos(Math.min(1, Math.max(-1, cosC)));
+  if (c < 1e-12) return {x: 0, y: 0};
+  const k = c / Math.sin(c);
+  return {
+    x: RAYON_MOYEN * k * Math.cos(lat) * Math.sin(dLon),
+    y: RAYON_MOYEN * k * (Math.cos(origine.lat) * Math.sin(lat) - Math.sin(origine.lat) * Math.cos(lat) * Math.cos(dLon)),
+  };
+}
+
+/** Rendre une caméra centrée sur `origine` (géo) qui montre un disque de `rayonVisible` m dans `largeur` × `hauteur` px. */
+export function creer_camera(largeur, hauteur, rayonVisible, origine = {lat: 0, lon: 0}) {
+  return {largeur, hauteur, origine, echelle: Math.min(largeur, hauteur) / (2 * rayonVisible), centre: {x: 0, y: 0}};
 }
 
 /** Rendre la position écran (px) d'un point du monde (m). */
@@ -10,6 +27,9 @@ export const vers_ecran = (camera, point) => ({
   x: camera.largeur / 2 + (point.x - camera.centre.x) * camera.echelle,
   y: camera.hauteur / 2 - (point.y - camera.centre.y) * camera.echelle,
 });
+
+/** Rendre la position écran (px) d'une position géographique. */
+export const geo_vers_ecran = (camera, geo) => vers_ecran(camera, projeter(camera.origine, geo));
 
 /** Rendre le point du monde (m) sous une position écran (px). */
 export const vers_monde = (camera, ecran) => ({

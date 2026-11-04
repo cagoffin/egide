@@ -12,8 +12,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Tests JavaScript (moteur de simulation)
-        run: npm test
+      - name: Tests JavaScript (moteur, dont l'équivalence avec la v0.1)
+        run: npm run test:complet
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"

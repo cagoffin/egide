@@ -1,0 +1,18 @@
+{
+  "_aide": {
+    "_": "Base des roquettes guidees tirees d'avion (MODELE § 4 et § 8.5).",
+    "guidage": "'laser' : l'avion designe jusqu'a l'impact et ne tire pas entre-temps ; 'ir' : tire et oublie.",
+    "portee_km": "Portee utile, mesuree en distance oblique du tireur au drone.",
+    "pk": "Probabilite de destruction par tir.",
+    "duree_designation_s": "Guidage laser : duree de designation, egale au temps de vol jusqu'a l'impact.",
+    "cadence_s": "Guidage IR : intervalle minimal entre deux tirs d'un meme avion.",
+    "vitesse_ms": "Guidage IR : vitesse moyenne de la roquette, qui fixe son temps de vol."
+  },
+  "herite_de": "_unite",
+  "guidage": "laser",
+  "portee_km": 8,
+  "pk": 0.7,
+  "duree_designation_s": 10,
+  "cadence_s": 3,
+  "vitesse_ms": 700
+}

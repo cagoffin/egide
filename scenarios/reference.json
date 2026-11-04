@@ -1,71 +1,112 @@
 {
   "_aide": {
-    "_": "Scenario notionnel de reference (ordres de grandeur publics). Unites indiquees dans chaque nom de cle ; le moteur convertit en SI a la lecture.",
-    "zone_rayon_km": "Rayon du disque de territoire defendu.",
-    "cibles_nombre": "Nombre de cibles a proteger, disseminees dans la zone.",
-    "drones_nombre": "Taille totale de l'essaim.",
-    "drones_vitesse_kmh": "Vitesse de croisiere des drones, supposee constante.",
-    "drones_tactique": "Comportement de l'essaim : 'direct' (chaque groupe vient d'un cap tire au hasard), 'disperse' (chaque drone seul, departs etales), 'fourmi' (couloir compact puis eclatement) — MODELE § 8.2.",
-    "drones_concentration_max": "Nombre maximal de drones que l'attaquant porte sur une meme cible ; fixe le nombre de groupes (MODELE § 6.1).",
-    "drones_etalement_s": "Tactique 'disperse' : duree sur laquelle les departs sont etales.",
-    "fourmi_eclatement_rayon_km": "Tactique 'fourmi' : distance au centre de la zone ou le couloir eclate vers les cibles.",
-    "fourmi_largeur_couloir_km": "Tactique 'fourmi' : largeur du couloir compact.",
-    "drones_altitude_m": "Altitude de vol des drones ; fixe la portee de detection radar a l'horizon.",
-    "radar_hauteur_antenne_m": "Hauteur des antennes radar au sol.",
-    "radar_portee_max_km": "Portee instrumentee maximale, avant limitation par l'horizon.",
-    "delai_reaction_s": "Duree detection -> decision -> ordre de mise a poste.",
-    "interception_profondeur_km": "Profondeur dans la zone, depuis la frontiere, ou l'on veut intercepter (MODELE § 3.2).",
-    "avions_nombre": "Nombre d'avions en orbite dans la zone.",
-    "avions_ir_nombre": "Parmi eux, nombre d'avions armes en guidage IR (tire et oublie) ; les autres sont en guidage laser.",
-    "avions_vitesse_kmh": "Vitesse de mise a poste (et non de poursuite) des avions.",
-    "avions_vitesse_engagement_kmh": "Vitesse de l'avion une fois a poste, pendant le tir : fixe la fenetre de tir (MODELE § 4.1), independamment de la vitesse de mise a poste.",
-    "avions_facteur_charge_max": "Facteur de charge maximal en virage, en g.",
-    "avions_roquettes_par_avion": "Emport de roquettes guidees par avion, sans rechargement pendant le raid.",
-    "avions_pas_decision_s": "Periode de replanification des mises a poste par le centre de conduite (MODELE § 8.4).",
-    "roquette_air_portee_km": "Portee utile des roquettes guidees tirees d'avion.",
-    "roquette_air_pk": "Probabilite de destruction par tir.",
-    "laser_duree_designation_s": "Duree de designation par tir laser (le tir suivant attend l'impact).",
-    "ir_cadence_s": "Intervalle minimal entre deux tirs IR d'un meme avion.",
-    "sol_roquettes_nombre": "Stock total de roquettes sol-air.",
-    "sol_missiles_nombre": "Stock total de missiles sol-air.",
-    "sol_postes_nombre": "Nombre de postes sol-air, repartis a parts egales sur les cibles ; le stock de munitions est partage entre eux.",
-    "sol_portee_km": "Rayon de la bulle d'engagement d'un poste sol.",
-    "sol_pk": "Probabilite de destruction par tir sol.",
-    "sol_engagements_par_passage": "Tirs utiles d'un poste pendant la traversee de sa bulle par une vague.",
-    "simulation_pas_s": "Pas de temps de la simulation ; 0,5 s = 111 m parcourus par un drone a 800 km/h.",
-    "graine": "Graine du generateur aleatoire : meme graine, meme deroulement."
+    "_": "Scenario Egide, format 2 : les unites sont referencees dans le catalogue unites/ (ou prive/unites/). Unites d'affichage indiquees par le suffixe de chaque cle.",
+    "format": "Version du format de scenario.",
+    "nom": "Nom affiche du scenario.",
+    "theatre": "Ou se joue le raid.",
+    "rouge": "Force attaquante : l'essaim.",
+    "bleu": "Defense : avions, postes sol, radar, conduite.",
+    "simulation": "Reglages du calcul."
   },
-  "zone_rayon_km": 150,
-  "cibles_nombre": 10,
-  "drones_nombre": 1000,
-  "drones_vitesse_kmh": 800,
-  "drones_tactique": "fourmi",
-  "drones_concentration_max": 300,
-  "drones_etalement_s": 120,
-  "fourmi_eclatement_rayon_km": 60,
-  "fourmi_largeur_couloir_km": 6,
-  "drones_altitude_m": 100,
-  "radar_hauteur_antenne_m": 20,
-  "radar_portee_max_km": 250,
-  "delai_reaction_s": 90,
-  "interception_profondeur_km": 50,
-  "avions_nombre": 50,
-  "avions_ir_nombre": 20,
-  "avions_vitesse_kmh": 500,
-  "avions_vitesse_engagement_kmh": 350,
-  "avions_facteur_charge_max": 5,
-  "avions_roquettes_par_avion": 12,
-  "avions_pas_decision_s": 5,
-  "roquette_air_portee_km": 8,
-  "roquette_air_pk": 0.7,
-  "laser_duree_designation_s": 10,
-  "ir_cadence_s": 3,
-  "sol_roquettes_nombre": 1000,
-  "sol_missiles_nombre": 20,
-  "sol_postes_nombre": 200,
-  "sol_portee_km": 8,
-  "sol_pk": 0.7,
-  "sol_engagements_par_passage": 8,
-  "simulation_pas_s": 0.5,
-  "graine": 42
+  "format": 2,
+  "nom": "Référence : 1 000 drones rapides contre une défense mixte",
+  "theatre": {
+    "_aide": {
+      "origine_lat_deg": "Latitude du centre de la zone defendue (WGS84).",
+      "origine_lon_deg": "Longitude du centre de la zone defendue (WGS84).",
+      "zone_rayon_km": "Rayon du disque defendu, mesure le long de l'ellipsoide.",
+      "cibles_nombre": "Nombre de cibles a proteger, tirees au hasard dans 70 % du rayon."
+    },
+    "origine_lat_deg": 47,
+    "origine_lon_deg": 2.5,
+    "zone_rayon_km": 150,
+    "cibles_nombre": 10
+  },
+  "rouge": {
+    "_aide": {
+      "unite": "Identifiant du drone dans le catalogue.",
+      "nombre": "Taille de l'essaim.",
+      "tactique": "'direct' (groupes venant chacun d'un cap), 'disperse' (drones isoles, departs etales), 'fourmi' (couloir compact puis eclatement) — MODELE § 8.2.",
+      "concentration_max": "Nombre maximal de drones portes sur une meme cible ; fixe le nombre de groupes (MODELE § 6.1).",
+      "etalement_s": "Tactique 'disperse' : duree sur laquelle les departs sont etales.",
+      "fourmi_eclatement_rayon_km": "Tactique 'fourmi' : distance au centre ou le couloir eclate vers les cibles.",
+      "fourmi_largeur_couloir_km": "Tactique 'fourmi' : largeur du couloir compact.",
+      "surcharges": "Valeurs qui remplacent celles de l'unite pour ce scenario (cles et unites du fichier d'unite)."
+    },
+    "unite": "vecteurs/drones/drone_reaction_notionnel",
+    "nombre": 1000,
+    "tactique": "fourmi",
+    "concentration_max": 300,
+    "etalement_s": 120,
+    "fourmi_eclatement_rayon_km": 60,
+    "fourmi_largeur_couloir_km": 6,
+    "surcharges": {}
+  },
+  "bleu": {
+    "_aide": {
+      "avions": "Groupes d'avions en orbite ; chaque groupe a son type et son effectif.",
+      "avions[].unite": "Identifiant de l'avion dans le catalogue.",
+      "avions[].nombre": "Nombre d'avions du groupe.",
+      "avions[].altitude_m": "Altitude de vol du groupe, en orbite comme en mise a poste.",
+      "avions[].surcharges": "Valeurs qui remplacent celles de l'avion pour ce groupe.",
+      "avions[].surcharges_emport": "Valeurs qui remplacent celles de son arme pour ce groupe.",
+      "sol": "Postes sol-air, repartis a parts egales sur les cibles.",
+      "radar": "Couverture radar : continue le long de la frontiere, a l'horizon du type de radar choisi (MODELE § 2).",
+      "conduite": "Centre de conduite des avions."
+    },
+    "avions": [
+      {
+        "unite": "vecteurs/avions/turbopropulseur_ir_notionnel",
+        "nombre": 20,
+        "altitude_m": 1000,
+        "surcharges": {},
+        "surcharges_emport": {}
+      },
+      {
+        "unite": "vecteurs/avions/turbopropulseur_laser_notionnel",
+        "nombre": 30,
+        "altitude_m": 1000,
+        "surcharges": {},
+        "surcharges_emport": {}
+      }
+    ],
+    "sol": {
+      "_aide": {
+        "unite": "Identifiant du poste dans le catalogue.",
+        "nombre": "Nombre de postes sol-air.",
+        "munitions": "Stock total de munitions sol, partage a parts egales entre les postes.",
+        "surcharges": "Valeurs qui remplacent celles du poste pour ce scenario."
+      },
+      "unite": "sites/postes/poste_sol_air_notionnel",
+      "nombre": 200,
+      "munitions": 1020,
+      "surcharges": {}
+    },
+    "radar": {
+      "_aide": {
+        "unite": "Identifiant du radar dans le catalogue.",
+        "surcharges": "Valeurs qui remplacent celles du radar pour ce scenario."
+      },
+      "unite": "capteurs/radars/radar_basse_altitude_notionnel",
+      "surcharges": {}
+    },
+    "conduite": {
+      "_aide": {
+        "delai_reaction_s": "Duree detection -> decision -> ordre de mise a poste.",
+        "pas_decision_s": "Periode de replanification des mises a poste (MODELE § 8.3).",
+        "interception_profondeur_km": "Profondeur dans la zone ou l'on veut intercepter ; sert aux abaques (MODELE § 3.2)."
+      },
+      "delai_reaction_s": 90,
+      "pas_decision_s": 5,
+      "interception_profondeur_km": 50
+    }
+  },
+  "simulation": {
+    "_aide": {
+      "pas_s": "Pas de temps ; 0,5 s = 111 m parcourus par un drone a 800 km/h.",
+      "graine": "Graine du generateur aleatoire : meme graine, meme deroulement."
+    },
+    "pas_s": 0.5,
+    "graine": 42
+  }
 }

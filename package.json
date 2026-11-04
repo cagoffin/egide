@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test \"tests/*.test.js\""
+    "test": "node --test --test-skip-pattern=\"équivalence v0.1\" \"tests/*.test.js\"",
+    "test:complet": "node --test \"tests/*.test.js\""
   }
 }

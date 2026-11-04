@@ -1,0 +1,10 @@
+{
+  "_aide": {
+    "_": "Base des drones d'attaque : vol a vitesse et altitude constantes, sans reaction a la defense (MODELE § 8.2).",
+    "vitesse_kmh": "Vitesse de croisiere, supposee constante.",
+    "altitude_croisiere_m": "Altitude de vol au-dessus de l'ellipsoide ; fixe la portee de detection radar a l'horizon."
+  },
+  "herite_de": "_unite",
+  "vitesse_kmh": 185,
+  "altitude_croisiere_m": 100
+}

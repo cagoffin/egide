@@ -1,0 +1,70 @@
+{
+  "_aide": {
+    "_": "Statistiques du moteur v0.1 (plan, avant la géodésie), figées au commit 0dd826a : le moteur v2 doit les retrouver (tests/equivalence_v01.test.js).",
+    "tirages": "Raids par tactique, graines 42 à 61.",
+    "tactiques": "Résumé par tactique : moyenne, écart-type, demi-largeur IC 95 %, effectif."
+  },
+  "tirages": 20,
+  "tactiques": {
+    "direct": {
+      "fuites": {
+        "moyenne": 401.65,
+        "ecart_type": 75.17927695988121,
+        "ic95": 32.9487708611893,
+        "effectif": 20
+      },
+      "detruits_air": {
+        "moyenne": 258.25,
+        "ecart_type": 34.50838952151231,
+        "ic95": 15.123968533772024,
+        "effectif": 20
+      },
+      "detruits_sol": {
+        "moyenne": 340.1,
+        "ecart_type": 57.82814830895163,
+        "ic95": 25.34430344382405,
+        "effectif": 20
+      }
+    },
+    "disperse": {
+      "fuites": {
+        "moyenne": 187.65,
+        "ecart_type": 23.642679962082845,
+        "ic95": 10.36186135483592,
+        "effectif": 20
+      },
+      "detruits_air": {
+        "moyenne": 406.45,
+        "ecart_type": 9.461695630833105,
+        "ic95": 4.146770944139293,
+        "effectif": 20
+      },
+      "detruits_sol": {
+        "moyenne": 405.9,
+        "ecart_type": 20.759018331926566,
+        "ic95": 9.09804092272501,
+        "effectif": 20
+      }
+    },
+    "fourmi": {
+      "fuites": {
+        "moyenne": 408.05,
+        "ecart_type": 71.55084684481747,
+        "ic95": 31.358541248966887,
+        "effectif": 20
+      },
+      "detruits_air": {
+        "moyenne": 271.7,
+        "ecart_type": 37.04492294214518,
+        "ic95": 16.235653320296112,
+        "effectif": 20
+      },
+      "detruits_sol": {
+        "moyenne": 320.25,
+        "ecart_type": 51.440179871994594,
+        "ic95": 22.544652837844882,
+        "effectif": 20
+      }
+    }
+  }
+}

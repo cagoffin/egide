@@ -1,0 +1,160 @@
+{
+  "_aide": {
+    "_": "Scénario de référence résolu en SI par src/moteur/scenario.js : analyse/scenario.py doit rendre le même (tests/test_scenario.py), et ce fichier change seulement si le catalogue ou la référence change (tests/scenario.test.js).",
+    "resolu": "Le scénario résolu."
+  },
+  "resolu": {
+    "nom": "Référence : 1 000 drones rapides contre une défense mixte",
+    "theatre": {
+      "origine": {
+        "lat": 0.8203047484373349,
+        "lon": 0.04363323129985824,
+        "alt": 0
+      },
+      "zone_rayon": 150000,
+      "cibles_nombre": 10
+    },
+    "rouge": {
+      "id": "vecteurs/drones/drone_reaction_notionnel",
+      "nom": "Drone d'attaque a reaction (notionnel)",
+      "fidelite": "notionnel",
+      "sources": [
+        "Ordre de grandeur notionnel : classe des drones d'attaque a turboreacteur, 600 a 900 km/h, vol tres bas"
+      ],
+      "lignee": [
+        "_unite",
+        "vecteurs/drones/_drone",
+        "vecteurs/drones/drone_reaction_notionnel"
+      ],
+      "vitesse": 222.22222222222223,
+      "altitude_croisiere": 100,
+      "altitude": 100,
+      "nombre": 1000,
+      "tactique": "fourmi",
+      "concentration_max": 300,
+      "etalement": 120,
+      "fourmi_eclatement_rayon": 60000,
+      "fourmi_largeur_couloir": 6000
+    },
+    "avions": [
+      {
+        "id": "vecteurs/avions/turbopropulseur_ir_notionnel",
+        "nom": "Turbopropulseur d'appui, roquettes IR (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : classe des turbopropulseurs d'appui leger, 450 a 600 km/h"
+        ],
+        "lignee": [
+          "_unite",
+          "vecteurs/avions/_avion",
+          "vecteurs/avions/turbopropulseur_ir_notionnel"
+        ],
+        "vitesse_mise_a_poste": 138.88888888888889,
+        "vitesse_engagement": 97.22222222222223,
+        "facteur_charge_max": 5,
+        "emport": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+        "emport_nombre": 12,
+        "nombre": 20,
+        "altitude": 1000,
+        "arme": {
+          "id": "effecteurs/roquettes/roquette_guidee_ir_notionnelle",
+          "nom": "Roquette guidee infrarouge (notionnelle)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : classe des roquettes a autodirecteur infrarouge, tire et oublie"
+          ],
+          "lignee": [
+            "_unite",
+            "effecteurs/roquettes/_roquette_guidee",
+            "effecteurs/roquettes/roquette_guidee_ir_notionnelle"
+          ],
+          "guidage": "ir",
+          "portee": 8000,
+          "pk": 0.7,
+          "duree_designation": 10,
+          "cadence": 3,
+          "vitesse": 700
+        }
+      },
+      {
+        "id": "vecteurs/avions/turbopropulseur_laser_notionnel",
+        "nom": "Turbopropulseur d'appui, roquettes laser (notionnel)",
+        "fidelite": "notionnel",
+        "sources": [
+          "Ordre de grandeur notionnel : classe des turbopropulseurs d'appui leger, 450 a 600 km/h"
+        ],
+        "lignee": [
+          "_unite",
+          "vecteurs/avions/_avion",
+          "vecteurs/avions/turbopropulseur_laser_notionnel"
+        ],
+        "vitesse_mise_a_poste": 138.88888888888889,
+        "vitesse_engagement": 97.22222222222223,
+        "facteur_charge_max": 5,
+        "emport": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+        "emport_nombre": 12,
+        "nombre": 30,
+        "altitude": 1000,
+        "arme": {
+          "id": "effecteurs/roquettes/roquette_guidee_laser_notionnelle",
+          "nom": "Roquette guidee laser de 70 mm (notionnelle)",
+          "fidelite": "notionnel",
+          "sources": [
+            "Ordre de grandeur notionnel : classe des roquettes de 70 mm a guidage laser semi-actif, 5 a 10 km"
+          ],
+          "lignee": [
+            "_unite",
+            "effecteurs/roquettes/_roquette_guidee",
+            "effecteurs/roquettes/roquette_guidee_laser_notionnelle"
+          ],
+          "guidage": "laser",
+          "portee": 8000,
+          "pk": 0.7,
+          "duree_designation": 10,
+          "cadence": 3,
+          "vitesse": 700
+        }
+      }
+    ],
+    "sol": {
+      "id": "sites/postes/poste_sol_air_notionnel",
+      "nom": "Poste sol-air de courte portee (notionnel)",
+      "fidelite": "notionnel",
+      "sources": [
+        "Ordre de grandeur notionnel : defense sol-air tres courte portee, roquettes et missiles"
+      ],
+      "lignee": [
+        "_unite",
+        "sites/postes/poste_sol_air_notionnel"
+      ],
+      "portee": 8000,
+      "pk": 0.7,
+      "engagements_par_passage": 8,
+      "nombre": 200,
+      "munitions": 1020
+    },
+    "radar": {
+      "id": "capteurs/radars/radar_basse_altitude_notionnel",
+      "nom": "Radar de surveillance basse altitude (notionnel)",
+      "fidelite": "notionnel",
+      "sources": [
+        "Ordre de grandeur notionnel : radar de surveillance terrestre, antenne sur mat"
+      ],
+      "lignee": [
+        "_unite",
+        "capteurs/radars/radar_basse_altitude_notionnel"
+      ],
+      "hauteur_antenne": 20,
+      "portee_max": 250000
+    },
+    "conduite": {
+      "delai_reaction": 90,
+      "pas_decision": 5,
+      "interception_profondeur": 50000
+    },
+    "simulation": {
+      "pas": 0.5,
+      "graine": 42
+    }
+  }
+}

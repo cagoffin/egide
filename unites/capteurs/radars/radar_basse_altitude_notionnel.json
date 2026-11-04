@@ -1,0 +1,11 @@
+{
+  "_aide": {
+    "hauteur_antenne_m": "Hauteur de l'antenne au-dessus du sol ; avec l'altitude de la cible, fixe l'horizon radar (MODELE § 2).",
+    "portee_max_km": "Portee instrumentee maximale, avant limitation par l'horizon."
+  },
+  "herite_de": "_unite",
+  "nom": "Radar de surveillance basse altitude (notionnel)",
+  "sources": ["Ordre de grandeur notionnel : radar de surveillance terrestre, antenne sur mat"],
+  "hauteur_antenne_m": 20,
+  "portee_max_km": 250
+}

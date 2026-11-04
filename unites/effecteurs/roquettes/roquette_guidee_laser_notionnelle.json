@@ -1,0 +1,6 @@
+{
+  "herite_de": "effecteurs/roquettes/_roquette_guidee",
+  "nom": "Roquette guidee laser de 70 mm (notionnelle)",
+  "sources": ["Ordre de grandeur notionnel : classe des roquettes de 70 mm a guidage laser semi-actif, 5 a 10 km"],
+  "guidage": "laser"
+}

@@ -10,18 +10,32 @@ sol-air nécessaires sans avions**.
 Le scénario est **notionnel** : ordres de grandeur publics, aucune performance réelle de système identifié.
 Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phrase disant d'où elle vient.
 
-## Les trois étapes (détail dans docs/PLAN.md)
-1. Abaques analytiques (`analyse/`, Python) : formules fermées de docs/MODELE.md, courbes.
-2. Simulation multi-agents 2D (`src/moteur/`, JS pur) : Monte-Carlo à graine fixée.
-3. Interface graphique (`index.html`, `src/vue/`) : carte animée, curseurs, rejeu, tableaux de bord.
+## Feuille de route
+- v0.1 (docs/PLAN.md) : abaques (`analyse/`), simulation (`src/moteur/`), interface (`index.html`, `src/vue/`).
+- v2 (docs/PLAN_V2.md) : plateforme à la manière d'un jeu de stratégie vu de dessus — catalogue d'unités et
+  d'algorithmes en fichiers, Terre réelle avec relief, éditeur à la souris, physique expliquée, preuve de qualité.
+- **Proposer au fil de l'eau de nouvelles fonctions** et les consigner dans docs/PLAN_V2.md § Suggestions :
+  l'utilisateur y tient.
+
+## Catalogue et scénarios (MODELE § 9.1)
+- Une unité = un fichier `unites/<famille>/<classe>/<unite>.json`, héritage par `herite_de`, chaque clé documentée
+  dans `_aide` (chez elle ou un ancêtre), `fidelite` et `sources` obligatoires. Fichiers de base préfixés `_`.
+- Le catalogue public est **notionnel, par classe** : ordres de grandeur publics, sources citées, aucun système réel
+  identifié. Les modèles de systèmes réels vont dans `prive/` (ignoré par git), identifiants préfixés `prive/`.
+- Scénario v2 : unités citées par identifiant, valeurs modifiées par chemin (`bleu.avions.1.nombre`,
+  `rouge.surcharges.vitesse_kmh`) partout : interface, balayage, `node src/campagne.js --chemin valeur`.
+- Toute évolution de la résolution se fait dans `src/moteur/scenario.js` ET `analyse/scenario.py` ;
+  `tests/resolution_reference.json` garde les deux d'accord.
 
 ## Exigences : ludique ET rigoureux
 - Ludique : animation fluide (canvas, 60 i/s), curseurs à effet immédiat, rejeu accéléré/ralenti,
   traînées, explosions, compteurs vivants. Mais **chaque visuel se lit au chiffre** : unité affichée,
   échelle visible, valeur exacte au survol.
 - Rigoureux :
-  - Unités SI dans tout le moteur (m, s, m/s) ; conversions km, km/h, min **uniquement** aux frontières
-    (scénario, affichage), via les fonctions de `src/moteur/unites.js` / `analyse/unites.py`.
+  - Unités SI dans tout le moteur (m, s, m/s, rad) ; conversions km, km/h, degrés **uniquement** aux frontières
+    (scénario, affichage), via le suffixe des clés et `src/moteur/unites.js` / `analyse/unites.py`.
+  - Géodésie (MODELE § 9) : positions (lat, lon, alt) sur WGS84 avec ECEF en cache ; distances de capteur et d'arme
+    en oblique (ECEF), distances au sol en géodésique (Vincenty). Jamais de géométrie plane dans le moteur.
   - Chaque formule codée cite son paragraphe de docs/MODELE.md (`# MODELE § 3.2`) et inversement.
   - Hasard toujours à graine (générateur déterministe maison) : un résultat se rejoue à l'identique.
   - Toute statistique Monte-Carlo s'affiche avec son intervalle de confiance et le nombre de tirages.
@@ -65,7 +79,7 @@ Toute valeur chiffrée vient du scénario (`scenarios/*.json`) et porte une phra
 - Ne jamais tuer un processus qu'on n'a pas lancé soi-même.
 
 ## Vérifications avant commit
-- `npm test` (node --test) et `pytest -q tests`
+- `npm test` (rapide) et `pytest -q tests` ; `npm run test:complet` ajoute l'équivalence avec la v0.1 (~2 min, en CI)
 - `ruff check analyse tests` et `ruff format analyse tests`
 - Conventional commits en français (`feat:`, `fix:`, `docs:`, `chore:`), une branche par fonctionnalité,
   PR avec description et liste de contrôle.

@@ -1,15 +1,18 @@
 // Campagne Monte-Carlo sous Node : rejoue un scénario sur N graines et résume chaque grandeur avec son IC à 95 %.
 //
-//   node src/campagne.js                                        # scénario de référence, 50 tirages
-//   node src/campagne.js --tirages 200 --drones_tactique direct --avions_nombre 20
-//   node src/campagne.js --balayer avions_nombre=0,20,50,100     # une campagne par valeur
+//   node src/campagne.js                                            # scénario de référence, 50 tirages
+//   node src/campagne.js --tirages 200 --rouge.tactique direct --bleu.avions.1.nombre 10
+//   node src/campagne.js --balayer bleu.avions.1.nombre=0,10,30,60   # une campagne par valeur
+//   node src/campagne.js --scenario scenarios/autre.json             # un scénario v1 est migré à la lecture
 //
-// Toute clé du scénario (unités d'affichage) se surcharge par --cle valeur. Résultats : resultats/campagnes/*.json
+// Toute valeur du scénario se surcharge par son chemin (unités d'affichage), y compris celles d'une unité :
+// --rouge.surcharges.vitesse_kmh 600. Résultats : resultats/campagnes/*.json
 import {mkdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {GRANDEURS, mener_campagne} from "./moteur/campagne.js";
-import {modifier_scenario} from "./moteur/scenario.js";
+import {charger_unites_scenario} from "./moteur/catalogue_node.js";
+import {en_v2, modifier_scenario} from "./moteur/scenario.js";
 
 function lire_arguments(liste) {
   const options = {scenario: "scenarios/reference.json", tirages: 50, sortie: "resultats/campagnes", balayer: null};
@@ -37,20 +40,21 @@ function enregistrer(dossier, contenu) {
   return chemin;
 }
 
-function principal() {
+async function principal() {
   const {options, modifications} = lire_arguments(process.argv.slice(2));
-  const brut = modifier_scenario(JSON.parse(readFileSync(options.scenario, "utf-8")), modifications);
-  const [cleBalayee, liste] = options.balayer ? options.balayer.split("=") : [null, null];
-  const valeurs = cleBalayee ? liste.split(",").map(Number) : [null];
+  const brut = modifier_scenario(en_v2(JSON.parse(readFileSync(options.scenario, "utf-8"))), modifications);
+  const fichiers = await charger_unites_scenario(brut);
+  const [cheminBalaye, liste] = options.balayer ? options.balayer.split("=") : [null, null];
+  const valeurs = cheminBalaye ? liste.split(",").map(Number) : [null];
   const resultats = valeurs.map((valeur) => {
-    const variante = cleBalayee ? modifier_scenario(brut, {[cleBalayee]: valeur}) : brut;
-    const resume = mener_campagne(variante, options.tirages);
-    afficher(cleBalayee ? `${cleBalayee} = ${valeur}` : "scénario", resume);
+    const variante = cheminBalaye ? modifier_scenario(brut, {[cheminBalaye]: valeur}) : brut;
+    const resume = mener_campagne(variante, options.tirages, fichiers);
+    afficher(cheminBalaye ? `${cheminBalaye} = ${valeur}` : "scénario", resume);
     return {valeur, resume};
   });
-  const chemin = enregistrer(options.sortie, {scenario: brut, tirages: options.tirages, cle_balayee: cleBalayee, resultats});
+  const chemin = enregistrer(options.sortie, {scenario: brut, tirages: options.tirages, chemin_balaye: cheminBalaye, resultats});
   console.log(`→ ${chemin}`);
 }
 
 // Lancé en ligne de commande (et non importé par un test) : un chemin avec espaces doit encore correspondre.
-if (import.meta.url === pathToFileURL(process.argv[1]).href) principal();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) await principal();

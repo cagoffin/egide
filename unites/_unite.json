@@ -1,0 +1,12 @@
+{
+  "_aide": {
+    "_": "Base de toute unite du catalogue. Une unite herite des cles de son parent (herite_de) et peut en remplacer les valeurs ; chaque cle porte sa phrase ici ou chez un parent.",
+    "nom": "Nom affiche de l'unite.",
+    "fidelite": "Niveau de fidelite du modele : notionnel (ordres de grandeur), cinematique, point_masse (3 degres de liberte) ou 6ddl.",
+    "sources": "Origine des valeurs : documents publics, ouvrages, ou 'ordre de grandeur notionnel'. Au moins une entree.",
+    "herite_de": "Identifiant de l'unite parente, dont on reprend les cles avant d'appliquer celles-ci."
+  },
+  "nom": "Unite",
+  "fidelite": "notionnel",
+  "sources": ["Ordre de grandeur notionnel"]
+}

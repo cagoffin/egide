@@ -1,0 +1,13 @@
+{
+  "_aide": {
+    "portee_km": "Rayon de la bulle d'engagement du poste.",
+    "pk": "Probabilite de destruction par tir.",
+    "engagements_par_passage": "Tirs utiles du poste pendant la traversee de sa bulle par un drone (MODELE § 5)."
+  },
+  "herite_de": "_unite",
+  "nom": "Poste sol-air de courte portee (notionnel)",
+  "sources": ["Ordre de grandeur notionnel : defense sol-air tres courte portee, roquettes et missiles"],
+  "portee_km": 8,
+  "pk": 0.7,
+  "engagements_par_passage": 8
+}

@@ -1,7 +1,9 @@
 // Point d'entrée de l'interface : charge le scénario, branche réglages, scope, lecture, tableau et balayage.
-import {lire_scenario, modifier_scenario, ScenarioInvalide} from "../moteur/scenario.js";
+import {CatalogueInvalide, charger_unites} from "../moteur/catalogue.js";
+import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalide} from "../moteur/scenario.js";
 import {brancher_balayage, montrer} from "./balayage.js";
 import {creer_camera, deplacer, zoomer} from "./camera.js";
+import {aide_chemin, valeur_effective} from "./chemins.js";
 import {publier_couleurs} from "./couleurs.js";
 import {absorber, creer_effets, sauter} from "./effets.js";
 import {format_duree} from "./format.js";
@@ -18,18 +20,37 @@ const mouvementReduit = matchMedia("(prefers-reduced-motion: reduce)");
 // Un tour de faisceau toutes les 4 s simulées : le balayage visible suit le rythme des plots.
 const VITESSE_BALAYAGE = (2 * Math.PI) / 4;
 
-const etat = {base: null, modifications: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
-  camera: null, survol: null, angle: 0, dernierTableau: 0};
+const etat = {base: null, modifications: {}, fichiers: {}, lecteur: null, traces: creer_traces(), effets: creer_effets(),
+  camera: null, survol: null, angle: 0, dernierTableau: 0, afficher_reglages: null};
 
 const brut_courant = () => modifier_scenario(etat.base, etat.modifications);
 
-function charger() {
+async function lire_json(chemin) {
+  const reponse = await fetch(chemin);
+  if (!reponse.ok) throw new Error(`${reponse.status} sur ${chemin}`);
+  return reponse.json();
+}
+
+/** Charger les unités du catalogue que cite `brut` et qui ne sont pas encore en mémoire. */
+async function completer_catalogue(brut) {
+  const manquantes = ids_unites(brut).filter((id) => !(id in etat.fichiers));
+  if (manquantes.length) Object.assign(etat.fichiers, await charger_unites(manquantes, lire_json));
+}
+
+const contexte_reglages = () => ({
+  valeur: (chemin) => valeur_effective(brut_courant(), etat.fichiers, chemin),
+  aide: (chemin) => aide_chemin(brut_courant(), etat.fichiers, chemin),
+});
+
+async function charger() {
   const enLecture = etat.lecteur?.enLecture ?? false;
   const multiplicateur = etat.lecteur?.multiplicateur ?? 1;
+  const brut = brut_courant();
   try {
-    etat.lecteur = creer_lecteur(lire_scenario(brut_courant()));
+    await completer_catalogue(brut);
+    etat.lecteur = creer_lecteur(resoudre_scenario(brut, etat.fichiers));
   } catch (erreur) {
-    if (!(erreur instanceof ScenarioInvalide)) throw erreur;
+    if (!(erreur instanceof ScenarioInvalide || erreur instanceof CatalogueInvalide)) throw erreur;
     $("[data-champ='message']").textContent = `Scénario refusé : ${erreur.message}`;
     return;
   }
@@ -38,7 +59,7 @@ function charger() {
   etat.traces = creer_traces();
   etat.effets = creer_effets();
   $("[name='temps']").max = Math.ceil(etat.lecteur.duree);
-  $("[name='graine']").value = brut_courant().graine;
+  $("[name='graine']").value = brut.simulation.graine;
   cadrer();
 }
 
@@ -55,7 +76,8 @@ function cadrer() {
   const ratio = devicePixelRatio || 1;
   toile.width = toile.clientWidth * ratio;
   toile.height = toile.clientHeight * ratio;
-  if (etat.lecteur) etat.camera = creer_camera(toile.clientWidth, toile.clientHeight, etat.lecteur.monde.rayonDetection * 1.08);
+  const {monde} = etat.lecteur ?? {};
+  if (monde) etat.camera = creer_camera(toile.clientWidth, toile.clientHeight, monde.rayonDetection * 1.08, monde.scenario.theatre.origine);
 }
 
 function image(maintenant, precedent) {
@@ -101,9 +123,9 @@ function brancher_transport() {
   const vitesses = $("[data-zone='vitesses']");
   vitesses.innerHTML = MULTIPLICATEURS.map((m) => `<label><input type="radio" name="vitesse" value="${m}" ${m === 1 ? "checked" : ""}>×${String(m).replace(".", ",")}</label>`).join("");
   vitesses.addEventListener("change", (e) => (etat.lecteur.multiplicateur = Number(e.target.value)));
-  $("[name='graine']").addEventListener("change", (e) => modifier({graine: Number(e.target.value)}));
-  $("[data-action='autre_graine']").addEventListener("click", () => modifier({graine: Math.floor(Math.random() * 1e6)}));
-  document.querySelectorAll("[name='tactique']").forEach((bouton) => bouton.addEventListener("change", () => modifier({drones_tactique: bouton.value})));
+  $("[name='graine']").addEventListener("change", (e) => modifier({"simulation.graine": Number(e.target.value)}));
+  $("[data-action='autre_graine']").addEventListener("click", () => modifier({"simulation.graine": Math.floor(Math.random() * 1e6)}));
+  document.querySelectorAll("[name='tactique']").forEach((bouton) => bouton.addEventListener("change", () => modifier({"rouge.tactique": bouton.value})));
   addEventListener("keydown", (e) => {
     if (e.target.closest("input, select, textarea")) return;
     if (e.code === "Space") (e.preventDefault(), basculer_lecture());
@@ -136,7 +158,12 @@ function brancher_scope() {
   new ResizeObserver(cadrer).observe(toile);
 }
 
-function brancher_prereglages(afficher_valeurs) {
+function rafraichir_reglages() {
+  etat.afficher_reglages(contexte_reglages());
+  document.querySelector(`[name='tactique'][value='${brut_courant().rouge.tactique}']`).checked = true;
+}
+
+function brancher_prereglages() {
   const liste = $("[name='prereglage']");
   const remplir = () => (liste.innerHTML = `<option value="">Réglages enregistrés…</option>${Object.keys(lire_prereglages()).map((nom) => `<option>${nom}</option>`).join("")}`);
   remplir();
@@ -144,8 +171,7 @@ function brancher_prereglages(afficher_valeurs) {
     const choisi = lire_prereglages()[liste.value];
     if (!choisi) return;
     etat.modifications = {...choisi};
-    afficher_valeurs(brut_courant());
-    charger();
+    charger().then(rafraichir_reglages);
   });
   $("[data-action='enregistrer']").addEventListener("click", () => {
     const nom = $("[name='nom_prereglage']").value.trim();
@@ -154,19 +180,22 @@ function brancher_prereglages(afficher_valeurs) {
     remplir();
   });
   $("[data-action='exporter']").addEventListener("click", () => exporter_scenario(brut_courant(), "egide-scenario.json"));
-  $("[data-action='reinitialiser']").addEventListener("click", () => (etat.modifications = {}, afficher_valeurs(etat.base), charger()));
+  $("[data-action='reinitialiser']").addEventListener("click", () => {
+    etat.modifications = {};
+    charger().then(rafraichir_reglages);
+  });
 }
 
 async function demarrer() {
   publier_couleurs(document.documentElement);
-  etat.base = await (await fetch("scenarios/reference.json")).json();
-  const afficher_valeurs = construire_reglages($("#reglages"), etat.base, modifier);
-  document.querySelector(`[name='tactique'][value='${etat.base.drones_tactique}']`).checked = true;
+  etat.base = en_v2(await lire_json("scenarios/reference.json"));
+  etat.afficher_reglages = construire_reglages($("#reglages"), modifier);
   brancher_transport();
   brancher_scope();
-  brancher_prereglages(afficher_valeurs);
-  brancher_balayage($("#balayage"), brut_courant, $("#infobulle"));
-  charger();
+  brancher_prereglages();
+  brancher_balayage($("#balayage"), () => ({brut: brut_courant(), fichiers: etat.fichiers}), $("#infobulle"));
+  await charger();
+  rafraichir_reglages();
   requestAnimationFrame((t) => image(t, t));
 }
 

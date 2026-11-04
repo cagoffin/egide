@@ -1,0 +1,6 @@
+{
+  "herite_de": "effecteurs/roquettes/_roquette_guidee",
+  "nom": "Roquette guidee infrarouge (notionnelle)",
+  "sources": ["Ordre de grandeur notionnel : classe des roquettes a autodirecteur infrarouge, tire et oublie"],
+  "guidage": "ir"
+}
