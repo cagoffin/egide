@@ -2,7 +2,7 @@
 // mouvement, tir) sont déléguées aux algorithmes du scénario et des unités (MODELE § 8.3 à § 8.5, § 10).
 // Chaque avion porte les paramètres de son groupe (type d'avion, arme, altitude) : la flotte peut être hétérogène.
 import {algo} from "./algos.js";
-import {direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
+import {ajouter, depuis_ecef, direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
 import {OUTILS} from "./outils.js";
 import {effet_esquive} from "./reaction.js";
@@ -55,7 +55,29 @@ export function drone_approchant(monde, avion) {
  * pistage et d'allocation. Chaque centre affecte les avions qu'il joint le plus vite, sur sa propre situation : les
  * drones qu'il connaît depuis au moins le délai de réaction (MODELE § 18.2).
  */
+// EXPÉRIENCE — meutes de défense de point : à la première détection, chaque avion prend une orbite près d'une cible.
+function former_meutes(monde) {
+  const rayon = monde.scenario.conduite.meutes_test;
+  if (!rayon || monde.meutes_formees || !monde.drones.some((d) => d.connu !== null && d.connu <= monde.t)) return;
+  monde.meutes_formees = true;
+  const cibles = monde.cibles;
+  const capacite = Math.ceil(monde.avions.length / cibles.length);
+  const membres = cibles.map(() => 0);
+  // L'avion le plus proche d'une cible choisit d'abord : on remplit les meutes sans faire traverser tout le théâtre.
+  const paires = monde.avions.flatMap((a) => cibles.map((c, k) => ({a, k, d: distance_oblique(a.ecef, c.ecef)}))).sort((x, y) => x.d - y.d);
+  const placés = new Set();
+  for (const {a, k} of paires) {
+    if (placés.has(a) || membres[k] >= capacite) continue;
+    placés.add(a);
+    const orbite = {...direct(cibles[k].geo, (2 * Math.PI * membres[k]++) / capacite, rayon), alt: a.groupe.altitude};
+    a.orbite = orbite;
+    a.meute = k;
+    if (a.etat === "orbite" || a.etat === "poste") Object.assign(a, {etat: "retour", point: orbite});
+  }
+}
+
 export function planifier_avions(monde) {
+  former_meutes(monde);
   for (const avion of monde.avions) avion.acces = acces_avion(monde.reseau, avion, monde.scenario.avions.indexOf(avion.groupe));
   // Un avion sous ordre (ou dont l'ordre est en route) n'est pas réaffecté avant d'avoir rallié son point.
   const libres = monde.avions.filter((avion) => avion.acces && avion.munitions > 0 && !avion.ordre && !avion.consigne?.ordre && !drone_approchant(monde, avion));
@@ -128,13 +150,15 @@ export function avancer_avions(monde, dt) {
   for (const avion of monde.avions) {
     if (avion.perdu) continue;
     const {vitesse_mise_a_poste: vitesse, vitesse_engagement: vitesseEngagement} = avion.groupe;
-    const menace = avion.munitions > 0 ? drone_approchant(monde, avion) : null;
+    const essai = monde.scenario.conduite.engagement_test;
+    const menace = avion.munitions > 0 ? drone_approchant(monde, avion) ?? (essai ? plus_proche(monde, avion.ecef, avion.groupe.arme.portee, false) : null) : null;
     if (menace) {
       // L'avion accroche un drone avec son propre capteur : il le poursuit sans attendre la conduite.
       if (avion.etat !== "engagement" || avion.contact !== menace.id) journaliser(monde, {type: "contact", avion: avion.id, drone: menace.id});
       avion.contact = menace.id;
       avion.etat = "engagement";
-      deplacer(monde, avion, menace.geo, vitesseEngagement * dt);
+      const but = essai ? {...depuis_ecef(ajouter(menace.ecef, menace.vitesse, essai)), alt: avion.geo.alt} : menace.geo;
+      deplacer(monde, avion, but, vitesseEngagement * dt);
       continue;
     }
     if (avion.etat === "engagement") avion.etat = avion.ordre ? "ralliement" : "poste";
