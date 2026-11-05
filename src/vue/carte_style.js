@@ -3,7 +3,8 @@ import {direct, vers_degres} from "../moteur/geodesie.js";
 import {COULEURS} from "./couleurs.js";
 
 const CLE_REGLAGES = "egide.carte";
-export const REGLAGES_DEFAUT = {fond: "fonds/sombre_carto", ombrage: true, relief_3d: false, batiments: false, globe: false};
+// Fond IGN par défaut : service Géoplateforme sans clé ; les tuiles CARTO renvoient désormais « API KEY REQUIRED ».
+export const REGLAGES_DEFAUT = {fond: "fonds/ign_ortho", ombrage: true, relief_3d: false, batiments: false, globe: false};
 
 /** Rendre les réglages de carte mémorisés dans ce navigateur, ou ceux par défaut. */
 export function lire_reglages_carte() {
