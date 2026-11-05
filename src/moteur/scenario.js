@@ -77,7 +77,9 @@ export function ids_unites(brut) {
   // Déploiement (MODELE § 21) : unités propres des sites radar et des batteries, moyens dont chaque nœud est équipé.
   const propres = [...(v2.bleu.radar.sites ?? []), ...(v2.bleu.sol.batteries ?? [])].map((s) => s.unite).filter(Boolean);
   const equipements = (v2.bleu.reseau?.equipements ?? []).flatMap((e) => e.moyens);
-  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens, ...terrain, ...propres, ...equipements])];
+  // Arme changée dans l'éditeur (dépôt d'un armement sur un avion) : elle n'est citée que par la surcharge du groupe.
+  const emports = v2.bleu.avions.map((g) => g.surcharges?.emport).filter(Boolean);
+  return [...new Set([v2.rouge.unite, ...v2.bleu.avions.map((g) => g.unite), ...emports, v2.bleu.sol.unite, v2.bleu.radar.unite, ...moyens, ...terrain, ...propres, ...equipements])];
 }
 
 function resoudre_avions(groupes, fichiers) {

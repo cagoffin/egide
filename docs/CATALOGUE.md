@@ -262,6 +262,25 @@ prive/algos/allocation/mon_allocation.js        → identifiant « prive/allocat
 - **Les modèles de systèmes réels, de guidage ou de performances d'armes vont uniquement là.** Le dépôt public
   reste notionnel, par classe.
 - La conformité automatique s'applique aussi aux fichiers privés.
+- Pour être jouable, une unité privée se range dans une famille du moteur (§ 2.6) et hérite de sa base publique,
+  qui apporte ses algorithmes ; ailleurs (par exemple `prive/menace/hypersonique/`), elle reste une fiche consultable
+  dans le catalogue mais absente de la palette.
+
+### 5.1 Importer le catalogue privé dans l'interface
+
+Un navigateur ne peut pas lister `prive/unites/` : `node outils/indexer.js` y écrit `prive/unites/index.json`
+(hors git, comme le reste de `prive/`). La page **Catalogue** propose alors trois choix, retenus dans le navigateur
+et appliqués aussi à la palette de la simulation :
+
+- **Public seul** : le privé est ignoré ;
+- **Fusionner** : les unités privées s'ajoutent aux publiques ;
+- **Remplacer** : dans chaque dossier où le privé a au moins une unité (`vecteurs/avions`, `sites/postes`…), les
+  unités publiques disparaissent de la palette ; les dossiers qu'il ne couvre pas (terrains, roquettes…) et les
+  classes de base `_` publiques restent.
+
+Sans index privé, l'interface reste sur le catalogue public et la page Catalogue dit quoi lancer. Les scénarios
+citent toujours les unités par identifiant : un scénario qui cite une unité privée ne s'ouvre que là où `prive/`
+la contient.
 
 ## 6 · Conformité et index
 

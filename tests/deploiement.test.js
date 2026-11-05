@@ -42,6 +42,14 @@ test("batteries placées : un poste de plus chacune, rattaché à la cible la pl
   assert.ok(b.detruits_sol > 0 && b.detruits_sol <= 70, "les batteries tirent, dans la limite de leurs munitions");
 });
 
+test("armement déposé : l'arme citée par la seule surcharge d'un groupe est chargée avec le scénario", () => {
+  // Bug : ids_unites ignorait surcharges.emport ; déposer sur un avion une arme que rien d'autre ne cite faisait
+  // échouer la résolution sur « unité non chargée » (vu avec un brouilleur du catalogue privé).
+  const arme = "effecteurs/drones/charge_impact_notionnelle";
+  const brut = modifier_scenario(REFERENCE, {"bleu.avions.0.surcharges": {emport: arme}});
+  assert.ok(ids_unites(brut).includes(arme));
+});
+
 test("centres : allocation propre à un centre secondaire, chargée avec le scénario", () => {
   const s = scenario({"bleu.reseau.centres": [{nom: "Nord", lat_deg: 48, lon_deg: 2.5, allocation: "global/allocation/plus_proche"}]});
   assert.equal(s.reseau.centres[0].allocation, "global/allocation/plus_proche");

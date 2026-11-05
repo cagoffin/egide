@@ -6,6 +6,7 @@ import {en_v2, ids_unites, modifier_scenario, resoudre_scenario, ScenarioInvalid
 import {brancher_balayage, montrer} from "./balayage.js";
 import {creer_camera, deplacer, zoomer} from "./camera.js";
 import {cadrer_carte, creer_carte} from "./carte.js";
+import {charger_index} from "./catalogue_prive.js";
 import {lire_reglages_carte, memoriser_reglages_carte, style_carte} from "./carte_style.js";
 import {aide_chemin, valeur_effective} from "./chemins.js";
 import {CALQUES, calques_par_defaut, lire_calques, memoriser_calques} from "./calques.js";
@@ -620,14 +621,18 @@ function remplir_palette(index) {
 
 /** Proposer dans la barre d'édition les moyens de liaison du catalogue (unites/liaisons/), radio par défaut. */
 async function remplir_moyens() {
-  const index = await lire_json("unites/index.json");
+  // Catalogue privé importé depuis la page Catalogue : fusionné au public ou à sa place, selon le mode retenu.
+  const {index, erreur} = await charger_index(lire_json);
+  if (erreur) console.warn(`Catalogue privé : ${erreur}`);
   etat.index_unites = index;
   etat.index_algos = await lire_json("algos/index.json");
   remplir_palette(index);
   const moyens = index.filter((u) => u.famille === "liaisons" && !u.base);
   const choix = $("[name='moyen_liaison']");
   choix.innerHTML = moyens.map((u) => `<option value="${u.id}">${u.nom.replace(/ \(notionnelle?\)$/, "")}</option>`).join("");
-  choix.value = MOYENS_PAR_DEFAUT.avions;
+  // En remplacement, la radio publique par défaut peut manquer : on prend alors une radio V/UHF, sinon le premier moyen.
+  const repli = moyens.find((u) => /UHF/i.test(u.nom)) ?? moyens[0];
+  choix.value = moyens.some((u) => u.id === MOYENS_PAR_DEFAUT.avions) ? MOYENS_PAR_DEFAUT.avions : repli?.id ?? "";
   const terrains = index.filter((u) => u.famille === "terrains" && !u.base);
   $("[name='terrain']").insertAdjacentHTML("beforeend", terrains.map((u) => `<option value="${u.id}">${u.nom}</option>`).join(""));
 }

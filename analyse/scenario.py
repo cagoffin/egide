@@ -56,6 +56,8 @@ def ids_unites(brut: dict) -> list[str]:
     ids = [
         brut["rouge"]["unite"],
         *(g["unite"] for g in bleu["avions"]),
+        # Arme changee dans l'editeur (depot d'un armement sur un avion) : seule la surcharge du groupe la cite.
+        *(g["surcharges"]["emport"] for g in bleu["avions"] if g.get("surcharges", {}).get("emport")),
         bleu["sol"]["unite"],
         bleu["radar"]["unite"],
         *moyens,

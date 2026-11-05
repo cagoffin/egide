@@ -1,10 +1,11 @@
 // Fiche de déploiement (MODELE § 21) : pour l'unité ou le groupe sélectionné dans l'éditeur, les réglages qu'on peut
 // changer — modèle du catalogue, algorithmes par rôle, moyens de communication, effectifs. Chaque réglage est un
 // contrôle lié à des modifications par chemin du scénario. Pur, sans DOM, testé.
+import {sans_prive} from "./catalogue_prive.js";
 import {equipement} from "./deploiement.js";
 import {noeud_element} from "./edition.js";
 
-const parmi = (index, prefixes) => index.filter((u) => !u.base && prefixes.some((p) => u.id.startsWith(p))).map((u) => ({valeur: u.id, libelle: u.nom}));
+const parmi = (index, prefixes) => index.filter((u) => !u.base && prefixes.some((p) => sans_prive(u.id).startsWith(p))).map((u) => ({valeur: u.id, libelle: u.nom}));
 const algos_du_role = (algos, role) => algos.filter((a) => a.role === role).map((a) => ({valeur: a.id, libelle: a.nom}));
 
 /**

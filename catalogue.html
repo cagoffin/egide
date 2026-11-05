@@ -17,6 +17,13 @@
 <main class="catalogue">
   <nav class="index-catalogue" aria-label="Index du catalogue">
     <input type="search" name="recherche" placeholder="Chercher une unité, un algorithme…" aria-label="Chercher">
+    <fieldset class="catalogue-prive" title="Importer prive/unites/ (hors git) : le choix vaut aussi pour la palette de la simulation">
+      <legend>Catalogue privé</legend>
+      <label><input type="radio" name="mode_prive" value="public"> Public seul</label>
+      <label><input type="radio" name="mode_prive" value="fusion"> Fusionner</label>
+      <label><input type="radio" name="mode_prive" value="remplacement"> Remplacer</label>
+      <p class="etat-prive" data-zone="etat_prive" aria-live="polite"></p>
+    </fieldset>
     <h2>Unités</h2>
     <ul data-liste="unites"></ul>
     <h2>Algorithmes</h2>

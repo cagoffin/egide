@@ -5,6 +5,7 @@ import {unite_si} from "../moteur/catalogue.js";
 import {direct, inverse} from "../moteur/geodesie.js";
 import {positions_radars} from "../moteur/radars.js";
 import {portee_liaison} from "../moteur/reseau.js";
+import {sans_prive} from "./catalogue_prive.js";
 import {en_degres, modifications_ajout_centre, modifications_ajout_cible, modifications_ajout_radar, noeud_element} from "./edition.js";
 import {position_noeud} from "./reseau_vue.js";
 
@@ -42,12 +43,12 @@ export function palette(index, pays = "") {
   return FAMILLES_PALETTE.map((famille) => ({
     ...famille,
     elements: famille.id === "infrastructures" ? SPECIAUX
-      : index.filter((u) => !u.base && u.id.startsWith(famille.prefixe) && garde(u)).sort(ordre).map(({id, nom, pays: p = null, icone = null}) => ({id, nom, pays: p, icone})),
+      : index.filter((u) => !u.base && sans_prive(u.id).startsWith(famille.prefixe) && garde(u)).sort(ordre).map(({id, nom, pays: p = null, icone = null}) => ({id, nom, pays: p, icone})),
   })).filter((famille) => famille.elements.length);
 }
 
-/** Rendre la famille de la palette d'un identifiant déposé. */
-export const famille_de = (id) => FAMILLES_PALETTE.find((f) => (f.id === "infrastructures" ? id.startsWith("special/") : id.startsWith(f.prefixe)));
+/** Rendre la famille de la palette d'un identifiant déposé, public ou privé. */
+export const famille_de = (id) => FAMILLES_PALETTE.find((f) => (f.id === "infrastructures" ? id.startsWith("special/") : sans_prive(id).startsWith(f.prefixe)));
 
 /**
  * Rendre les modifications qui déposent `id` en `geo` ({} si le dépôt n'a pas de sens, par exemple un moyen de
@@ -75,7 +76,7 @@ function depot_vecteurs(monde, brut, id, geo, quantite) {
   const nouveaux = Array.from({length: quantite}, (_, k) => en_degres(k === 0 ? geo : direct(geo, (2 * Math.PI * k) / (quantite - 1 || 1), ECART_DEPOT)));
   const orbites = [...existants, ...nouveaux];
   if (g >= 0) return {[`bleu.avions.${g}.nombre`]: orbites.length, [`bleu.avions.${g}.orbites_placees`]: orbites};
-  const altitude = id.startsWith("vecteurs/drones_defensifs/") ? 300 : 1000;
+  const altitude = famille_de(id)?.id === "drones_defensifs" ? 300 : 1000;
   return {[`bleu.avions.${brut.bleu.avions.length}`]: {unite: id, nombre: orbites.length, altitude_m: altitude, surcharges: {}, surcharges_emport: {}, orbites_placees: orbites}};
 }
 

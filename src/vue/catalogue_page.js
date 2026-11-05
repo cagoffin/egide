@@ -1,6 +1,8 @@
-// Page catalogue.html : index cherchable des unités et des algorithmes publics, et leurs fiches (fiches.js).
+// Page catalogue.html : index cherchable des unités et des algorithmes publics, et leurs fiches (fiches.js) ; import
+// du catalogue privé (catalogue_prive.js), fusionné au public ou à sa place.
 import {charger_algos} from "../moteur/algos.js";
 import {charger_unites, unite_brute} from "../moteur/catalogue.js";
+import {charger_index, ecrire_mode, lire_mode} from "./catalogue_prive.js";
 import {publier_couleurs} from "./couleurs.js";
 import {echapper, fiche_algo, fiche_unite, utilisations} from "./fiches.js";
 
@@ -25,9 +27,30 @@ function filtrer(texte) {
   document.querySelectorAll(".index-catalogue li[data-texte]").forEach((li) => (li.hidden = Boolean(cherche) && !li.dataset.texte.includes(cherche)));
 }
 
+const ETATS_PRIVE = {
+  public: () => "Catalogue public seul.",
+  fusion: (n) => `${n} unités privées ajoutées au catalogue public.`,
+  remplacement: (n) => `${n} unités privées, à la place des unités publiques de leurs dossiers.`,
+};
+
+/** Brancher le choix du catalogue privé : retenu dans le navigateur, il recharge la page (et vaut pour la simulation). */
+function brancher_mode_prive(mode, privees, erreur) {
+  const choix = document.querySelector(`[name='mode_prive'][value='${mode}']`);
+  if (choix) choix.checked = true;
+  const etat = $("[data-zone='etat_prive']");
+  etat.textContent = erreur ?? ETATS_PRIVE[mode](privees);
+  etat.classList.toggle("erreur", Boolean(erreur));
+  document.querySelectorAll("[name='mode_prive']").forEach((radio) => radio.addEventListener("change", () => {
+    if (ecrire_mode(radio.value)) location.reload();
+    else etat.textContent = "Ce navigateur refuse de retenir le choix (stockage local indisponible).";
+  }));
+}
+
 async function demarrer() {
   publier_couleurs(document.documentElement);
-  const [indexUnites, indexAlgos, scenario] = await Promise.all([lire_json("unites/index.json"), lire_json("algos/index.json"), lire_json("scenarios/reference.json")]);
+  const mode = lire_mode();
+  const [{index: indexUnites, privees, erreur}, indexAlgos, scenario] = await Promise.all([charger_index(lire_json, mode), lire_json("algos/index.json"), lire_json("scenarios/reference.json")]);
+  brancher_mode_prive(mode, privees, erreur);
   const fichiers = await charger_unites(indexUnites.map((u) => u.id), lire_json);
   const registre = await charger_algos(indexAlgos.map((a) => a.id), (chemin) => import(new URL(chemin, document.baseURI).href));
   const metas = Object.fromEntries(Object.entries(registre).map(([id, module]) => [id, module.meta]));

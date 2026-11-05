@@ -5,18 +5,24 @@ import {readdirSync, readFileSync, renameSync, writeFileSync, mkdirSync} from "n
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {charger_algos} from "../src/moteur/algos.js";
-import {unite_brute} from "../src/moteur/catalogue.js";
+import {chemin_unite, unite_brute} from "../src/moteur/catalogue.js";
 import {RACINE, ids_algos_disque, ids_unites_disque, importer_module} from "../src/moteur/catalogue_node.js";
 
-/** Rendre le contenu de l'index des unités publiques : identifiant, nom, famille, fidélité, unité instanciable. */
-export function index_unites() {
-  const ids = ids_unites_disque().filter((id) => !id.startsWith("prive/"));
-  const fichiers = Object.fromEntries(ids.map((id) => [id, JSON.parse(readFileSync(join(RACINE, "unites", `${id}.json`), "utf-8"))]));
+/** Rendre les entrées d'index des unités `ids` ; la famille se lit sans le préfixe « prive/ ». */
+function entrees_index(ids) {
+  // Tout le disque : une unité privée hérite volontiers d'une unité publique.
+  const fichiers = Object.fromEntries(ids_unites_disque().map((id) => [id, JSON.parse(readFileSync(join(RACINE, chemin_unite(id)), "utf-8"))]));
   return ids.map((id) => {
     const unite = unite_brute(id, fichiers);
-    return {id, nom: unite.nom, famille: id.split("/")[0], fidelite: unite.fidelite, base: id.split("/").at(-1).startsWith("_"), pays: unite.pays ?? null, icone: unite.icone ?? null};
+    return {id, nom: unite.nom, famille: id.replace(/^prive\//, "").split("/")[0], fidelite: unite.fidelite, base: id.split("/").at(-1).startsWith("_"), pays: unite.pays ?? null, icone: unite.icone ?? null};
   });
 }
+
+/** Rendre le contenu de l'index des unités publiques : identifiant, nom, famille, fidélité, unité instanciable. */
+export const index_unites = () => entrees_index(ids_unites_disque().filter((id) => !id.startsWith("prive/")));
+
+/** Rendre l'index des unités privées (prive/unites/, hors git), même format ; vide sans catalogue privé. */
+export const index_unites_prive = () => entrees_index(ids_unites_disque().filter((id) => id.startsWith("prive/")));
 
 /** Rendre le contenu de l'index des algorithmes publics : identifiant, nom, rôle, fidélité. */
 export async function index_algos() {
@@ -61,5 +67,8 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   ecrire(join(RACINE, "scenarios", "index.json"), index_scenarios());
   mkdirSync(join(RACINE, "schemas"), {recursive: true});
   for (const [nom, schema] of Object.entries(schemas())) ecrire(join(RACINE, "schemas", nom), schema);
-  console.log("Index régénérés : unites/index.json, algos/index.json, cartes/index.json, scenarios/index.json, schemas/*.schema.json");
+  const prive = index_unites_prive();
+  // Hors git comme le reste de prive/ : la page Catalogue le lit pour importer le catalogue privé.
+  if (prive.length) ecrire(join(RACINE, "prive", "unites", "index.json"), prive);
+  console.log(`Index régénérés : unites/index.json, algos/index.json, cartes/index.json, scenarios/index.json, schemas/*.schema.json${prive.length ? `, prive/unites/index.json (${prive.length})` : ""}`);
 }

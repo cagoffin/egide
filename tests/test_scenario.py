@@ -90,6 +90,14 @@ def test_resolution_du_deploiement_identique_au_jumeau_javascript():
     assert _egaux(resoudre_scenario(brut, charger_unites(ids_unites(brut))), variante["resolu"])
 
 
+def test_arme_citee_par_la_seule_surcharge_d_un_groupe_chargee():
+    """ids_unites ignorait surcharges.emport : une arme deposee sur un avion dans l'editeur n'etait pas chargee."""
+    arme = "effecteurs/drones/charge_impact_notionnelle"
+    brut = json.loads(json.dumps(BRUT))
+    brut["bleu"]["avions"][0]["surcharges"] = {"emport": arme}
+    assert arme in ids_unites(brut)
+
+
 def test_reseau_refuse_un_noeud_inconnu():
     brut = json.loads(json.dumps(BRUT))
     brut["bleu"]["reseau"]["liaisons"] = [

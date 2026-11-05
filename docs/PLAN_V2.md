@@ -138,5 +138,6 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Catalogue | **Icônes orientées** : les silhouettes de vecteurs tournées selon leur cap | 12 | à faire |
 | Catalogue | **Icônes des C2 et des sites** sur la carte (la palette les montre déjà) | 12 | à faire |
 | Catalogue | **Formats d'échange** : spécification (docs/FORMATS.md), schémas JSON générés depuis le catalogue, validateur `node outils/valider.js` (rapport `--json`) pour les outils externes | 12 | **fait** |
+| Catalogue | **Import du catalogue privé** : page Catalogue, choix Public seul / Fusionner / Remplacer, retenu dans le navigateur et appliqué à la palette ; index `prive/unites/index.json` par `node outils/indexer.js` | 12 | **fait** (`src/vue/catalogue_prive.js`) |
 | Catalogue | **Schéma JSON du scénario** généré depuis `scenarios/reference.json` | 12 | à faire |
 | Carte | **Théâtres prédéfinis** : choisir le centre du théâtre par un nom de lieu, liste de théâtres d'exemple | 0 | à faire |
