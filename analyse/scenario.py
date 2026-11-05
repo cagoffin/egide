@@ -251,6 +251,8 @@ def resoudre_scenario(brut: dict, fichiers: dict) -> dict:
                 "cibles_nombre": max(theatre["cibles_nombre"], len(cibles_placees)),
                 "cibles_placees": cibles_placees,
                 "terrain": unite_si(theatre["terrain"], fichiers, None) if theatre.get("terrain") else None,
+                # Seuil de destruction d'une cible (MODELE § 23) ; None : une cible n'est jamais detruite.
+                "frappes_destruction": theatre.get("frappes_destruction"),
                 "zones": [
                     {"nom": z["nom"], "type": z["type"], "points": _vers_geo(z["points"], 0)}
                     for z in theatre.get("zones", [])

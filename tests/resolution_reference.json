@@ -17,7 +17,8 @@
       "cibles_nombre": 10,
       "cibles_placees": [],
       "zones": [],
-      "terrain": null
+      "terrain": null,
+      "frappes_destruction": 100
     },
     "rouge": {
       "id": "vecteurs/drones/drone_reaction_notionnel",
@@ -444,7 +445,8 @@
         "cibles_nombre": 10,
         "cibles_placees": [],
         "zones": [],
-        "terrain": null
+        "terrain": null,
+        "frappes_destruction": 100
       },
       "rouge": {
         "id": "vecteurs/drones/drone_reaction_notionnel",
@@ -983,7 +985,8 @@
         "cibles_nombre": 10,
         "cibles_placees": [],
         "zones": [],
-        "terrain": null
+        "terrain": null,
+        "frappes_destruction": 100
       },
       "rouge": {
         "id": "vecteurs/drones/drone_reaction_notionnel",
@@ -1467,7 +1470,8 @@
         "cibles_nombre": 10,
         "cibles_placees": [],
         "zones": [],
-        "terrain": null
+        "terrain": null,
+        "frappes_destruction": 100
       },
       "rouge": {
         "id": "vecteurs/drones/drone_reaction_notionnel",

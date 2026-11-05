@@ -24,7 +24,7 @@ export function decrire(survol, monde) {
   if (survol.type === "cible") {
     const postes = monde.postes.filter((p) => p.cible === survol.indice);
     const munitions = postes.reduce((somme, p) => somme + p.munitions, 0);
-    return `Cible C${survol.indice + 1}\n${postes.length} postes sol, ${munitions} munitions\n${monde.fuites[survol.indice]} drones arrivés`;
+    return `Cible C${survol.indice + 1}\n${postes.length} postes sol, ${munitions} munitions\n${monde.fuites[survol.indice]} frappes${seuil_destruction(monde, survol.indice)}`;
   }
   if (survol.type === "conduite" || survol.type === "centre") {
     const {reseau} = monde;
@@ -43,4 +43,11 @@ export function decrire(survol, monde) {
   const drone = survol.objet;
   const vu = drone.detection === null ? "pas encore détecté" : `détecté depuis ${format_duree(monde.t - drone.detection)}`;
   return `Drone ${drone.id + 1}, vise C${drone.cible + 1}\n${vu}`;
+}
+
+/** Rendre la précision « sur N pour la détruire » ou « — détruite » d'une cible (MODELE § 23), ou "" sans seuil. */
+function seuil_destruction(monde, k) {
+  const seuil = monde.scenario.theatre.frappes_destruction;
+  if (seuil === null) return "";
+  return monde.fuites[k] >= seuil ? ` — détruite (seuil ${seuil})` : ` sur ${seuil} pour la détruire`;
 }

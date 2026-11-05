@@ -45,8 +45,21 @@ export function dessiner_cibles(ctx, camera, monde, effets, maintenant, calques)
     ctx.fillStyle = COULEURS.texte;
     ctx.fillText(`C${indice + 1}`, ecran.x + 9, ecran.y - 6);
     if (monde.fuites[indice]) {
+      const seuil = monde.scenario.theatre.frappes_destruction;
+      const detruite = seuil !== null && monde.fuites[indice] >= seuil;
       ctx.fillStyle = COULEURS.hostile;
-      ctx.fillText(`${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
+      ctx.fillText(detruite ? `détruite (${monde.fuites[indice]} frappes)` : `${monde.fuites[indice]} frappes`, ecran.x + 9, ecran.y + 9);
+      if (detruite) {
+        // Croix sur la cible détruite (MODELE § 23).
+        ctx.strokeStyle = COULEURS.hostile;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(ecran.x - 8, ecran.y - 8);
+        ctx.lineTo(ecran.x + 8, ecran.y + 8);
+        ctx.moveTo(ecran.x + 8, ecran.y - 8);
+        ctx.lineTo(ecran.x - 8, ecran.y + 8);
+        ctx.stroke();
+      }
     }
   });
   if (calques.postes) dessiner_batteries(ctx, camera, monde, calques);

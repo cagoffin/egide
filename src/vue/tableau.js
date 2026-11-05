@@ -22,10 +22,12 @@ function frappes_par_cible(racine, monde) {
   if (liste.children.length !== monde.cibles.length) {
     liste.innerHTML = monde.cibles.map((c, i) => `<li><span>${c.conduite ? "CDC" : `C${i + 1}`}</span><span class="barre"><i></i></span><b>0</b></li>`).join("");
   }
-  const maximum = Math.max(1, monde.scenario.rouge.concentration_max);
+  // Avec un seuil de destruction (MODELE § 23), la barre pleine est la cible détruite.
+  const seuil = monde.scenario.theatre.frappes_destruction;
+  const maximum = Math.max(1, seuil ?? monde.scenario.rouge.concentration_max);
   [...liste.children].forEach((ligne, i) => {
     ligne.querySelector("i").style.inlineSize = `${Math.min(100, (100 * monde.fuites[i]) / maximum)}%`;
-    ligne.querySelector("b").textContent = format_entier(monde.fuites[i]);
+    ligne.querySelector("b").textContent = format_entier(monde.fuites[i]) + (seuil !== null && monde.fuites[i] >= seuil ? " ✕" : "");
   });
 }
 
@@ -52,7 +54,9 @@ export function mettre_a_jour_tableau(racine, monde) {
   // Essaim réactif : ses compteurs n'existent que s'il réagit (MODELE § 22.5).
   const {reaffectations, detours, esquives} = monde.compteurs;
   const zoneEssaim = racine.querySelector("[data-zone='essaim']");
-  const texteEssaim = reaffectations === undefined ? ""
-    : `Essaim réactif : ${format_entier(reaffectations)} réaffectations · ${format_entier(detours)} détours · ${format_entier(esquives)} tirs esquivés`;
+  const perdues = monde.compteurs.frappes_perdues;
+  const textePerdues = perdues ? ` · ${format_entier(perdues)} drones perdus sur des cibles détruites` : "";
+  const texteEssaim = reaffectations === undefined ? textePerdues.slice(3)
+    : `Essaim réactif : ${format_entier(reaffectations)} réaffectations · ${format_entier(detours)} détours · ${format_entier(esquives)} tirs esquivés${textePerdues}`;
   if (zoneEssaim && zoneEssaim.textContent !== texteEssaim) [zoneEssaim.textContent, zoneEssaim.hidden] = [texteEssaim, !texteEssaim];
 }

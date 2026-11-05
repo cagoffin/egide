@@ -10,6 +10,8 @@ const J0 = JSON.parse(readFileSync(new URL("./references_j0.json", import.meta.u
 
 for (const [nom, {modifications, bilan: attendu}] of Object.entries(J0.cas)) {
   test(`portage : le raid « ${nom} » rend exactement le bilan du jalon 0`, () => {
-    assert.deepEqual(bilan(simuler(scenario(modifications), {registre: REGISTRE, journal: false})), attendu);
+    // Le jalon 0 ne détruisait pas les cibles (MODELE § 23) : on le rejoue sans seuil de destruction.
+    const avantDestruction = {...modifications, "theatre.frappes_destruction": null};
+    assert.deepEqual(bilan(simuler(scenario(avantDestruction), {registre: REGISTRE, journal: false})), attendu);
   });
 }

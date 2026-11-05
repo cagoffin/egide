@@ -620,3 +620,36 @@ réaction, puis écart avec réaction et son intervalle de confiance à 95 % (St
 - `disperse` : 182 frappes, +115 ± 14 (+63 %) ; les départs étalés laissent aux derniers drones le temps d'apprendre
   des premiers.
 
+## 23 · Destruction des cibles
+Une cible encaisse au plus N frappes (`theatre.frappes_destruction`) : la N-ième la détruit. Un drone qui arrive sur
+une cible déjà détruite s'écrase en pure perte ; il n'est pas compté dans les frappes mais dans les frappes perdues
+(`frappes_perdues`). Le bilan d'un raid ne peut donc pas dépasser N par cible, ni N × nombre de cibles au total.
+Sans seuil (`frappes_destruction` null), une cible n'est jamais détruite et tout résultat antérieur est inchangé.
+
+Hypothèses : la destruction est binaire et instantanée (pas de dommages partiels, pas de réparation) ; une cible
+détruite garde ses postes sol, qui tirent tant qu'il leur reste des munitions ; le centre de conduite est une cible
+comme les autres, et sa destruction coupe la conduite dès sa première frappe (§ 17), avant tout seuil.
+
+L'essaim inerte ignore la destruction et continue de viser ses cibles. L'essaim réactif (§ 22) la connaît par ses
+frappes : dès que F_k ≥ N (après le délai de son réseau), la cible k est rayée. Un drone qui la visait, même engagé,
+se reporte sur la cible non détruite de meilleure survie estimée ŝ (§ 22.1), la plus proche à survie égale, sans
+condition d'allongement ni de nombre de réaffectations ; une cible détruite n'est jamais choisie en report.
+
+### 23.1 Répartition contre la saturation
+L'essaim réactif connaît N (il sait ce qu'il faut pour détruire ses cibles) et la cible de chacun de ses drones, en
+vol ou pas encore partis. Tant qu'aucune cible n'est frappée, il garde sa masse : l'étaler à l'aveugle lui ôte ce qui
+sature les postes (mesuré : 69 frappes au lieu de 120, raid direct, N = 30). Dès une première brèche, il apprend
+l'absorption K̂ : les drones perdus en moyenne près d'une cible déjà frappée, c'est-à-dire ce que ses postes et les
+avions alentour abattent. Un poste abat un nombre de drones borné par ses munitions, non une proportion du raid : une
+survie par drone (règle de Laplace) sous-estimait la masse nécessaire (80 frappes au lieu de 120, même raid).
+
+Chaque cible k reçoit alors un quota q_k = ⌈(N − F_k + A_k) × 1,5⌉, avec A_k = max(0, K̂ − P_k) pour une cible déjà
+frappée (ses postes ont déjà tiré) et A_k = K̂ pour une cible neuve ; q_k = 0 pour une cible détruite. Le facteur 1,5
+couvre ce que l'essaim ignore des cibles neuves et les pertes en route. Chaque cible garde ses q_k drones les plus
+proches. Le surplus comble d'abord les cibles visées en manque, puis part en blocs complets de q_k drones vers les
+cibles jamais visées, de celle où l'essaim a le moins perdu à la plus coûteuse ; un bloc incomplet ne part pas, car
+il se ferait abattre. La répartition passe avant les décisions de chaque drone (§ 22.2) et ne compte pas dans leur
+limite de réaffectations.
+
+Hypothèses : le réseau maillé connaît la cible de chaque drone ; les cibles sont défendues de façon comparable, si
+bien que K̂ appris sur les unes vaut pour les autres.

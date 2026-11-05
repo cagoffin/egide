@@ -67,7 +67,9 @@ export function creer_monde(scenario, {registre, journal = true}) {
     tirs_en_vol: [],
     fuites: cibles.map(() => 0),
     // Les compteurs des drones défensifs n'apparaissent que s'il y en a : un bilan sans eux garde sa forme d'avant.
-    compteurs: {tirs_air: 0, tirs_sol: 0, detruits_air: 0, detruits_sol: 0, ...compteurs_defensifs(scenario), ...compteurs_reaction(scenario)},
+    compteurs: {tirs_air: 0, tirs_sol: 0, detruits_air: 0, detruits_sol: 0, ...compteurs_defensifs(scenario), ...compteurs_reaction(scenario),
+      // Frappes sur cible déjà détruite (MODELE § 23) : le compteur n'existe que si les cibles peuvent l'être.
+      ...(scenario.theatre.frappes_destruction !== null ? {frappes_perdues: 0} : {})},
     // Connaissance de l'essaim réactif (MODELE § 22) ; null : l'essaim ne réagit pas.
     essaim: creer_essaim(scenario, cibles.length),
     brouilleurs: scenario.avions.some((g) => g.nombre > 0 && g.arme.type === "brouillage"),

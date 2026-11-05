@@ -54,7 +54,8 @@ test("résolution : clé de scénario sans phrase d'aide refusée", () => {
 
 test("migration : le scénario v1 de la v0.1 se résout comme le scénario de référence v2", () => {
   const sansNom = ({nom: _, ...reste}) => JSON.stringify(reste, (k, v) => (typeof v === "number" ? Math.round(v * 1e9) / 1e9 : v));
-  assert.equal(sansNom(resoudre_scenario(V1, FICHIERS)), sansNom(scenario()));
+  // La v0.1 ne détruisait pas les cibles (MODELE § 23) : la référence v2 se compare sans seuil de destruction.
+  assert.equal(sansNom(resoudre_scenario(V1, FICHIERS)), sansNom(scenario({"theatre.frappes_destruction": null})));
 });
 test("migration : le document migré porte les mêmes phrases d'aide que le scénario de référence", () => {
   const migre = migrer_v1(V1);

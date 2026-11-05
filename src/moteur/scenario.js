@@ -76,12 +76,15 @@ export const en_v2 = (brut) => (brut.format === FORMAT ? completer_aide(brut) : 
 function completer_aide(brut) {
   const manque = (bloc, aide) => bloc?._aide && Object.keys(aide).some((k) => !(k in bloc._aide));
   const sections = ["sol", "radar", "reseau"].filter((s) => manque(brut.bleu?.[s], AIDE[s]));
+  // Destruction des cibles (MODELE § 23) : sa clé est apparue après le jalon 16.
+  const theatre = manque(brut.theatre, AIDE.theatre);
   // Réaction de l'essaim (MODELE § 22) : ses clés sont apparues au jalon 16.
   const rouge = manque(brut.rouge, AIDE.rouge);
-  if (!sections.length && !rouge) return brut;
+  if (!sections.length && !rouge && !theatre) return brut;
   const copie = structuredClone(brut);
   for (const s of sections) copie.bleu[s]._aide = {...AIDE[s], ...copie.bleu[s]._aide};
   if (rouge) copie.rouge._aide = {...AIDE.rouge, ...copie.rouge._aide};
+  if (theatre) copie.theatre._aide = {...AIDE.theatre, ...copie.theatre._aide};
   return copie;
 }
 
@@ -199,6 +202,8 @@ export function resoudre_scenario(brutDonne, fichiers) {
         cibles_placees: ciblesPlacees,
         zones: (zones ?? []).map((zone) => ({nom: zone.nom, type: zone.type, points: vers_geo(zone.points, 0)})),
         terrain: terrain ? unite_si(terrain, fichiers) : null,
+        // Seuil de destruction d'une cible (MODELE § 23) ; null : une cible n'est jamais détruite.
+        frappes_destruction: reglagesTheatre.frappes_destruction ?? null,
       },
       rouge: {
         ...drone, altitude: drone.altitude_croisiere, ...convertir_objet({...DEFAUTS_REACTION, ...reglagesRouge}),

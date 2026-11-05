@@ -61,12 +61,25 @@ export function avancer_drones(monde, dt) {
     drone.ecef = suivant.ecef;
     if (suivant.atteints) drone.route.splice(0, suivant.atteints);
     drone.vitesse = {x: (drone.ecef.x - avant.x) / dt, y: (drone.ecef.y - avant.y) / dt, z: (drone.ecef.z - avant.z) / dt};
-    if (drone.route.length === 0) {
-      drone.arrive = true;
-      monde.fuites[drone.cible]++;
-      journaliser(monde, {type: "impact", cible: drone.cible});
-    }
+    if (drone.route.length === 0) frapper(monde, drone);
   }
+}
+
+/**
+ * Faire frapper sa cible au drone arrivé au bout de sa route. Une cible détruite (N frappes, MODELE § 23) ne compte
+ * plus : le drone s'y écrase en pure perte.
+ */
+function frapper(monde, drone) {
+  const seuil = monde.scenario.theatre.frappes_destruction;
+  drone.arrive = true;
+  if (seuil !== null && monde.fuites[drone.cible] >= seuil) {
+    monde.compteurs.frappes_perdues++;
+    journaliser(monde, {type: "impact", cible: drone.cible, perdue: true});
+    return;
+  }
+  monde.fuites[drone.cible]++;
+  journaliser(monde, {type: "impact", cible: drone.cible});
+  if (seuil !== null && monde.fuites[drone.cible] === seuil) journaliser(monde, {type: "destruction", cible: drone.cible, frappes: seuil});
 }
 
 /**

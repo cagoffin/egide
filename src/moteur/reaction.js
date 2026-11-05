@@ -14,7 +14,8 @@ export function creer_essaim(scenario, nombreCibles) {
     // Faits en route dans le réseau maillé : connus de l'essaim à l'instant `t` (MODELE § 22.1).
     en_route: [],
     version: 0,
-    version_decidee: 0,
+    // −1 : une première décision dès le départ, pour répartir l'essaim avant toute perte (MODELE § 23.1).
+    version_decidee: -1,
     prochaine_decision: 0,
   };
 }
@@ -78,7 +79,7 @@ function appliquer(monde, drone, reaction) {
     drone.cible = reaction.cible;
     drone.reaffectations = (drone.reaffectations ?? 0) + 1;
     monde.compteurs.reaffectations++;
-    journaliser(monde, {type: "reaction", nature: "reaffectation", drone: drone.id, de: avant, vers: reaction.cible});
+    journaliser(monde, {type: "reaction", nature: "reaffectation", drone: drone.id, de: avant, vers: reaction.cible, motif: reaction.motif ?? "breche"});
     return;
   }
   drone.route.unshift(point(reaction.detour));
@@ -92,14 +93,25 @@ function appliquer(monde, drone, reaction) {
 function decider(monde) {
   const {essaim, scenario} = monde;
   const reaction = algo(monde.registre, scenario.rouge.reaction, "reaction");
-  const contexte = {reglages: scenario.rouge, cibles: monde.cibles.map((c) => c.geo), foyers: essaim.foyers, bilans: essaim.bilans};
+  const contexte = {reglages: scenario.rouge, cibles: monde.cibles.map((c) => c.geo), foyers: essaim.foyers, bilans: essaim.bilans,
+    frappes_destruction: scenario.theatre.frappes_destruction};
+  const vue = (drone) => ({
+    geo: drone.geo, cible: drone.cible, route: drone.route.map((p) => p.geo),
+    reaffectations: drone.reaffectations ?? 0, detours: drone.detours ?? 0,
+  });
+  // Répartition contre la saturation (MODELE § 23.1) : sur tout l'essaim encore en l'air ou au sol, avant les
+  // décisions de chaque drone ; un drone ainsi réparti ne décide pas seul à ce pas.
+  const repartis = new Set();
+  if (reaction.repartir) {
+    const restants = monde.drones.filter((d) => d.vivant && !d.arrive);
+    for (const {index, cible, motif} of reaction.repartir(contexte, restants.map(vue), OUTILS)) {
+      appliquer(monde, restants[index], {cible, motif});
+      repartis.add(restants[index]);
+    }
+  }
   for (const drone of monde.drones) {
-    if (!drone.vivant || drone.arrive || monde.t < drone.depart) continue;
-    const vue = {
-      geo: drone.geo, cible: drone.cible, route: drone.route.map((p) => p.geo),
-      reaffectations: drone.reaffectations ?? 0, detours: drone.detours ?? 0,
-    };
-    const choix = reaction.reagir(contexte, vue, OUTILS);
+    if (!drone.vivant || drone.arrive || monde.t < drone.depart || repartis.has(drone)) continue;
+    const choix = reaction.reagir(contexte, vue(drone), OUTILS);
     if (choix) appliquer(monde, drone, choix);
   }
 }

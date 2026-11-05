@@ -58,7 +58,10 @@ function ligne(monde, e) {
       const esquive = e.esquive ? `, réduit par son esquive` : "";
       return {famille: "tir", texte: `${qui} ${verbe} le drone ${e.drone + 1} (Pk ${format_decimal(e.pk)}${esquive}) : ${e.detruit ? "détruit" : "manqué"}.`, cible: {type: "drone", id: e.drone}};
     }
-    case "impact": return {famille: "tir", texte: `Un drone frappe ${monde.cibles[e.cible]?.conduite ? "le CDC" : `C${e.cible + 1}`}.`, cible: {type: "cible", id: e.cible}};
+    case "impact": return {famille: "tir", texte: e.perdue
+      ? `Un drone s'écrase en pure perte sur ${nom_cible(monde, e.cible)}, déjà détruite.`
+      : `Un drone frappe ${nom_cible(monde, e.cible)}.`, cible: {type: "cible", id: e.cible}};
+    case "destruction": return {famille: "tir", texte: `${nom_cible(monde, e.cible)} est détruite (${e.frappes} frappes) : les drones suivants s'y perdront.`, cible: {type: "cible", id: e.cible}};
     case "ordre": return {famille: "autre", texte: `Ordre de l'éditeur, parti du CDC : avion${e.avions.length > 1 ? "s" : ""} ${e.avions.map((a) => a + 1).join(", ") || "aucun joignable"}.`, cible: e.avions.length ? {type: "avion", id: e.avions[0]} : null};
     case "panne": return {famille: "autre", texte: "Le CDC est détruit par l'essaim : plus rien n'est connu, plus personne n'est affecté.", cible: {type: "conduite", id: 0}};
     case "reseau": return {famille: "autre", texte: e.hs.length ? `Hors service : ${e.hs.map((h) => (h.startsWith("liaison:") ? `liaison ${Number(h.slice(8)) + 1}` : noeud(h))).join(", ")}.` : "Tout le réseau est de nouveau en service.", cible: null};
@@ -75,7 +78,7 @@ const nom_cible = (monde, k) => (monde.cibles[k]?.conduite ? "le CDC" : `C${k + 
 function lignes_reactions(monde, evenements) {
   const groupes = new Map();
   for (const e of evenements.filter((x) => x.type === "reaction")) {
-    const quoi = e.nature === "reaffectation" ? `r|${e.de}|${e.vers}` : `d|${Math.round(e.foyer.geo.lat * 1e3)}|${Math.round(e.foyer.geo.lon * 1e3)}`;
+    const quoi = e.nature === "reaffectation" ? `r|${e.de}|${e.vers}|${e.motif}` : `d|${Math.round(e.foyer.geo.lat * 1e3)}|${Math.round(e.foyer.geo.lon * 1e3)}`;
     const cle = `${Math.floor(e.t / FENETRE_DETECTIONS)}|${quoi}`;
     const g = groupes.get(cle) ?? {t: e.t, e, drones: []};
     g.drones.push(e.drone);
@@ -84,7 +87,11 @@ function lignes_reactions(monde, evenements) {
   return [...groupes.values()].map(({t, e, drones}) => {
     const qui = drones.length === 1 ? `Le drone ${drones[0] + 1}` : `${drones.length} drones`;
     const pluriel = drones.length > 1 ? "nt" : "";
-    const texte = e.nature === "reaffectation"
+    const texte = e.nature === "reaffectation" && e.motif === "saturation"
+      ? `${qui} quitte${pluriel} ${nom_cible(monde, e.de)}, assez servie, pour ${nom_cible(monde, e.vers)}, qui manque de drones.`
+      : e.nature === "reaffectation" && e.motif === "detruite"
+      ? `${qui} quitte${pluriel} ${nom_cible(monde, e.de)}, détruite, pour ${nom_cible(monde, e.vers)}.`
+      : e.nature === "reaffectation"
       ? `${qui} quitte${pluriel} ${nom_cible(monde, e.de)}, où l'essaim perd ses drones, pour ${nom_cible(monde, e.vers)}, déjà frappée.`
       : `${qui} contourne${pluriel} un site défendu (${e.foyer.pertes} pertes connues).`;
     return {t, famille: "essaim", texte, cible: {type: "drone", id: drones[0]}};

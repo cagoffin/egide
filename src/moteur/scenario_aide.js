@@ -13,6 +13,7 @@ export const AIDE = {
   },
   theatre: {
     origine_lat_deg: "Latitude du centre de la zone defendue (WGS84).",
+    frappes_destruction: "Frappes qui detruisent une cible (MODELE § 23) : au-dela, les drones s'y ecrasent en pure perte et ne comptent pas. null : une cible n'est jamais detruite.",
     origine_lon_deg: "Longitude du centre de la zone defendue (WGS84).",
     zone_rayon_km: "Rayon du disque defendu, mesure le long de l'ellipsoide.",
     cibles_nombre: "Nombre de cibles a proteger : les cibles placees d'abord, puis des cibles tirees au hasard dans 70 % du rayon.",

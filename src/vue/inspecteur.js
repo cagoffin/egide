@@ -10,6 +10,9 @@ import {positions_radars} from "../moteur/radars.js";
 import {couverture_reelle} from "../moteur/terrain.js";
 import {libelle_noeud} from "./reseau_vue.js";
 import {chaine_drone} from "./journal.js";
+
+/** Rendre vrai si la cible `k` a reçu ses N frappes de destruction (MODELE § 23). */
+const est_detruite = (monde, k) => monde.scenario.theatre.frappes_destruction !== null && monde.fuites[k] >= monde.scenario.theatre.frappes_destruction;
 import {NOMS_VECTEURS} from "./infobulles.js";
 
 const ETATS = {orbite: "en orbite", ralliement: "en route vers son point", engagement: "au contact d'un drone",
@@ -71,7 +74,11 @@ export function tirs_subis(monde, idDrone) {
 function reactions_drone(drone, monde) {
   const reactions = (monde.evenements ?? []).filter((e) => e.type === "reaction" && e.drone === drone.id);
   const cible = (k) => (monde.cibles[k]?.conduite ? "le CDC" : `C${k + 1}`);
-  const lignes = reactions.map((e) => (e.nature === "reaffectation"
+  const lignes = reactions.map((e) => (e.nature === "reaffectation" && e.motif === "saturation"
+    ? `<li>${format_duree(e.t)} : quitte ${cible(e.de)}, où l'essaim a déjà assez de drones pour la détruire, pour ${cible(e.vers)}, qui en manque (quota ⌈(N − F) / ŝ⌉).</li>`
+    : e.nature === "reaffectation" && e.motif === "detruite"
+    ? `<li>${format_duree(e.t)} : quitte ${cible(e.de)}, que l'essaim sait détruite, pour ${cible(e.vers)}, la meilleure cible encore debout.</li>`
+    : e.nature === "reaffectation"
     ? `<li>${format_duree(e.t)} : quitte ${cible(e.de)} pour ${cible(e.vers)} — l'essaim y perd moins de drones et y a déjà frappé (survie estimée (F + 1) / (F + P + 2)).</li>`
     : `<li>${format_duree(e.t)} : contourne un site défendu où l'essaim a perdu ${e.foyer.pertes} drones (détour à ${position(e.point)}).</li>`));
   return `<h4>Pourquoi a-t-il changé de route ?</h4>${lignes.length ? `<ul>${lignes.join("")}</ul>` : "<p>Il garde sa route : rien de ce que sait l'essaim ne vaut un détour ou une autre cible.</p>"}`;
@@ -114,7 +121,7 @@ function inspection_cible(indice, monde) {
       ligne("Position", position(monde.cibles[indice].geo)),
       ligne("Postes sol", `${postes.length} × ${lien_fiche("unite", sol.id, sol.nom)}`),
       ligne("Munitions", `${format_entier(munitions)} restantes`),
-      ligne("Frappes reçues", format_entier(monde.fuites[indice])),
+      ligne("Frappes reçues", format_entier(monde.fuites[indice]) + (est_detruite(monde, indice) ? ` — détruite (seuil ${monde.scenario.theatre.frappes_destruction})` : "")),
     ].join("")}</table>
     <h4>Comment est-elle défendue ?</h4>
     <p>Chaque poste tire sur le drone le plus proche dans sa bulle de ${format_decimal(sol.portee / 1000)} km, un tir toutes les

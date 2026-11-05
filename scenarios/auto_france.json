@@ -23,7 +23,8 @@
       "zones[].nom": "Nom affiche de la zone.",
       "zones[].type": "'protegee' (incursions comptees au bilan) ou 'annotation'.",
       "zones[].points": "Sommets du polygone, liste de {lat_deg, lon_deg}, au moins trois.",
-      "terrain": "Terrain du catalogue (unites/terrains/…) : le relief masque radars et liaisons radio (MODELE § 16) ; null : Terre lisse."
+      "terrain": "Terrain du catalogue (unites/terrains/…) : le relief masque radars et liaisons radio (MODELE § 16) ; null : Terre lisse.",
+      "frappes_destruction": "Frappes qui detruisent une cible (MODELE § 23) : au-dela, les drones s'y ecrasent en pure perte et ne comptent pas. null : une cible n'est jamais detruite."
     },
     "origine_lat_deg": 46.680537,
     "origine_lon_deg": 2.642404,
@@ -2219,7 +2220,8 @@
           }
         ]
       }
-    ]
+    ],
+    "frappes_destruction": 100
   },
   "rouge": {
     "_aide": {
