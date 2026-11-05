@@ -163,9 +163,6 @@ export function avancer_avions(monde, dt) {
 function tirer_en_salve(monde, avion) {
   const regle = monde.scenario.conduite.salve_test;
   if (!regle || avion.munitions < 2 || avion.groupe.consomme_au_tir) return false;
-  const actifs = monde.drones.filter((d) => est_actif(d, monde.t)).length;
-  const stock = monde.avions.reduce((s, a) => s + (a.perdu ? 0 : a.munitions), 0);
-  if (stock < 2 * actifs) return false;
   if (regle === "toujours") return true;
   const air = monde.bilan_air ?? {tirs: 0, detruits: 0};
   return air.tirs >= 20 && air.detruits / air.tirs < 0.85 * avion.groupe.arme.pk;
