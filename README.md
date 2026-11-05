@@ -118,7 +118,7 @@ ni ne s'édite.
 
 ## 4 · Jouer un raid
 
-### Trois tactiques adverses, plus la vôtre
+### Trois tactiques adverses, plus la vôtre, et un essaim qui réagit
 
 <table>
 <tr>
@@ -134,6 +134,12 @@ ni ne s'édite.
 </tr>
 <tr>
 <td colspan="2"><b>Dispersés</b> : chaque drone vient seul, de n'importe quel cap, départs étalés. La plus facile à défendre : les avions trouvent des cibles partout. La quatrième tactique, <b>Plan de vol</b>, suit l'itinéraire que vous dessinez (outil P de l'éditeur) ; le panneau Profil trace son altitude au-dessus du relief.</td>
+</tr>
+<tr>
+<td colspan="2" align="center"><img src="docs/images/reactif.gif" alt="Dispersés réactif, de 9:00 à 21:00 : les drones contournent les sites défendus et quittent C3 pour C9 et C10, le journal raconte chaque décision"></td>
+</tr>
+<tr>
+<td colspan="2"><b>Réactif</b>, ici sur les dispersés, de 9:00 à 21:00 : les drones contournent les sites où l'essaim a déjà perdu des siens, puis quittent C3, qui tue, pour C9 et C10, déjà frappées. Le journal, filtré sur « Réactions de l'essaim », raconte chaque décision. La case Réactif se combine à n'importe quelle tactique (voir ci-dessous).</td>
 </tr>
 </table>
 
