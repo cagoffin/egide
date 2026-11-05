@@ -25,6 +25,8 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   l'éditeur.
 - **v0.7.0** : formats d'échange pour outils externes (spécification, schémas JSON, validateur) ; plan des jalons 13 à
   15 (Déployer en 2D, Observer en 3D, sortie vers un moteur de jeu).
+- **v0.8.0** : import du catalogue privé dans l'interface (page Catalogue : public seul, fusion ou remplacement,
+  appliqué à la palette) ; six pays et huit icônes de jeu de plus ; arme déposée sur un avion chargée avec le scénario.
 
 ## Arborescence cible
 ```

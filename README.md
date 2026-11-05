@@ -368,6 +368,13 @@ qui les fixe, algorithmes) et par algorithme (équations, hypothèses, domaine d
 </tr>
 </table>
 
+L'encadré **Catalogue privé** de cette page importe vos unités de `prive/` : **Public seul**, **Fusionner** (elles
+s'ajoutent aux unités publiques) ou **Remplacer** (elles prennent la place des unités publiques de leurs dossiers ;
+terrains, armements et classes de base restent). Le choix est retenu par le navigateur et vaut aussi pour la palette
+de la simulation (voir [§ 12](#12--étendre--unités-algorithmes-cartes)).
+
+![Catalogue : public seul, puis fusion avec un catalogue privé de démonstration (fiche de « Mon radar », lignée et fichier privé), puis remplacement des radars publics](docs/images/catalogue_prive.gif)
+
 ## 11 · Analyser et prouver
 
 Un raid est un tirage : seule une série de raids dit si un déploiement fait mieux qu'un autre.
@@ -446,9 +453,16 @@ schemas/                                  schémas JSON des fichiers (générés
   `algos/global/allocation/plus_proche.js` sert d'exemple commenté.
 - **Pays et icônes** : `pays` (code ISO à trois lettres) classe l'unité et colore sa pastille ; `icone` choisit une
   silhouette de `icones/` (SVG blanc, 64 × 64, vu de dessus).
-- **Catalogue privé** : `prive/` reçoit vos unités et algorithmes réels, hors du dépôt public.
+- **Catalogue privé** : `prive/` reçoit vos unités et algorithmes réels, hors du dépôt public. Une unité privée se
+  range dans une famille du moteur (`prive/vecteurs/avions/…`, `prive/sites/postes/…`) et hérite de sa base publique,
+  qui lui apporte ses algorithmes : elle se joue alors comme une unité publique.
 
 Après tout ajout : `node outils/indexer.js`, puis `npm test` — la conformité vérifie d'elle-même tout fichier déposé.
+L'indexeur écrit aussi `prive/unites/index.json` (hors git), que lit l'import du catalogue privé : choisissez
+**Fusionner** ou **Remplacer** dans la page Catalogue, et vos unités apparaissent dans la palette, se déposent et se
+battent comme les autres.
+
+![Palette en mode Remplacer : radar, batteries et intercepteurs d'un catalogue privé de démonstration déposés sur la carte, menace privée à 400 km/h, puis le raid joué](docs/images/palette_privee.gif)
 Pour mesurer l'effet d'un changement : `node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche`.
 
 **Depuis un outil externe** (modeleur d'unités, générateur d'algorithmes, export d'un autre simulateur) : le format
