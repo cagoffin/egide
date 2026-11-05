@@ -95,7 +95,7 @@ Orpin H, Chardon D…) et leurs valeurs celles de leur classe, arrondies : aucun
 
 ![Unités de plusieurs pays déployées en icônes de jeu ; la palette filtrée sur la France](docs/images/icones.png)
 
-Le panneau **Calques** choisit le fond de carte (sombre, OpenStreetMap, plan ou photographies IGN, relief ombré ou
+Le panneau **Calques** choisit le fond de carte (photographies IGN par défaut, sombre, OpenStreetMap ou plan, relief ombré ou
 3D, bâtiments 3D, globe) et affiche ou masque chaque famille d'entités. Ce qui est masqué ne se survole, ne s'inspecte
 ni ne s'édite.
 

@@ -27,6 +27,8 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   15 (Déployer en 2D, Observer en 3D, sortie vers un moteur de jeu).
 - **v0.8.0** : import du catalogue privé dans l'interface (page Catalogue : public seul, fusion ou remplacement,
   appliqué à la palette) ; six pays et huit icônes de jeu de plus ; arme déposée sur un avion chargée avec le scénario.
+- **v0.8.1** : fond de carte par défaut sur les photographies IGN (Géoplateforme, sans clé) au lieu de CARTO, dont les
+  tuiles exigent désormais une clé.
 
 ## Arborescence cible
 ```
