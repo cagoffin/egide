@@ -65,19 +65,6 @@ export function planifier_avions(monde) {
   });
 }
 
-/**
- * Rendre l'état des cibles que la conduite connaît de ses propres forces (MODELE § 23.1) : frappes reçues et munitions
- * restantes et initiales de leurs postes. Un algorithme d'allocation peut l'ignorer.
- */
-function situation_cibles(monde) {
-  const cibles = monde.cibles.map((c, k) => ({geo: c.geo, ecef: c.ecef, frappes: monde.fuites[k], munitions_sol: 0, munitions_sol_initiales: 0}));
-  for (const poste of monde.postes) {
-    cibles[poste.cible].munitions_sol += poste.munitions;
-    cibles[poste.cible].munitions_sol_initiales += poste.munitions_initiales;
-  }
-  return {cibles};
-}
-
 /** Affecter les avions libres `siens` du centre `c` aux pistes des drones qu'il connaît. */
 function affecter(monde, c, siens) {
   const {conduite} = monde.scenario;
@@ -88,7 +75,7 @@ function affecter(monde, c, siens) {
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
   // Un centre secondaire peut avoir son propre algorithme d'allocation (déploiement, MODELE § 21.3).
   const allocation = (c > 0 && monde.scenario.reseau.centres[c - 1]?.allocation) || conduite.allocation;
-  for (const {avion, point, explication} of algo(monde.registre, allocation, "allocation").allouer(siens, pistes, OUTILS, situation_cibles(monde))) {
+  for (const {avion, point, explication} of algo(monde.registre, allocation, "allocation").allouer(siens, pistes, OUTILS)) {
     // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
     // Nouvelle mission (l'avion n'était pas déjà en route) : journalisée pour le suivi de l'information (MODELE § 17).
     const nouvelle = Boolean(point && avion.etat !== "ralliement" && !avion.consigne);
@@ -159,15 +146,6 @@ export function avancer_avions(monde, dt) {
   }
 }
 
-// EXPÉRIENCE — salve adaptative : à valider avant d'entrer au modèle.
-function tirer_en_salve(monde, avion) {
-  const regle = monde.scenario.conduite.salve_test;
-  if (!regle || avion.munitions < 2 || avion.groupe.consomme_au_tir) return false;
-  if (regle === "toujours") return true;
-  const air = monde.bilan_air ?? {tirs: 0, detruits: 0};
-  return air.tirs >= 20 && air.detruits / air.tirs < 0.85 * avion.groupe.arme.pk;
-}
-
 /**
  * Faire tirer chaque avion prêt sur le drone non visé le plus proche à portée (MODELE § 4.2) ; l'algorithme de tir
  * de l'arme donne le temps de vol et la durée pendant laquelle l'avion ne peut plus tirer.
@@ -181,12 +159,11 @@ export function tirer_air(monde) {
     if (!drone) continue;
     const tir = algo(monde.registre, arme.algos.tir, "tir");
     const {vol, occupation} = tir.planifier_tir(arme, distance_oblique(avion.ecef, drone.ecef));
-    const salve = tirer_en_salve(monde, avion) ? 2 : 1;
-    avion.munitions -= salve;
+    avion.munitions--;
     avion.prochain_tir = monde.t + occupation;
     drone.vise = true;
-    monde.compteurs.tirs_air += salve;
-    for (let i = 0; i < salve; i++) monde.tirs_en_vol.push({drone, impact: monde.t + vol, pk: arme.pk, origine: {...avion.geo}, tireur: avion.id, salve: salve > 1});
+    monde.compteurs.tirs_air++;
+    monde.tirs_en_vol.push({drone, impact: monde.t + vol, pk: arme.pk, origine: {...avion.geo}, tireur: avion.id});
     // Un intercepteur à usage unique est son arme : il se perd en frappant (MODELE § 19.2).
     if (avion.groupe.consomme_au_tir) {
       avion.perdu = true;
@@ -227,13 +204,7 @@ export function resoudre_tirs_en_vol(monde) {
     tir.drone.vise = false;
     if (monde.essaim && est_actif(tir.drone, monde.t)) monde.compteurs.esquives++;
     const details = monde.essaim ? {esquive: reduction} : {};
-    const avant = tir.drone.vivant && est_actif(tir.drone, monde.t);
     resoudre_tir(monde, tir.drone, tir.pk * (1 - reduction), "air", tir.origine, tir.tireur, details);
-    if (avant) {
-      monde.bilan_air ??= {tirs: 0, detruits: 0};
-      monde.bilan_air.tirs++;
-      if (!tir.drone.vivant) monde.bilan_air.detruits++;
-    }
   }
   monde.tirs_en_vol = restants;
 }
