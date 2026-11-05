@@ -2,7 +2,7 @@
 // mouvement, tir) sont déléguées aux algorithmes du scénario et des unités (MODELE § 8.3 à § 8.5, § 10).
 // Chaque avion porte les paramètres de son groupe (type d'avion, arme, altitude) : la flotte peut être hétérogène.
 import {algo} from "./algos.js";
-import {ajouter, depuis_ecef, direct, distance_oblique, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
+import {ajouter, depuis_ecef, direct, distance_oblique, inverse, produit_scalaire, soustraire, vers_ecef} from "./geodesie.js";
 import {parcourir_voisins} from "./grille.js";
 import {OUTILS} from "./outils.js";
 import {effet_esquive} from "./reaction.js";
@@ -55,29 +55,103 @@ export function drone_approchant(monde, avion) {
  * pistage et d'allocation. Chaque centre affecte les avions qu'il joint le plus vite, sur sa propre situation : les
  * drones qu'il connaît depuis au moins le délai de réaction (MODELE § 18.2).
  */
-// EXPÉRIENCE — meutes de défense de point : à la première détection, chaque avion prend une orbite près d'une cible.
+// EXPÉRIENCE — meutes de défense de point (options dans conduite.*_test).
+const SEUIL_CONNUS = 20;
+
+/** Rendre la compacité de l'essaim connu : drones par cellule de 5 km, ou null si trop peu de drones sont connus. */
+function compacite(monde) {
+  const connus = monde.drones.filter((d) => est_actif(d, monde.t) && d.connu !== null && d.connu <= monde.t);
+  if (connus.length < SEUIL_CONNUS) return null;
+  const cellules = new Set(connus.map((d) => `${Math.floor(d.ecef.x / 5000)},${Math.floor(d.ecef.y / 5000)},${Math.floor(d.ecef.z / 5000)}`));
+  return {valeur: connus.length / cellules.size, connus};
+}
+
+/** Rendre la position du membre `j` (sur `n`) de la meute de la cible `k` : anneau, ou échelons sur l'axe d'arrivée. */
+function poste_de_meute(monde, k, j, n, axe, altitude) {
+  const {conduite} = monde.scenario;
+  const cible = monde.cibles[k].geo;
+  if (!conduite.meutes_echelon_test || axe === null) return {...direct(cible, (2 * Math.PI * j) / n, conduite.meutes_test), alt: altitude};
+  // Échelons tous les 6 km depuis 8 km, alternés de part et d'autre de l'axe à 3 km.
+  const profondeur = 8000 + 6000 * Math.floor(j / 2);
+  const centre = direct(cible, axe, profondeur);
+  return {...direct(centre, axe + (j % 2 ? Math.PI / 2 : -Math.PI / 2), 3000), alt: altitude};
+}
+
+/** Placer `avion` dans la meute de la cible `k`, au rang `j` sur `n`. */
+function rejoindre_meute(monde, avion, k, j, n, axe) {
+  const orbite = poste_de_meute(monde, k, j, n, axe, avion.groupe.altitude);
+  Object.assign(avion, {orbite, meute: k});
+  if (avion.etat === "orbite" || avion.etat === "poste") Object.assign(avion, {etat: "retour", point: orbite});
+}
+
+/** Rendre l'azimut de la cible `k` vers le barycentre des drones connus (axe d'arrivée), ou null. */
+function axe_arrivee(monde, k, connus) {
+  if (!connus.length) return null;
+  const centre = connus.reduce((s, d) => ajouter(s, d.ecef, 1 / connus.length), {x: 0, y: 0, z: 0});
+  return inverse(monde.cibles[k].geo, depuis_ecef(centre)).azimut_depart;
+}
+
 function former_meutes(monde) {
-  const rayon = monde.scenario.conduite.meutes_test;
-  if (!rayon || monde.meutes_formees || !monde.drones.some((d) => d.connu !== null && d.connu <= monde.t)) return;
-  monde.meutes_formees = true;
+  const {conduite} = monde.scenario;
+  if (!conduite.meutes_test || monde.meutes_formees !== undefined) return;
+  const lecture = compacite(monde);
+  if (!lecture) return;
+  // Doctrine : un essaim éparpillé se combat en interception libre, pas en meutes.
+  monde.meutes_formees = !conduite.meutes_doctrine_test || lecture.valeur >= 3;
+  monde.compacite_lue = lecture.valeur;
+  if (!monde.meutes_formees) return;
   const cibles = monde.cibles;
   const capacite = Math.ceil(monde.avions.length / cibles.length);
   const membres = cibles.map(() => 0);
-  // L'avion le plus proche d'une cible choisit d'abord : on remplit les meutes sans faire traverser tout le théâtre.
+  const axes = cibles.map((_, k) => axe_arrivee(monde, k, lecture.connus));
   const paires = monde.avions.flatMap((a) => cibles.map((c, k) => ({a, k, d: distance_oblique(a.ecef, c.ecef)}))).sort((x, y) => x.d - y.d);
-  const placés = new Set();
+  const places = new Set();
   for (const {a, k} of paires) {
-    if (placés.has(a) || membres[k] >= capacite) continue;
-    placés.add(a);
-    const orbite = {...direct(cibles[k].geo, (2 * Math.PI * membres[k]++) / capacite, rayon), alt: a.groupe.altitude};
-    a.orbite = orbite;
-    a.meute = k;
-    if (a.etat === "orbite" || a.etat === "poste") Object.assign(a, {etat: "retour", point: orbite});
+    if (places.has(a) || membres[k] >= capacite) continue;
+    places.add(a);
+    rejoindre_meute(monde, a, k, membres[k]++, capacite, axes[k]);
+  }
+  monde.prochain_redeploiement = monde.t + (conduite.meutes_redeploiement_test ?? Infinity);
+}
+
+/** Redéployer les meutes vers les cibles que visent les pistes (cap à moins de 3 km, moins de 4 min), brèches × 3. */
+function redeployer_meutes(monde) {
+  const {conduite} = monde.scenario;
+  if (!monde.meutes_formees || !conduite.meutes_redeploiement_test || monde.t < monde.prochain_redeploiement) return;
+  monde.prochain_redeploiement = monde.t + conduite.meutes_redeploiement_test;
+  const menace = monde.cibles.map(() => 0);
+  const connus = monde.drones.filter((d) => est_actif(d, monde.t) && d.connu !== null && d.connu <= monde.t);
+  for (const d of connus) {
+    const v = Math.hypot(d.vitesse.x, d.vitesse.y, d.vitesse.z);
+    if (!v) continue;
+    monde.cibles.forEach((c, k) => {
+      const D = soustraire(c.ecef, d.ecef);
+      const avance = produit_scalaire(D, d.vitesse) / v;
+      const ecart = Math.sqrt(Math.max(produit_scalaire(D, D) - avance ** 2, 0));
+      if (avance > 0 && avance / v <= 240 && ecart <= 3000) menace[k] += monde.fuites[k] > 0 ? 3 : 1;
+    });
+  }
+  const total = menace.reduce((s, x) => s + x, 0);
+  if (!total) return;
+  const libres = monde.avions.filter((a) => a.munitions > 0 && !a.perdu && a.etat !== "engagement" && a.meute !== undefined);
+  const voulus = menace.map((m) => Math.round((libres.length * m) / total));
+  const presents = monde.cibles.map((_, k) => libres.filter((a) => a.meute === k));
+  for (let k = 0; k < monde.cibles.length; k++) {
+    while (presents[k].length < voulus[k]) {
+      // Prendre l'avion en surplus le plus proche de la cible menacée.
+      const donneurs = presents.flatMap((p, i) => (p.length > voulus[i] ? p.map((a) => ({a, i})) : []));
+      if (!donneurs.length) break;
+      const {a, i} = donneurs.reduce((m, x) => (distance_oblique(x.a.ecef, monde.cibles[k].ecef) < distance_oblique(m.a.ecef, monde.cibles[k].ecef) ? x : m));
+      presents[i].splice(presents[i].indexOf(a), 1);
+      presents[k].push(a);
+      rejoindre_meute(monde, a, k, presents[k].length - 1, Math.max(voulus[k], 1), axe_arrivee(monde, k, connus));
+    }
   }
 }
 
 export function planifier_avions(monde) {
   former_meutes(monde);
+  redeployer_meutes(monde);
   for (const avion of monde.avions) avion.acces = acces_avion(monde.reseau, avion, monde.scenario.avions.indexOf(avion.groupe));
   // Un avion sous ordre (ou dont l'ordre est en route) n'est pas réaffecté avant d'avoir rallié son point.
   const libres = monde.avions.filter((avion) => avion.acces && avion.munitions > 0 && !avion.ordre && !avion.consigne?.ordre && !drone_approchant(monde, avion));
@@ -150,7 +224,7 @@ export function avancer_avions(monde, dt) {
   for (const avion of monde.avions) {
     if (avion.perdu) continue;
     const {vitesse_mise_a_poste: vitesse, vitesse_engagement: vitesseEngagement} = avion.groupe;
-    const essai = monde.scenario.conduite.engagement_test;
+    const essai = monde.scenario.conduite.meutes_doctrine_test && !monde.meutes_formees ? null : monde.scenario.conduite.engagement_test;
     const menace = avion.munitions > 0 ? drone_approchant(monde, avion) ?? (essai ? plus_proche(monde, avion.ecef, avion.groupe.arme.portee, false) : null) : null;
     if (menace) {
       // L'avion accroche un drone avec son propre capteur : il le poursuit sans attendre la conduite.
