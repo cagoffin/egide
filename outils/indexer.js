@@ -1,6 +1,7 @@
 // Régénère unites/index.json, algos/index.json et cartes/index.json, lus par l'interface (palette, explorateur) qui ne peut pas lister
 // un dossier. `node outils/indexer.js` ; tests/conformite.test.js échoue si un index est périmé.
-import {readdirSync, readFileSync, renameSync, writeFileSync} from "node:fs";
+import {schemas} from "./schemas.js";
+import {readdirSync, readFileSync, renameSync, writeFileSync, mkdirSync} from "node:fs";
 import {join} from "node:path";
 import {pathToFileURL} from "node:url";
 import {charger_algos} from "../src/moteur/algos.js";
@@ -58,5 +59,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   ecrire(join(RACINE, "algos", "index.json"), await index_algos());
   ecrire(join(RACINE, "cartes", "index.json"), index_cartes());
   ecrire(join(RACINE, "scenarios", "index.json"), index_scenarios());
-  console.log("Index régénérés : unites/index.json, algos/index.json, cartes/index.json, scenarios/index.json");
+  mkdirSync(join(RACINE, "schemas"), {recursive: true});
+  for (const [nom, schema] of Object.entries(schemas())) ecrire(join(RACINE, "schemas", nom), schema);
+  console.log("Index régénérés : unites/index.json, algos/index.json, cartes/index.json, scenarios/index.json, schemas/*.schema.json");
 }

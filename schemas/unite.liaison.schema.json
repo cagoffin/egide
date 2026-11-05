@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "egide/schemas/unite.liaison.schema.json",
+  "title": "Unité Égide : liaison",
+  "description": "Base des moyens de communication entre unites : delai de bout en bout et portee, avec ou sans visibilite directe (MODELE § 15.2). Fichier unites/liaisons/<nom>.json (ou prive/unites/liaisons/<nom>.json) ; identifiant = chemin sans « unites/ » ni « .json ». Toute clé ajoutée doit avoir sa phrase dans _aide. Valeurs en unités d'affichage, converties en SI selon le suffixe (docs/FORMATS.md).",
+  "type": "object",
+  "required": [
+    "herite_de",
+    "nom",
+    "sources"
+  ],
+  "properties": {
+    "herite_de": {
+      "type": "string",
+      "description": "Identifiant de l'unite parente, dont on reprend les cles avant d'appliquer celles-ci. Pour cette famille : liaisons/_liaison, ou une unité qui en descend.",
+      "examples": [
+        "liaisons/_liaison"
+      ]
+    },
+    "_aide": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Phrase d'aide de chaque clé que l'unité ajoute ; les clés héritées ont déjà la leur."
+    },
+    "nom": {
+      "type": "string",
+      "description": "Nom affiche de l'unite.",
+      "default": "Liaison"
+    },
+    "fidelite": {
+      "enum": [
+        "notionnel",
+        "cinematique",
+        "point_masse",
+        "6ddl"
+      ],
+      "description": "Niveau de fidelite du modele : notionnel (ordres de grandeur), cinematique, point_masse (3 degres de liberte) ou 6ddl.",
+      "default": "notionnel"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Origine des valeurs : documents publics, ouvrages, ou 'ordre de grandeur notionnel'. Au moins une entree.",
+      "default": [
+        "Ordre de grandeur notionnel"
+      ]
+    },
+    "algos": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "comportement",
+          "mouvement",
+          "detection",
+          "pistage",
+          "allocation",
+          "tir",
+          "tir_sol",
+          "guidage",
+          "filtrage",
+          "performance_radar"
+        ]
+      },
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Algorithmes de l'unite, par role : identifiant dans algos/ (ou prive/algos/). Une unite fille ne remplace que les roles qu'elle cite.",
+      "default": {}
+    },
+    "pays": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Pays d'inspiration (code ISO 3166 a trois lettres) : classement et couleur de pastille seulement ; nom et valeurs restent notionnels. null : unite generique.",
+      "default": null
+    },
+    "icone": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Icone de jeu de l'unite (icones/<nom>.svg), dessinee sur la carte et dans la palette ; null : symbologie APP-6 seule.",
+      "default": null
+    },
+    "type": {
+      "type": "string",
+      "description": "Famille du moyen : filaire, radio, satellite ou optique ; fixe le trait du synoptique.",
+      "default": "radio"
+    },
+    "latence_s": {
+      "type": "number",
+      "description": "Delai de bout en bout d'un message : propagation, traitement et mise en forme comprises.",
+      "default": 1
+    },
+    "portee_km": {
+      "type": "number",
+      "description": "Distance maximale entre les deux extremites ; 40 000 km : sans limite pratique.",
+      "default": 40000
+    },
+    "visibilite_directe": {
+      "type": "boolean",
+      "description": "Vrai si la liaison exige que les antennes se voient : la portee est alors bornee par l'horizon radioelectrique (k = 4/3).",
+      "default": false
+    },
+    "hauteur_antenne_m": {
+      "type": "number",
+      "description": "Hauteur de l'antenne au sol (mat) ; l'extremite aerienne est a l'altitude de l'avion.",
+      "default": 10
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "egide/schemas/unite.brouillage.schema.json",
+  "title": "Unité Égide : brouillage",
+  "description": "Effet de brouillage represente sans modele de signal : chaque drone ennemi dans le rayon est neutralise avec un taux constant (MODELE § 19.3). Fichier unites/effecteurs/brouillage/<nom>.json (ou prive/unites/effecteurs/brouillage/<nom>.json) ; identifiant = chemin sans « unites/ » ni « .json ». Toute clé ajoutée doit avoir sa phrase dans _aide. Valeurs en unités d'affichage, converties en SI selon le suffixe (docs/FORMATS.md).",
+  "type": "object",
+  "required": [
+    "herite_de",
+    "nom",
+    "sources"
+  ],
+  "properties": {
+    "herite_de": {
+      "type": "string",
+      "description": "Identifiant de l'unite parente, dont on reprend les cles avant d'appliquer celles-ci. Pour cette famille : effecteurs/brouillage/brouillage_notionnel, ou une unité qui en descend.",
+      "examples": [
+        "effecteurs/brouillage/brouillage_notionnel"
+      ]
+    },
+    "_aide": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Phrase d'aide de chaque clé que l'unité ajoute ; les clés héritées ont déjà la leur."
+    },
+    "nom": {
+      "type": "string",
+      "description": "Nom affiche de l'unite.",
+      "default": "Brouillage (notionnel)"
+    },
+    "fidelite": {
+      "enum": [
+        "notionnel",
+        "cinematique",
+        "point_masse",
+        "6ddl"
+      ],
+      "description": "Niveau de fidelite du modele : notionnel (ordres de grandeur), cinematique, point_masse (3 degres de liberte) ou 6ddl.",
+      "default": "notionnel"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Origine des valeurs : documents publics, ouvrages, ou 'ordre de grandeur notionnel'. Au moins une entree.",
+      "default": [
+        "Ordre de grandeur notionnel : effet de zone, sans parametre de signal"
+      ]
+    },
+    "algos": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "comportement",
+          "mouvement",
+          "detection",
+          "pistage",
+          "allocation",
+          "tir",
+          "tir_sol",
+          "guidage",
+          "filtrage",
+          "performance_radar"
+        ]
+      },
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Algorithmes de l'unite, par role : identifiant dans algos/ (ou prive/algos/). Une unite fille ne remplace que les roles qu'elle cite.",
+      "default": {}
+    },
+    "pays": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Pays d'inspiration (code ISO 3166 a trois lettres) : classement et couleur de pastille seulement ; nom et valeurs restent notionnels. null : unite generique.",
+      "default": null
+    },
+    "icone": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Icone de jeu de l'unite (icones/<nom>.svg), dessinee sur la carte et dans la palette ; null : symbologie APP-6 seule.",
+      "default": null
+    },
+    "type": {
+      "type": "string",
+      "description": "'brouillage' : pas de tir ; effet de zone autour du porteur.",
+      "default": "brouillage"
+    },
+    "portee_km": {
+      "type": "number",
+      "description": "Rayon de l'effet autour du porteur ; fixe aussi la distance a laquelle il cherche a s'approcher.",
+      "default": 3
+    },
+    "constante_temps_s": {
+      "type": "number",
+      "description": "Temps moyen de neutralisation d'un drone ennemi maintenu dans le rayon : p = 1 - exp(-dt / tau) a chaque pas.",
+      "default": 60
+    }
+  },
+  "additionalProperties": true
+}

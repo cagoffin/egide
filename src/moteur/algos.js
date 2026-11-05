@@ -15,6 +15,10 @@ export const ROLES = {
   performance_radar: ["probabilite_detection"],
 };
 export const ROLES_BRANCHES = ["comportement", "mouvement", "detection", "pistage", "allocation", "tir", "tir_sol"];
+// Rôles dont l'algorithme est porté par une unité, et donc tenu de trouver ses paramètres dans l'unité.
+export const ROLES_D_UNITE = ["mouvement", "detection", "tir", "tir_sol"];
+// Ce qu'un algorithme n'a pas le droit d'écrire : il reçoit tout en argument et ne dépend que de ses entrées.
+export const INTERDITS = [/^\s*import\s/m, /\brequire\(/, /Math\.random/, /Date\.now|new Date\b/, /\bfetch\(/, /\bperformance\./];
 const FIDELITES = ["notionnel", "cinematique", "point_masse", "6ddl"];
 const CHAMPS_TEXTE = ["nom", "description", "domaine_validite"];
 const CHAMPS_LISTE = ["equations", "hypotheses", "references"];

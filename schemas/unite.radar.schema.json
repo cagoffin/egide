@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "egide/schemas/unite.radar.schema.json",
+  "title": "Unité Égide : radar",
+  "description": "Unité de la famille radar. Fichier unites/capteurs/radars/<nom>.json (ou prive/unites/capteurs/radars/<nom>.json) ; identifiant = chemin sans « unites/ » ni « .json ». Toute clé ajoutée doit avoir sa phrase dans _aide. Valeurs en unités d'affichage, converties en SI selon le suffixe (docs/FORMATS.md).",
+  "type": "object",
+  "required": [
+    "herite_de",
+    "nom",
+    "sources"
+  ],
+  "properties": {
+    "herite_de": {
+      "type": "string",
+      "description": "Identifiant de l'unite parente, dont on reprend les cles avant d'appliquer celles-ci. Pour cette famille : capteurs/radars/radar_basse_altitude_notionnel, ou une unité qui en descend.",
+      "examples": [
+        "capteurs/radars/radar_basse_altitude_notionnel"
+      ]
+    },
+    "_aide": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Phrase d'aide de chaque clé que l'unité ajoute ; les clés héritées ont déjà la leur."
+    },
+    "nom": {
+      "type": "string",
+      "description": "Nom affiche de l'unite.",
+      "default": "Radar de surveillance basse altitude (notionnel)"
+    },
+    "fidelite": {
+      "enum": [
+        "notionnel",
+        "cinematique",
+        "point_masse",
+        "6ddl"
+      ],
+      "description": "Niveau de fidelite du modele : notionnel (ordres de grandeur), cinematique, point_masse (3 degres de liberte) ou 6ddl.",
+      "default": "notionnel"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Origine des valeurs : documents publics, ouvrages, ou 'ordre de grandeur notionnel'. Au moins une entree.",
+      "default": [
+        "Ordre de grandeur notionnel : radar de surveillance terrestre, antenne sur mat"
+      ]
+    },
+    "algos": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "comportement",
+          "mouvement",
+          "detection",
+          "pistage",
+          "allocation",
+          "tir",
+          "tir_sol",
+          "guidage",
+          "filtrage",
+          "performance_radar"
+        ]
+      },
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Algorithmes de l'unite, par role : identifiant dans algos/ (ou prive/algos/). Une unite fille ne remplace que les roles qu'elle cite.",
+      "default": {
+        "detection": "global/detection/couverture_frontiere"
+      }
+    },
+    "pays": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Pays d'inspiration (code ISO 3166 a trois lettres) : classement et couleur de pastille seulement ; nom et valeurs restent notionnels. null : unite generique.",
+      "default": null
+    },
+    "icone": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Icone de jeu de l'unite (icones/<nom>.svg), dessinee sur la carte et dans la palette ; null : symbologie APP-6 seule.",
+      "default": "radar_mobile"
+    },
+    "hauteur_antenne_m": {
+      "type": "number",
+      "description": "Hauteur de l'antenne au-dessus du sol ; avec l'altitude de la cible, fixe l'horizon radar (MODELE § 2).",
+      "default": 20
+    },
+    "portee_max_km": {
+      "type": "number",
+      "description": "Portee instrumentee maximale, avant limitation par l'horizon.",
+      "default": 250
+    }
+  },
+  "additionalProperties": true
+}

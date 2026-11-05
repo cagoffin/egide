@@ -132,4 +132,6 @@ par thème, avec le jalon qui la portera. Elles se réalisent par lots, comme le
 | Catalogue | **Catalogue par pays et icônes de jeu** : unités fictives inspirées de classes de différents pays (noms de plantes, valeurs de classe arrondies), silhouettes SVG sur pastille de pays, filtre de la palette par pays | 12 | **fait** |
 | Catalogue | **Icônes orientées** : les silhouettes de vecteurs tournées selon leur cap | 12 | à faire |
 | Catalogue | **Icônes des C2 et des sites** sur la carte (la palette les montre déjà) | 12 | à faire |
+| Catalogue | **Formats d'échange** : spécification (docs/FORMATS.md), schémas JSON générés depuis le catalogue, validateur `node outils/valider.js` (rapport `--json`) pour les outils externes | 12 | **fait** |
+| Catalogue | **Schéma JSON du scénario** généré depuis `scenarios/reference.json` | 12 | à faire |
 | Carte | **Théâtres prédéfinis** : choisir le centre du théâtre par un nom de lieu, liste de théâtres d'exemple | 0 | à faire |

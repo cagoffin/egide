@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "egide/schemas/algo_meta.schema.json",
+  "title": "Fiche « meta » d'un algorithme Égide",
+  "description": "Objet exporté sous le nom « meta » par un module ES algos/global/<rôle>/<nom>.js (ou prive/algos/…), qui exporte aussi les fonctions de son rôle (docs/FORMATS.md § 4).",
+  "type": "object",
+  "required": [
+    "role",
+    "nom",
+    "fidelite",
+    "description",
+    "equations",
+    "hypotheses",
+    "domaine_validite",
+    "references",
+    "parametres"
+  ],
+  "properties": {
+    "role": {
+      "enum": [
+        "comportement",
+        "mouvement",
+        "detection",
+        "pistage",
+        "allocation",
+        "tir",
+        "tir_sol",
+        "guidage",
+        "filtrage",
+        "performance_radar"
+      ],
+      "description": "Rôle tenu ; fonctions exigées : comportement → planifier_drone ; mouvement → avancer ; detection → preparer, detecte ; pistage → pister ; allocation → allouer ; tir → planifier_tir ; tir_sol → cadence ; guidage → acceleration ; filtrage → initialiser, mettre_a_jour ; performance_radar → probabilite_detection."
+    },
+    "nom": {
+      "type": "string",
+      "minLength": 1
+    },
+    "fidelite": {
+      "enum": [
+        "notionnel",
+        "cinematique",
+        "point_masse",
+        "6ddl"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domaine_validite": {
+      "type": "string",
+      "minLength": 1
+    },
+    "equations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "parametres": {
+      "type": "object",
+      "description": "Clés SI lues dans l'unité porteuse (sans suffixe : vitesse_kmh devient vitesse).",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "unite",
+          "aide"
+        ],
+        "properties": {
+          "unite": {
+            "type": "string"
+          },
+          "aide": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

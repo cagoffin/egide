@@ -4,7 +4,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {join} from "node:path";
-import {chemin_algo, ROLES, ROLES_BRANCHES} from "../src/moteur/algos.js";
+import {chemin_algo, INTERDITS, ROLES, ROLES_BRANCHES, ROLES_D_UNITE} from "../src/moteur/algos.js";
 import {charger_unites, unite_brute, unite_si} from "../src/moteur/catalogue.js";
 import {RACINE, ids_unites_disque, lire_fichier} from "../src/moteur/catalogue_node.js";
 import {OUTILS} from "../src/moteur/outils.js";
@@ -12,11 +12,9 @@ import {creer_hasard} from "../src/moteur/hasard.js";
 import {index_algos, index_cartes, index_scenarios, index_unites} from "../outils/indexer.js";
 import {REGISTRE, scenario} from "./aide_scenario.js";
 import {PAYS} from "../src/vue/pays.js";
+import {FAMILLES, schemas} from "../outils/schemas.js";
+import {reconnaitre, valider_fichier} from "../outils/valider.js";
 
-// Ce qu'un algorithme n'a pas le droit d'écrire : il reçoit tout en argument et ne dépend que de ses entrées.
-const INTERDITS = [/^\s*import\s/m, /\brequire\(/, /Math\.random/, /Date\.now|new Date\b/, /\bfetch\(/, /\bperformance\./];
-// Rôles dont l'algorithme est porté par une unité, et donc tenu de trouver ses paramètres dans l'unité.
-const ROLES_D_UNITE = ["mouvement", "detection", "tir", "tir_sol"];
 
 const FICHIERS = await charger_unites(ids_unites_disque(), lire_fichier);
 
@@ -96,6 +94,33 @@ test("index : unites/index.json et algos/index.json sont à jour (sinon : node o
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "algos", "index.json"), "utf-8")), await index_algos());
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "cartes", "index.json"), "utf-8")), index_cartes());
   assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "scenarios", "index.json"), "utf-8")), index_scenarios());
+  for (const [nom, schema] of Object.entries(schemas())) assert.deepEqual(JSON.parse(readFileSync(join(RACINE, "schemas", nom), "utf-8")), schema, `schemas/${nom}`);
+});
+
+test("formats : chaque unité publique respecte le schéma de sa famille (clés connues bien typées, clés requises)", () => {
+  const tous = schemas();
+  for (const [nom, , dossier] of FAMILLES) {
+    const {properties, required} = tous[`unite.${nom}.schema.json`];
+    for (const id of ids_unites_disque().filter((i) => `unites/${i}/`.startsWith(dossier) && !i.split("/").at(-1).startsWith("_"))) {
+      const fichier = JSON.parse(readFileSync(join(RACINE, "unites", `${id}.json`), "utf-8"));
+      for (const cle of required) assert.ok(cle in fichier, `${id} : clé requise ${cle}`);
+      for (const [cle, valeur] of Object.entries(fichier)) {
+        const attendu = properties[cle]?.type;
+        if (!attendu || valeur === null) continue;
+        const reel = Array.isArray(valeur) ? "array" : Number.isInteger(valeur) ? "integer" : typeof valeur;
+        const types = [attendu].flat();
+        assert.ok(types.includes(reel) || (reel === "integer" && types.includes("number")), `${id} : ${cle} est ${reel}, ${types.join("|")} attendu`);
+      }
+    }
+  }
+});
+
+test("formats : outils/valider.js accepte le catalogue et refuse un fichier fautif en nommant le défaut", async () => {
+  const bons = await Promise.all(["unites/capteurs/radars/fra_ajonc_300.json", "unites/liaisons/satellite_notionnelle.json", "algos/global/allocation/plus_proche.js", "scenarios/reference.json"]
+    .map((f) => valider_fichier(join(RACINE, f))));
+  assert.ok(bons.every((r) => r.valide), JSON.stringify(bons.filter((r) => !r.valide)));
+  assert.deepEqual(reconnaitre("prive/unites/sites/postes/x.json"), {genre: "unite", id: "prive/sites/postes/x"});
+  assert.deepEqual(reconnaitre("prive/algos/allocation/y.js"), {genre: "algo", id: "prive/allocation/y"});
 });
 
 test("conformité cartes : chaque source n'emploie que des clés documentées, et toute source tierce est attribuée", () => {

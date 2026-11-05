@@ -5,6 +5,9 @@ fichier : une unité est un JSON, un algorithme est un module JavaScript, une ca
 scénario est un JSON. Le moteur ne fait qu'orchestrer (ordre des étapes, horloge, tirages, journal) ; chaque
 valeur vient d'une unité et chaque décision est confiée à un algorithme désigné par son identifiant.
 
+Pour un outil externe qui génère ces fichiers, le format exact, les schémas JSON et le validateur sont décrits dans
+[FORMATS.md](FORMATS.md).
+
 Ce guide explique comment ces fichiers s'articulent, comment en ajouter, et comment prouver l'effet d'un ajout.
 Les équations et le contrat formel sont dans [MODELE.md](MODELE.md) (§ 9.1 scénario et catalogue, § 10 registre
 d'algorithmes).
