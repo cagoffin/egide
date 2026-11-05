@@ -1,5 +1,11 @@
 [
   {
+    "id": "global/allocation/adaptative",
+    "nom": "Conduite adaptative (destination, brèches, barrière)",
+    "role": "allocation",
+    "fidelite": "notionnel"
+  },
+  {
     "id": "global/allocation/densite_pistes",
     "nom": "Densité des pistes, interception analytique",
     "role": "allocation",

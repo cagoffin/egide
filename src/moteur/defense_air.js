@@ -65,6 +65,19 @@ export function planifier_avions(monde) {
   });
 }
 
+/**
+ * Rendre l'état des cibles que la conduite connaît de ses propres forces (MODELE § 23.1) : frappes reçues et munitions
+ * restantes et initiales de leurs postes. Un algorithme d'allocation peut l'ignorer.
+ */
+function situation_cibles(monde) {
+  const cibles = monde.cibles.map((c, k) => ({geo: c.geo, ecef: c.ecef, frappes: monde.fuites[k], munitions_sol: 0, munitions_sol_initiales: 0}));
+  for (const poste of monde.postes) {
+    cibles[poste.cible].munitions_sol += poste.munitions;
+    cibles[poste.cible].munitions_sol_initiales += poste.munitions_initiales;
+  }
+  return {cibles};
+}
+
 /** Affecter les avions libres `siens` du centre `c` aux pistes des drones qu'il connaît. */
 function affecter(monde, c, siens) {
   const {conduite} = monde.scenario;
@@ -75,7 +88,7 @@ function affecter(monde, c, siens) {
   const pistes = algo(monde.registre, conduite.pistage, "pistage").pister(connus, OUTILS);
   // Un centre secondaire peut avoir son propre algorithme d'allocation (déploiement, MODELE § 21.3).
   const allocation = (c > 0 && monde.scenario.reseau.centres[c - 1]?.allocation) || conduite.allocation;
-  for (const {avion, point, explication} of algo(monde.registre, allocation, "allocation").allouer(siens, pistes, OUTILS)) {
+  for (const {avion, point, explication} of algo(monde.registre, allocation, "allocation").allouer(siens, pistes, OUTILS, situation_cibles(monde))) {
     // L'explication est facultative pour un algorithme d'allocation ; l'inspecteur l'affiche quand elle existe.
     // Nouvelle mission (l'avion n'était pas déjà en route) : journalisée pour le suivi de l'information (MODELE § 17).
     const nouvelle = Boolean(point && avion.etat !== "ralliement" && !avion.consigne);

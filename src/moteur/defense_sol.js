@@ -73,7 +73,8 @@ export function creer_postes(scenario, cibles) {
     id: nombre + j, batterie: j, cible: cible_la_plus_proche(cibles, b.geo), geo: b.geo, ecef: vers_ecef(b.geo),
     munitions: b.munitions, prochain_tir: 0, unite: b.unite,
   }));
-  return [...communs, ...places];
+  // Le stock initial sert à la conduite adaptative, qui juge une cible prête à céder (MODELE § 23.1).
+  return [...communs, ...places].map((poste) => ({...poste, munitions_initiales: poste.munitions}));
 }
 
 /** Rendre le stock initial de munitions sol : celui du dispositif commun et celui des batteries placées. */
