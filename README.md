@@ -435,6 +435,7 @@ algos/global/<rôle>/<algo>.js             un algorithme par module : fiche « m
 cartes/fonds|relief|batiments/<source>.json   une source de carte par fichier, attribution obligatoire
 prive/unites/…  prive/algos/…             votre catalogue privé (ignoré par git), identifiants préfixés « prive/ »
 scenarios/                                scénarios JSON, chaque clé documentée
+schemas/                                  schémas JSON des fichiers (générés par node outils/indexer.js)
 ```
 
 - **Unités** : un fichier ne dit que ce qui change par rapport à son parent (`herite_de`) ; les valeurs s'écrivent
@@ -449,6 +450,15 @@ scenarios/                                scénarios JSON, chaque clé document�
 
 Après tout ajout : `node outils/indexer.js`, puis `npm test` — la conformité vérifie d'elle-même tout fichier déposé.
 Pour mesurer l'effet d'un changement : `node src/preuve.js duel --variante bleu.conduite.allocation=global/allocation/plus_proche`.
+
+**Depuis un outil externe** (modeleur d'unités, générateur d'algorithmes, export d'un autre simulateur) : le format
+exact de chaque fichier est fixé dans [docs/FORMATS.md](docs/FORMATS.md), avec des schémas JSON par famille dans
+`schemas/` (générés depuis le catalogue) et un validateur qui applique les règles de la conformité :
+
+```sh
+node outils/valider.js prive/unites/capteurs/radars/mon_radar.json prive/algos/allocation/mon_algo.js
+node outils/valider.js --json …     # rapport machine, code de sortie 0 ou 1
+```
 
 **Le guide complet est dans [docs/CATALOGUE.md](docs/CATALOGUE.md)** : familles d'unités, héritage, suffixes,
 surcharges, rôles et contrat des algorithmes, exemple pas à pas, catalogue privé, conformité, cartes, reliefs,
@@ -516,7 +526,9 @@ pas de temps de 0,5 s a convergé alors que celui de 1 s ne l'a pas.
 
 - [docs/MODELE.md](docs/MODELE.md) : toutes les équations et hypothèses.
 - [docs/CATALOGUE.md](docs/CATALOGUE.md) : étendre Égide — unités, algorithmes, catalogue privé, preuve d'un changement.
+- [docs/FORMATS.md](docs/FORMATS.md) : formats d'échange pour les outils externes (unités, liaisons, terrains, algorithmes, scénarios).
 - [docs/PLAN_V2.md](docs/PLAN_V2.md) : feuille de route, jalons, idées et suggestions retenues.
+- [docs/PLAN_3D.md](docs/PLAN_3D.md) : plan des prochains jalons — déployer en 2D stricte, observer en 3D, sortie vers un moteur de jeu.
 
 ## Tests
 

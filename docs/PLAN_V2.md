@@ -23,6 +23,8 @@ relief ; on place les unités et on trace les plans de vol à la souris ; chaque
   d'extension du catalogue ; README en guide utilisateur.
 - **v0.6.0** : catalogue de 35 unités fictives par pays et icônes de jeu ; gomme, Maj+clic et « Tout effacer » dans
   l'éditeur.
+- **v0.7.0** : formats d'échange pour outils externes (spécification, schémas JSON, validateur) ; plan des jalons 13 à
+  15 (Déployer en 2D, Observer en 3D, sortie vers un moteur de jeu).
 
 ## Arborescence cible
 ```
